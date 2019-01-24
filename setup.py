@@ -11,7 +11,7 @@ setuptools.setup(
     description="LND gRPC pre-packaged",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://github.com/willcl-ark/lnd_grpc",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
