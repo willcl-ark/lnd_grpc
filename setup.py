@@ -19,8 +19,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "grpcio,"
-        "grpcio-tools,"
+        "grpcio",
+        "grpcio-tools",
         "googleapis-common-protos",
         "codecs",
     ]
