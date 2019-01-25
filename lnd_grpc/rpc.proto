@@ -293,7 +293,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `connect`
+    /** lncli: `connect_macaroon`
     ConnectPeer attempts to establish a connection to a remote peer. This is at
     the networking level, and is used for communication between nodes. This is
     distinct from establishing a channel with a peer.
@@ -549,7 +549,7 @@ service Lightning {
     /** lncli: `describegraph`
     DescribeGraph returns a description of the latest graph state from the
     point of view of the node. The graph information is partitioned into two
-    components: all the nodes/vertexes, and all the edges that connect the
+    components: all the nodes/vertexes, and all the edges that connect_macaroon the
     vertexes themselves.  As this is a directed graph, the edges also contain
     the node directional specific routing policy which includes: the time lock
     delta, fee information, etc.
@@ -911,7 +911,7 @@ message ConnectPeerRequest {
     /// Lightning address of the peer, in the format `<pubkey>@host`
     LightningAddress addr = 1;
 
-    /** If set, the daemon will attempt to persistently connect to the target
+    /** If set, the daemon will attempt to persistently connect_macaroon to the target
      * peer.  Otherwise, the call will be synchronous. */
     bool perm = 2;
 }

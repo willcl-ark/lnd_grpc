@@ -496,7 +496,7 @@ class LightningServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def ConnectPeer(self, request, context):
-    """* lncli: `connect`
+    """* lncli: `connect_macaroon`
     ConnectPeer attempts to establish a connection to a remote peer. This is at
     the networking level, and is used for communication between nodes. This is
     distinct from establishing a channel with a peer.
@@ -736,7 +736,7 @@ class LightningServicer(object):
     """* lncli: `describegraph`
     DescribeGraph returns a description of the latest graph state from the
     point of view of the node. The graph information is partitioned into two
-    components: all the nodes/vertexes, and all the edges that connect the
+    components: all the nodes/vertexes, and all the edges that connect_macaroon the
     vertexes themselves.  As this is a directed graph, the edges also contain
     the node directional specific routing policy which includes: the time lock
     delta, fee information, etc.
