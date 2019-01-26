@@ -1,11 +1,12 @@
+import json
+import sys
+
 import codecs
 import grpc
-import json
 import rpc_pb2 as ln
 import rpc_pb2_grpc as lnrpc
 import utilities as u
 from os import environ
-import sys
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -224,12 +225,10 @@ class Client:
                    **kwargs):
         request = ln.SendCoinsRequest(
                 addr=addr,
-                amount=amount,
-        )
+                amount=amount)
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.SendCoins(request)
         return response
 
@@ -249,19 +248,17 @@ class Client:
         return response
 
     def send_many(self,
-                  addr_to_amount: json,     # TODO worth importing json just for type hint?
+                  addr_to_amount: json,  # TODO worth importing json just for type hint?
                   **kwargs)
         request = ln.SendManyRequest()
         request.addr_to_amount = addr_to_amount
-
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.SendMany(request)
         return response
 
-    def new_address(self, address_type: int):       # TODO why do only '1' and '2' work here?
+    def new_address(self, address_type: int):  # TODO why do only '1' and '2' work here?
         request = ln.NewAddressRequest(type=address_type)
         response = self.l_stub.NewAddress(request)
         return response
@@ -308,40 +305,34 @@ class Client:
 
     def list_channels(self, **kwargs):
         request = ln.ListChannelsRequest()
-
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.ListChannels(request)
         return response.channels
 
     def closed_channels(self, **kwargs)
         request = ln.ClosedChannelsRequest()
-
         # set options, can multi-select
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.ClosedChannels(request)
         return response.channels
 
     def open_channel_sync(self,
-                     node_pubkey: str,
-                     node_pubkey_string: str,
-                     local_funding_amount: int,
-                     push_sat: int,
-                     **kwargs):
+                          node_pubkey: str,
+                          node_pubkey_string: str,
+                          local_funding_amount: int,
+                          push_sat: int,
+                          **kwargs):
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat,
-        )
+                push_sat=push_sat)
         request.node_pubkey = node_pubkey.encode('utf-8')
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.OpenChannelSync(request)
         return response
 
@@ -355,14 +346,12 @@ class Client:
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat,
-        )
+                push_sat=push_sat)
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
         if hasattr(request, 'node_pubkey') == False:
             request.node_pubkey = node_pubkey_string.encode('utf-8')
-
         response = self.l_stub.OpenChannel(request)
         return response
 
@@ -374,19 +363,11 @@ class Client:
         close, see the channel_point values within the list_channels() command
         output. The format for a channel_point is 'funding_txid:output_index'.
         """
-
-        # TODO: make sure this actually works in the real world instead of just \
-        #  demanding users pass this function an ln.ChannelPoint object \
-        #  directly. \
-        #  Perhaps more reasonable would be to use a helper/lookup function based on \
-        #  the channel pubkey to do it automatically.
-
+        # TODO: Can you actually use this (pass a ChannelPoint object)
         request = ln.CloseChannelsRequest(channel_point=channel_point)
-
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-
         response = self.l_stub.CloseChannel(request)
         return response
 
@@ -396,41 +377,40 @@ class Client:
         return response
 
     def payment_request_generator(self,
-                          dest: bytes,
-                          dest_string: str,
-                          amt: int,
-                          payment_hash: bytes,
-                          payment_hash_string: str,
-                          payment_request: str = None,
-                          final_cltv_delta: int,
-                          # TODO: fee_limit: ln.FeeLimit,
-                          ):
-
+                                  dest: bytes,
+                                  dest_string: str,
+                                  amt: int,
+                                  payment_hash: bytes,
+                                  payment_hash_string: str,
+                                  payment_request: str = None,
+                                  final_cltv_delta: int,
+                                  # TODO: fee_limit: ln.FeeLimit,
+                                  ):
         while True:
-        # Parameters here can be set as arguments to the generator.
-           if payment_request is not None:
-               request = ln.SendRequest(
-                       payment_request=payment_request)
-           else:
-               request = ln.SendRequest(
-                       dest=dest,
-                       dest_string=dest_string,
-                       amt=amt,
-                       payment_hash=payment_hash,
-                       payment_hash_string=payment_hash_string,
-                       final_cltv_delta=final_cltv_delta,
-                       #fee_limit=fee_limit,
-               )
-           yield request
+            # Parameters here can be set as arguments to the generator.
+            if payment_request is not None:
+                request = ln.SendRequest(
+                        payment_request=payment_request)
+            else:
+                request = ln.SendRequest(
+                        dest=dest,
+                        dest_string=dest_string,
+                        amt=amt,
+                        payment_hash=payment_hash,
+                        payment_hash_string=payment_hash_string,
+                        final_cltv_delta=final_cltv_delta,
+                        # fee_limit=fee_limit,
+                )
+            yield request
 
     def send_payment(self,
-                          dest_string: str,
-                          amt: int,
-                          payment_hash_string: str,
-                          payment_request: str = None,
-                          final_cltv_delta: int,
-                          # TODO: fee_limit: ln.FeeLimit = None,
-                          ):
+                     dest_string: str,
+                     amt: int,
+                     payment_hash_string: str,
+                     final_cltv_delta: int,
+                     payment_request: str = None,
+                     # TODO: fee_limit: ln.FeeLimit = None,
+                     ):
         _dest = dest_string.encode('utf-8')
         _payment_hash = payment_hash_string.encode('utf-8')
         # TODO: Ask Justin about this one
@@ -439,13 +419,13 @@ class Client:
                     payment_request=payment_request)
         else:
             request_iterable = self.payment_request_generator(
-                dest=_dest,
-                dest_string=dest_string,
-                amt=amt,
-                payment_hash=_payment_hash,
-                payment_hash_string=payment_hash_string,
-                final_cltv_delta=final_cltv_delta,
-                # TODO: fee_limit=fee_limit,
+                    dest=_dest,
+                    dest_string=dest_string,
+                    amt=amt,
+                    payment_hash=_payment_hash,
+                    payment_hash_string=payment_hash_string,
+                    final_cltv_delta=final_cltv_delta,
+                    # TODO: fee_limit=fee_limit,
             )
         for response in self.l_stub.SendPayment(request_iterable):
             return response
@@ -460,9 +440,9 @@ class Client:
         pass
 
     def add_invoice(self,
-                       r_preimage: bytes,
-                       value: int,
-                       **kwargs):
+                    r_preimage: bytes,
+                    value: int,
+                    **kwargs):
         request = ln.Invoice(r_preimage=r_preimage, value=value)
         # set options
         for key, value in kwargs.items():
