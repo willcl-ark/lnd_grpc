@@ -221,21 +221,14 @@ class Client:
     def send_coins(self,
                    addr: str,
                    amount: int,
-                   target_conf: int = None,
-                   sat_per_byte: int = None,
-                   send_all: bool = None):
+                   **kwargs):
         request = ln.SendCoinsRequest(
                 addr=addr,
                 amount=amount,
         )
-
         # set options
-        if target_conf is not None:
-            request.target_conf = target_conf
-        if sat_per_byte is not None:
-            request.sat_per_byte = sat_per_byte
-        if send_all is not None:
-            request.send_all = send_all
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.SendCoins(request)
         return response
@@ -257,16 +250,13 @@ class Client:
 
     def send_many(self,
                   addr_to_amount: json,     # TODO worth importing json just for type hint?
-                  target_conf: int = None,
-                  sat_per_byte: int = None):
+                  **kwargs)
         request = ln.SendManyRequest()
         request.addr_to_amount = addr_to_amount
 
         # set options
-        if target_conf is not None:
-            request.target_conf = target_conf
-        if sat_per_byte is not None:
-            request.sat_per_byte = sat_per_byte
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.SendMany(request)
         return response
@@ -316,48 +306,22 @@ class Client:
         response = self.l_stub.PendingChannels(request)
         return response
 
-    def list_channels(self,
-                      active_only: bool = None,
-                      inactive_only: bool = None,
-                      public_only: bool = None,
-                      private_only: bool = None):
+    def list_channels(self, **kwargs):
         request = ln.ListChannelsRequest()
 
         # set options
-        if active_only is not None:
-            request.active_only = 1
-        elif inactive_only is not None:
-            request.inactive_only = 1
-        elif public_only is not None:
-            request.public_only = 1
-        elif private_only is not None:
-            request.private_only = 1
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.ListChannels(request)
         return response.channels
 
-    def closed_channels(self,
-                        cooperative: bool = None,
-                        local_force: bool = None,
-                        remote_force: bool = None,
-                        breach: bool = None,
-                        funding_cancelled: bool = None,
-                        abandoned: bool = None):
+    def closed_channels(self, **kwargs)
         request = ln.ClosedChannelsRequest()
 
         # set options, can multi-select
-        if cooperative is not None:
-            request.cooperative = 1
-        if local_force is not None:
-            request.local_force = 1
-        if remote_force is not None:
-            request.remote_force = 1
-        if breach is not None:
-            request.breach = 1
-        if funding_cancelled is not None:
-            request.funding_cancelled = 1
-        if abandoned is not None:
-            request.abandoned = 1
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.ClosedChannels(request)
         return response.channels
@@ -367,15 +331,7 @@ class Client:
                      node_pubkey_string: str,
                      local_funding_amount: int,
                      push_sat: int,
-                     target_conf: int = None,
-                     sat_per_byte: int = None,
-                     private: bool = None,
-                     min_htlc_msat: int = None,
-                     remote_csv_delay: int = None,
-                     min_confs: int = None,
-                     spend_unconfirmed: bool = None,
-                     # TODO: are all these required fields, really
-                     ):
+                     **kwargs):
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
@@ -383,36 +339,17 @@ class Client:
         )
         request.node_pubkey = node_pubkey.encode('utf-8')
         # set options
-        if target_conf is not None:
-            request.target_conf = target_conf
-        if sat_per_byte is not None:
-            request.sat_per_byte = sat_per_byte
-        if private is not None:
-            request.private = private
-        if min_htlc_msat is not None:
-            request.min_htlc_msat = min_htlc_msat
-        if remote_csv_delay is not None:
-            request.remote_csv_delay = remote_csv_delay
-        if min_confs is not None:
-            request.min_confs = min_confs
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.OpenChannelSync(request)
         return response
 
     def open_channel(self,
-                     node_pubkey: str = None,
                      node_pubkey_string: str,
                      local_funding_amount: int,
                      push_sat: int,
-                     target_conf: int = None,
-                     sat_per_byte: int = None,
-                     private: bool = None,
-                     min_htlc_msat: int = None,
-                     remote_csv_delay: int = None,
-                     min_confs: int = None,
-                     spend_unconfirmed: bool = None,
-                     # TODO: are all these required fields, really
-                     ):
+                     **kwargs):
         # TODO: mirror `lncli openchannel --connect` function
 
         request = ln.OpenChannelRequest(
@@ -421,29 +358,17 @@ class Client:
                 push_sat=push_sat,
         )
         # set options
-        if node_pubkey is not None:
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        if hasattr(request, 'node_pubkey') == False:
             request.node_pubkey = node_pubkey_string.encode('utf-8')
-        if target_conf is not None:
-            request.target_conf = target_conf
-        if sat_per_byte is not None:
-            request.sat_per_byte = sat_per_byte
-        if private is not None:
-            request.private = private
-        if min_htlc_msat is not None:
-            request.min_htlc_msat = min_htlc_msat
-        if remote_csv_delay is not None:
-            request.remote_csv_delay = remote_csv_delay
-        if min_confs is not None:
-            request.min_confs = min_confs
 
         response = self.l_stub.OpenChannel(request)
         return response
 
     def close_channel(self,
                       channel_point: ln.ChannelPoint,
-                      force: bool = None,
-                      target_conf: int = None,
-                      sat_per_byte: int = None):
+                      **kwargs):
         """
         To view which funding_txids/output_indexes can be used for a channel
         close, see the channel_point values within the list_channels() command
@@ -459,12 +384,8 @@ class Client:
         request = ln.CloseChannelsRequest(channel_point=channel_point)
 
         # set options
-        if force is not None:
-            request.force = force
-        if target_conf is not None:
-            request.target_conf = target_conf
-        if sat_per_byte is not None:
-            request.sat_per_byte = sat_per_byte
+        for key, value in kwargs.items():
+            setattr(request, key, value)
 
         response = self.l_stub.CloseChannel(request)
         return response
