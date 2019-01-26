@@ -1,5 +1,6 @@
 import codecs
 import grpc
+import json
 import rpc_pb2 as ln
 import rpc_pb2_grpc as lnrpc
 import utilities as u
@@ -153,9 +154,9 @@ class Client:
 
         # set options
         if aezeed_passphrase is not None:
-            request.aezeed_passphrase = aezeed_passphrase.encode('latin1')
+            request.aezeed_passphrase = aezeed_passphrase.encode('utf-8')
         if seed_entropy is not None:
-            request.seed_entropy = seed_entropy.encode('latin1')
+            request.seed_entropy = seed_entropy.encode('utf-8')
 
         response = self.w_stub.GenSeed(request)
         return response
@@ -170,13 +171,13 @@ class Client:
         except AssertionError:
             sys.stdout.write('Wallet password must be at least 8 characters long')
         request = ln.InitWalletRequest()
-        request.wallet_password = wallet_password.encode('latin1')
+        request.wallet_password = wallet_password.encode('utf-8')
 
         # set options
         if cipher_seed_mnemonic is not None:
             request.cipher_seed_mnemonic.extend(cipher_seed_mnemonic)
         if aezeed_passphrase is not None:
-            request.aezeed_passphrase = aezeed_passphrase.encode('latin1')
+            request.aezeed_passphrase = aezeed_passphrase.encode('utf-8')
         if recovery_window is not None:
             request.recovery_window = recovery_window
 
@@ -187,7 +188,7 @@ class Client:
                       wallet_password: str,
                       recovery_window: int = None):
         request = ln.UnlockWalletRequest()
-        request.wallet_password = wallet_password.encode('latin1')
+        request.wallet_password = wallet_password.encode('utf-8')
         if recovery_window is not None:
             request.recovery_window = recovery_window
         response = self.w_stub.UnlockWallet(request)
@@ -197,8 +198,8 @@ class Client:
                         current_password: str,
                         new_password: str):
         request = ln.ChangePasswordRequest()
-        request.current_password = current_password.encode('latin1')
-        request.new_password = new_password.encode('latin1')
+        request.current_password = current_password.encode('utf-8')
+        request.new_password = new_password.encode('utf-8')
         response = self.w_stub.ChangePassword(request)
         return response
 
@@ -223,9 +224,10 @@ class Client:
                    target_conf: int = None,
                    sat_per_byte: int = None,
                    send_all: bool = None):
-        request = ln.SendCoinsRequest()
-        request.addr = addr     # TODO: can these be passed directly in?
-        request.amount = amount
+        request = ln.SendCoinsRequest(
+                addr=addr,
+                amount=amount,
+        )
 
         # set options
         if target_conf is not None:
@@ -241,9 +243,10 @@ class Client:
     def list_unspent(self,
                      min_confs: int,
                      max_confs: int):
-        request = ln.ListUnspentRequest()
-        request.min_confs = min_confs
-        request.max_confs = max_confs
+        request = ln.ListUnspentRequest(
+                min_confs=min_confs,
+                max_confs=max_confs,
+        )
         response = self.l_stub.ListUnspent(request)
         return response
 
@@ -253,7 +256,7 @@ class Client:
         return response
 
     def send_many(self,
-                  addr_to_amount: dict,     # TODO confirm!
+                  addr_to_amount: json,     # TODO worth importing json just for type hint?
                   target_conf: int = None,
                   sat_per_byte: int = None):
         request = ln.SendManyRequest()
@@ -274,13 +277,13 @@ class Client:
         return response
 
     def sign_message(self, msg: str):
-        msg_bytes = msg.encode('latin1')
+        msg_bytes = msg.encode('utf-8')
         request = ln.SignMessageRequest(msg=msg_bytes)
         response = self.l_stub.SignMessage(request)
         return response
 
     def verify_message(self, msg: str, signature: str):
-        msg_bytes = msg.encode('latin1')
+        msg_bytes = msg.encode('utf-8')
         request = ln.VerifyMessageRequest(msg=msg_bytes, signature=signature)
         response = self.l_stub.VerifyMessage(request)
         return response
@@ -323,11 +326,11 @@ class Client:
         # set options
         if active_only is not None:
             request.active_only = 1
-        if inactive_only is not None:
+        elif inactive_only is not None:
             request.inactive_only = 1
-        if public_only is not None:
+        elif public_only is not None:
             request.public_only = 1
-        if private_only is not None:
+        elif private_only is not None:
             request.private_only = 1
 
         response = self.l_stub.ListChannels(request)
@@ -342,7 +345,7 @@ class Client:
                         abandoned: bool = None):
         request = ln.ClosedChannelsRequest()
 
-        # set options
+        # set options, can multi-select
         if cooperative is not None:
             request.cooperative = 1
         if local_force is not None:
@@ -378,7 +381,7 @@ class Client:
                 local_funding_amount=local_funding_amount,
                 push_sat=push_sat,
         )
-        request.node_pubkey = node_pubkey.encode('latin1')
+        request.node_pubkey = node_pubkey.encode('utf-8')
         # set options
         if target_conf is not None:
             request.target_conf = target_conf
@@ -397,7 +400,7 @@ class Client:
         return response
 
     def open_channel(self,
-                     node_pubkey: str,
+                     node_pubkey: str = None,
                      node_pubkey_string: str,
                      local_funding_amount: int,
                      push_sat: int,
@@ -410,13 +413,16 @@ class Client:
                      spend_unconfirmed: bool = None,
                      # TODO: are all these required fields, really
                      ):
+        # TODO: mirror `lncli openchannel --connect` function
+
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
                 push_sat=push_sat,
         )
-        request.node_pubkey = node_pubkey.encode('latin1')
         # set options
+        if node_pubkey is not None:
+            request.node_pubkey = node_pubkey_string.encode('utf-8')
         if target_conf is not None:
             request.target_conf = target_conf
         if sat_per_byte is not None:
@@ -447,7 +453,7 @@ class Client:
         # TODO: make sure this actually works in the real world instead of just \
         #  demanding users pass this function an ln.ChannelPoint object \
         #  directly. \
-        #  Perhaps more reasonable would be to use a helper/lookup based on \
+        #  Perhaps more reasonable would be to use a helper/lookup function based on \
         #  the channel pubkey to do it automatically.
 
         request = ln.CloseChannelsRequest(channel_point=channel_point)
@@ -492,7 +498,7 @@ class Client:
                        payment_hash=payment_hash,
                        payment_hash_string=payment_hash_string,
                        final_cltv_delta=final_cltv_delta,
-                       fee_limit=fee_limit,
+                       #fee_limit=fee_limit,
                )
            yield request
 
@@ -504,8 +510,8 @@ class Client:
                           final_cltv_delta: int,
                           # TODO: fee_limit: ln.FeeLimit = None,
                           ):
-        _dest = dest_string.encode('latin1')
-        _payment_hash = payment_hash_string.encode('latin1')
+        _dest = dest_string.encode('utf-8')
+        _payment_hash = payment_hash_string.encode('utf-8')
         # TODO: Ask Justin about this one
         if payment_request is not None:
             request_iterable = self.payment_request_generator(
@@ -522,6 +528,26 @@ class Client:
             )
         for response in self.l_stub.SendPayment(request_iterable):
             return response
+
+    def send_payment_sync(self):
+        pass
+
+    def send_to_route(self):
+        pass
+
+    def send_to_route_sync(self):
+        pass
+
+    def add_invoice(self,
+                       r_preimage: bytes,
+                       value: int,
+                       **kwargs):
+        request = ln.Invoice(r_preimage=r_preimage, value=value)
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.AddInvoice(request)
+        return response
 
     def get_node_info(self, pubkey: str):
         request = ln.NodeInfoRequest()
