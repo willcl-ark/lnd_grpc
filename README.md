@@ -13,9 +13,20 @@ Note: Configuration for coins other than bitcoin will require modifying the sour
 ## LND setup
 To begin lnd daemon must be running on the host machine. This can typically be accomplished in a screen/tmux session.
 
-If lnd.conf is not configured already to communicate with your bitcoin client, an example lnd daemon startup command might look like:
+If lnd.conf is not configured already to communicate with your bitcoin client, an example lnd daemon startup command for bitcoind connection might look like:
 
-`lnd --bitcoin.active --bitcoin.mainnet --debuglevel=debug --bitcoin.node=bitcoind --bitcoind.rpcuser=xxxxx --bitcoind.rpcpass=xxxxxxxxxxxxxx --externalip=xx.xx.xx.xx --bitcoind.zmqpubrawblock=tcp://host:port --bitcoind.zmqpubrawtx=tcp://host:port --rpclisten=host:port`
+```
+lnd --bitcoin.active \
+--bitcoin.mainnet \
+--debuglevel=debug \
+--bitcoin.node=bitcoind \
+--bitcoind.rpcuser=xxxxx \
+--bitcoind.rpcpass=xxxxxxxxxxxxxx \
+--externalip=xx.xx.xx.xx \
+--bitcoind.zmqpubrawblock=tcp://host:port \
+--bitcoind.zmqpubrawtx=tcp://host:port \
+--rpclisten=host:port
+```
 
 ## Usage
 First import the module into your project:
