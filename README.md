@@ -2,7 +2,7 @@
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-##Install requires:
+## Install requires:
 * `grpcio`
 * `grpcio-tools`
 * `googleapis-common-protos`
@@ -10,14 +10,14 @@ A simple library to provide a Python 3 interface to the lnd lightning client gRP
 
 Note: Configuration for coins other than bitcoin will require modifying the source code directly.
 
-##LND setup
+## LND setup
 To begin lnd daemon must be running on the host machine. This can typically be accomplished in a screen/tmux session.
 
 If lnd.conf is not configured already to communicate with your bitcoin client, an example lnd daemon startup command might look like:
 
 `lnd --bitcoin.active --bitcoin.mainnet --debuglevel=debug --bitcoin.node=bitcoind --bitcoind.rpcuser=xxxxx --bitcoind.rpcpass=xxxxxxxxxxxxxx --externalip=xx.xx.xx.xx --bitcoind.zmqpubrawblock=tcp://host:port --bitcoind.zmqpubrawtx=tcp://host:port --rpclisten=host:port`
 
-##Usage
+## Usage
 First import the module into your project:
 
 `import lnd_grpc`
@@ -26,7 +26,7 @@ Next create an instance of the client class:
 
 `rpc = lnd_grpc.Client()`
 
-####Initialization of a new lnd installation
+#### Initialization of a new lnd installation
 
 Note: If you have already created a wallet during lnd setup/installation you can skip this section.
 
