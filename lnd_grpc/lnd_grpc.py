@@ -97,6 +97,7 @@ class Client:
         except FileNotFoundError:
             sys.stderr.write("Could not find macaroon in %s\n" % self.macaroon_path)
 
+
     def metadata_callback(self, context, callback):
         callback([('macaroon', self.macaroon)], None)
 
@@ -120,23 +121,26 @@ class Client:
                                            credentials=self.combined_creds,
                                            options=self.grpc_options)
         self.l_stub = lnrpc.LightningStub(self.channel)
-        self.w_stub = lnrpc.WalletUnlockerStub(self.channel)
+        self.wallet_unlocker()
 
-    def connect_ssl(self,
+    @property
+    def wallet_unlocker(self,
                     cert_path: str = None):
         if cert_path is not None:
             self.tls_cert_path = cert_path
         self.ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
-        self.channel = grpc.secure_channel('localhost:10009', self.ssl_creds)
-        self.w_stub = lnrpc.WalletUnlockerStub(self.channel)
+        self._w_channel = grpc.secure_channel(self.grpc_host + ':' + self.grpc_port,
+                                           self.ssl_creds)
+        self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
+        return self._w_stub
 
     def initialize(self,
                    aezeed_passphrase: str = None,
                    wallet_password: str = None,
                    recovery_window: int = None,
                    seed_entropy: bytes = None):
-        self.connect_ssl()
-        sys.stdout.write('Connected using SSL\n')
+        self.wallet_unlocker()
+        sys.stdout.write('Connected using "wallet_unlocker"\n')
         _seed = self.gen_seed(aezeed_passphrase=aezeed_passphrase, seed_entropy=seed_entropy)
         self.init_wallet(wallet_password=wallet_password,
                          cipher_seed_mnemonic=_seed.cipher_seed_mnemonic,
@@ -182,7 +186,7 @@ class Client:
         if recovery_window is not None:
             request.recovery_window = recovery_window
 
-        response = self.w_stub.InitWallet(request)
+        response = self.wallet_unlocker.InitWallet(request)
         return response
 
     def unlock_wallet(self,
@@ -192,7 +196,7 @@ class Client:
         request.wallet_password = wallet_password.encode('utf-8')
         if recovery_window is not None:
             request.recovery_window = recovery_window
-        response = self.w_stub.UnlockWallet(request)
+        response = self.wallet_unlocker.UnlockWallet(request)
         return response
 
     def change_password(self,
@@ -201,7 +205,7 @@ class Client:
         request = ln.ChangePasswordRequest()
         request.current_password = current_password.encode('utf-8')
         request.new_password = new_password.encode('utf-8')
-        response = self.w_stub.ChangePassword(request)
+        response = self.wallet_unlocker.ChangePassword(request)
         return response
 
     def wallet_balance(self):
@@ -249,7 +253,7 @@ class Client:
 
     def send_many(self,
                   addr_to_amount: json,  # TODO worth importing json just for type hint?
-                  **kwargs)
+                  **kwargs):
         request = ln.SendManyRequest()
         request.addr_to_amount = addr_to_amount
         # set options
@@ -311,7 +315,7 @@ class Client:
         response = self.l_stub.ListChannels(request)
         return response.channels
 
-    def closed_channels(self, **kwargs)
+    def closed_channels(self, **kwargs):
         request = ln.ClosedChannelsRequest()
         # set options, can multi-select
         for key, value in kwargs.items():
@@ -382,8 +386,8 @@ class Client:
                                   amt: int,
                                   payment_hash: bytes,
                                   payment_hash_string: str,
-                                  payment_request: str = None,
                                   final_cltv_delta: int,
+                                  payment_request: str = None,
                                   # TODO: fee_limit: ln.FeeLimit,
                                   ):
         while True:
@@ -392,7 +396,7 @@ class Client:
                 request = ln.SendRequest(
                         payment_request=payment_request)
             else:
-                request = ln.SendRequest(
+                request = ln.SendRequest(   #TODO: will this work with **kwargs too?
                         dest=dest,
                         dest_string=dest_string,
                         amt=amt,
@@ -450,19 +454,124 @@ class Client:
         response = self.l_stub.AddInvoice(request)
         return response
 
-    def get_node_info(self, pubkey: str):
-        request = ln.NodeInfoRequest()
-        request.pub_key = pubkey
+    def list_invoices(self,
+                      reversed: bool = 1,
+                      **kwargs):
+        request = ln.ListInvoiceRequest(reversed=reversed)
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.ListInvoices(request)
+        return response
+
+    def lookup_invoice(self, r_hash_str: str):
+        r_hash = r_hash_str.encode('utf-8')
+        request = ln.PaymentHash(
+                r_hash=r_hash,
+                r_hash_str=r_hash_str)
+        response = self.l_stub.LookupINvoice(request)
+        return response
+
+    def subscribe_invoices(self,
+                           **kwargs):
+        request = ln.InvoiceSubscription()
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        for response in self.l_stub.SubscribeInvoices(request):
+            return response
+
+    def decode_pay_req(self, pay_req: str):
+        request = ln.PayReqString(pay_req=pay_req)
+        response = self.l_stub.DecodePayReq(request)
+        return response
+
+    def list_payments(self):
+        request = ln.ListPaymentsRequest()
+        response = self.l_stub.ListPayments(request)
+        return response
+
+    def delete_all_payments(self):
+        request = ln.DeleteAllPaymentsRequest()
+        response = self.l_stub.DeleteAllPayments(request)
+        return response
+
+    def describe_graph(self, **kwargs):
+        request = ln.ChannelgraphRequest()
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.DescribeGraph(request)
+        return response
+
+    def get_chan_info(self, channel_id: int):
+        request = ln.ChanInfoRequest(channel_id=channel_id)
+        response = self.l_stub.GetChanInfo(request)
+        return response
+
+    def get_node_info(self, pub_key: str):
+        request = ln.NodeInfoRequest(pub_key=pub_key)
         response = self.l_stub.GetNodeInfo(request)
         return response
 
-    def create_invoice(self, **kwargs):
-        request = ln.Invoice(**kwargs)
-        response = self.l_stub.AddInvoice(request)
+    def query_routes(self,
+                     pub_key: str,
+                     amt: int,
+                     num_routes: int,
+                     **kwargs):
+        request = ln.QueryRoutesRequest(
+                pub_key=pub_key,
+                amt=amt,
+                num_routes=num_routes)
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.QueryRoutesRequest(request)
         return response
 
-    def get_graph(self):
-        request = ln.ChannelGraphRequest()
-        request.include_unannounced = False
-        response = self.l_stub.DescribeGraph(request)
+    def get_network_info(self):
+        request = ln.NetworkInfoRequest()
+        response = self.l_stub.GetNetworkInfo(request)
+        return response
+
+    def stop_daemon(self):
+        request = ln.StropRequest()
+        response = self.l_stub.StopDaemon(request)
+        return response
+
+    def subscribe_channel_graph(self):
+        request = ln.GraphTopologySubscription()
+        for response in self.l_stub.SubscribeChannelGraph(request):
+            return response
+
+    def debug_level(self, **kwargs):
+        request = ln.DebugLevelRequest()
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.DebugLevel(request)
+        return response
+
+    def fee_report(self):
+        request = ln.FeeReportRequest()
+        response = self.l_stub.FeeReport(request)
+        return response
+
+    def update_channel_policy(self, **kwargs):
+        # TODO: by default lncli updates all channels with bool
+        request = ln.POlicyUpdateRequest()
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.UpdateChannelPolicy(request)
+        return response
+
+    def forwarding_history(self,
+                           start_time: int,
+                           **kwargs):
+        request = ln.ForwardingHistoryRequest(start_time=start_time)
+        # set options
+        for key, value in kwargs.items():
+            setattr(request, key, value)
+        response = self.l_stub.ForwardingHistory(request)
         return response
