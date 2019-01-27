@@ -27,6 +27,7 @@ Next create an instance of the client class:
 `rpc = lnd_grpc.Client()`
 
 ####Initialization of a new lnd installation
+
 Note: If you have already created a wallet during lnd setup/installation you can skip this section.
 
 If this is the first time you have run lnd you will not have a wallet created. 'Macaroons', the authentication technique used to communicate securely with lnd, are tied to a wallet (seed) and therefore an alternative connection must be made with lnd to create the wallet, before recreating the connection stub using the wallet's macaroon.
@@ -37,7 +38,7 @@ Initialization requires the following steps:
 3. Initialize a new wallet `rpc.init_wallet()`
 4. Recreate the connection stub using wallet's admin.macaroon: `rpc.connect_macaroon()`
 
-These steps have been combined into a helper function which does not exist in the lnd gRPC, called 'initialize', which means you can simply run one function, passing the arguments required for that combination of functions to it. E.g.:
+These 4 steps have been combined into a helper function which does not exist in the lnd gRPC, called 'initialize', which you can simply run passing it the arguments required for those 4 functions to it. E.g.:
 
 ```python
 rpc.initialize(aezeed_passphrase:str = 'xxxxx',
@@ -45,7 +46,7 @@ rpc.initialize(aezeed_passphrase:str = 'xxxxx',
                recovery_window: int = xxxxx,
                seed_entropy: bytes = xxxxx)
 ```
-The only required argument is wallet_password.
+The only required argument is wallet_password, which must be at least 8 charaters long.
 
 The helper function will return the cipher_seed_mnemonic and the enciphered_seed in case these were not provided and therefore were auto-generated.
 
