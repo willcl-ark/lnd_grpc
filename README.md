@@ -69,4 +69,4 @@ Valid gRPC commands can be found here:
 https://api.lightning.community/?python#lnd-grpc-api-reference
  
 ### Additional Notes
-This library does not handle any errors directly, except for notifying the user of missing tls certificate or macaroon.
+This library does not handle any errors directly, except for notifying the user of missing tls certificate or macaroon  .

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lnd_grpc",
-    version="0.0.6",
+    version="0.1.0",
     author="Will Clark",
     author_email="will8clark@gmail.com",
     description="LND gRPC pre-packaged",
@@ -18,9 +18,11 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    keywords="lnd grpc",
     install_requires=[
         "grpcio",
         "grpcio-tools",
         "googleapis-common-protos"
-    ]
+    ],
+    python_requires='>=3',
 )
