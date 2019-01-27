@@ -10,10 +10,14 @@ A simple library to provide a Python 3 interface to the lnd lightning client gRP
 
 Note: Configuration for coins other than bitcoin will require modifying the source code directly.
 
-## LND setup
-To begin lnd daemon must be running on the host machine. This can typically be accomplished in a screen/tmux session.
+## Bitcoin setup
 
-If lnd.conf is not configured already to communicate with your bitcoin client, an example lnd daemon startup command for bitcoind connection might look like:
+bitcoind or btcd must be running and be ready to accept rpc connections from lnd.
+
+## LND setup
+lnd daemon must be running on the host machine. This can typically be accomplished in a screen/tmux session.
+
+If lnd.conf is not already configured to communicate with your bitcoin client, an example lnd daemon startup command for bitcoind connection might look like:
 
 ```
 lnd --bitcoin.active \
@@ -29,13 +33,29 @@ lnd --bitcoin.active \
 ```
 
 ## Usage
-First import the module into your project:
+Import the module into your project:
 
 `import lnd_grpc`
 
-Next create an instance of the client class: 
+Create an instance of the client class: 
 
 `rpc = lnd_grpc.Client()`
+
+Note: The class is instantiated to work with default bitcoind rpc port and lnd in default installation path unless additional arguments are passed.
+
+The class instantiation takes the the following arguments which you can change as required by your bitcoin node setup:
+
+```
+    (
+    lnd_dir: str = None, \
+    macaroon_path: str = None, \
+    network: str = 'mainnet', \
+    grpc_host: str = 'localhost', \
+    grpc_port: str = '10009'
+    )
+```
+
+
 
 #### Initialization of a new lnd installation
 
