@@ -38,20 +38,21 @@ Initialization requires the following steps:
 3. Initialize a new wallet `rpc.init_wallet()`
 4. Recreate the connection stub using wallet's admin.macaroon: `rpc.connect_macaroon()`
 
-These 4 steps have been combined into a helper function which does not exist in the lnd gRPC, called 'initialize', which you can simply run passing it the arguments required for those 4 functions to it. E.g.:
+These 4 steps have been combined into a helper function which does not exist in the lnd gRPC, called 'initialize', which you can simply run passing it the arguments for those 4 functions to it. E.g.:
 
 ```python
-rpc.initialize(aezeed_passphrase:str = 'xxxxx',
+rpc.initialize(aezeed_passphrase:str = 'xxxxx' (optional),
                wallet_password:str = 'xxxxx',
-               recovery_window: int = xxxxx,
-               seed_entropy: bytes = xxxxx)
+               recovery_window: int = xxxxx (optional),
+               seed_entropy: '16 bytes' = xxxxx (optional)
+               )
 ```
-The only required argument is wallet_password, which must be at least 8 charaters long.
+The only required argument is wallet_password, which must be at least 8 characters long.
 
 The helper function will return the cipher_seed_mnemonic and the enciphered_seed in case these were not provided and therefore were auto-generated.
 
 ## Connecting and re-connecting after wallet created
-If you did not run the initialization sequence above, you will need to make the connection stub using the admin.macaroon:
+If you did not run the initialization sequence above, you will need to create the connection stub using the admin.macaroon:
 
 `rpc.connect_macaroon()`
 
@@ -65,9 +66,7 @@ Further RPC commands can then be issued to the lnd gRPC interface using the foll
 
 `rpc.grpc_command(keyword_arg=value)`
 
-Valid gRPC commands can be found here:
-
-https://api.lightning.community/?python#lnd-grpc-api-reference
+Valid gRPC commands and their keyword arguments can be found [here](https://api.lightning.community/?python#lnd-grpc-api-reference)
  
 ### Additional Notes
 This library does not handle any errors directly, except for notifying the user of missing tls certificate or macaroon  .
