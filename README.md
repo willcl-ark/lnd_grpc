@@ -83,17 +83,13 @@ The only required argument is wallet_password, which must be at least 8 characte
 The helper function will return the cipher_seed_mnemonic and the enciphered_seed in case these were not provided and therefore were auto-generated.
 
 ## Connecting and re-connecting after wallet created
-If you did not run the initialization sequence above, you will need to create the connection stub using the admin.macaroon:
+If you did not run the initialization sequence above, you will only need to unlock your wallet before issuing further RPC commands:
 
-`rpc.connect_macaroon()`
-
-Next you can unlock your wallet using:
-
-`rpc.unlock_wallet(wallet_password: str = 'xxxxx')`
+`rpc.unlock_wallet()`
 
 # General usage
 
-Further RPC commands can then be issued to the lnd gRPC interface using the following convention, where gRPC commands are converted to lowercase_with_underscores and keyword arguments named exactly matching the parameters the gRPC uses:
+Further RPC commands can then be issued to the lnd gRPC interface using the following convention, where gRPC commands are converted from CamelCase to lowercase_with_underscores and keyword arguments named to exactly match the parameters the gRPC uses:
 
 `rpc.grpc_command(keyword_arg=value)`
 
