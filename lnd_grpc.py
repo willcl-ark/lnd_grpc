@@ -1,17 +1,17 @@
+import codecs
 import json
 import sys
-
-import codecs
-import grpc
-import rpc_pb2 as ln
-import rpc_pb2_grpc as lnrpc
-import utilities as u
 from os import environ
+
+import grpc
+
+from lib import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc, utilities as u
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
 
+# noinspection PyArgumentList
 class Client:
 
     def __init__(self,
@@ -35,9 +35,6 @@ class Client:
             ('grpc.max_receive_message_length', 33554432),
             ('grpc.max_send_message_length', 33554432),
         ]
-        # TODO should the _stub's be a @property's as they are dynamic
-        self.l_stub = None
-        self.w_stub = None
 
     @property
     def lnd_dir(self):
@@ -53,16 +50,19 @@ class Client:
 
     @property
     def tls_cert_path(self):
+        # noinspection PyAttributeOutsideInit
         self._tls_cert_path = self.lnd_dir + 'tls.cert'
         return self._tls_cert_path
 
     @tls_cert_path.setter
     def tls_cert_path(self, path):
+        # noinspection PyAttributeOutsideInit
         self._tls_cert_path = path
 
     @property
     def tls_cert_key(self):
         try:
+            # noinspection PyAttributeOutsideInit
             self._tls_cert_key = open(self.tls_cert_path, 'rb').read()
         except FileNotFoundError:
             sys.stderr.write("TLS cert not found at %s" % self.tls_cert_path)
@@ -92,11 +92,11 @@ class Client:
         try:
             with open(self.macaroon_path, 'rb') as f:
                 macaroon_bytes = f.read()
+                # noinspection PyAttributeOutsideInit
                 self._macaroon = codecs.encode(macaroon_bytes, 'hex')
                 return self._macaroon
         except FileNotFoundError:
             sys.stderr.write("Could not find macaroon in %s\n" % self.macaroon_path)
-
 
     def metadata_callback(self, context, callback):
         callback([('macaroon', self.macaroon)], None)
@@ -106,12 +106,16 @@ class Client:
         self.auth_creds = grpc.metadata_call_credentials(self.metadata_callback)
         self.combined_creds = grpc.composite_channel_credentials(self.cert_creds, self.auth_creds)
 
-    def connect_macaroon(self,
-                         cert_path: str = None,
-                         macaroon_path: str = None):
+    # Connection stubs will be generated dynamically for each request to ensure channel freshness
+
+    @property
+    def lightning_stub(self,
+                       cert_path: str = None,
+                       macaroon_path: str = None):
 
         # set options
         if cert_path is not None:
+            # noinspection PyAttributeOutsideInit
             self.tls_cert_path = cert_path
         if macaroon_path is not None:
             self.macaroon_path = macaroon_path
@@ -120,17 +124,21 @@ class Client:
         self.channel = grpc.secure_channel(target=self.address,
                                            credentials=self.combined_creds,
                                            options=self.grpc_options)
-        self.l_stub = lnrpc.LightningStub(self.channel)
-        self.wallet_unlocker()
+        self._lightning_stub = lnrpc.LightningStub(self.channel)
+        return self._lightning_stub
 
     @property
-    def wallet_unlocker(self,
-                    cert_path: str = None):
+    def wallet_unlocker_stub(self,
+                             cert_path: str = None):
         if cert_path is not None:
+            # noinspection PyAttributeOutsideInit
             self.tls_cert_path = cert_path
+        # noinspection PyAttributeOutsideInit
         self.ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
-        self._w_channel = grpc.secure_channel(self.grpc_host + ':' + self.grpc_port,
-                                           self.ssl_creds)
+        # noinspection PyAttributeOutsideInit
+        self._w_channel = grpc.secure_channel(self.address,
+                                              self.ssl_creds)
+        # noinspection PyAttributeOutsideInit
         self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
         return self._w_stub
 
@@ -139,17 +147,11 @@ class Client:
                    wallet_password: str = None,
                    recovery_window: int = None,
                    seed_entropy: bytes = None):
-        self.wallet_unlocker()
-        sys.stdout.write('Connected using "wallet_unlocker"\n')
         _seed = self.gen_seed(aezeed_passphrase=aezeed_passphrase, seed_entropy=seed_entropy)
         self.init_wallet(wallet_password=wallet_password,
                          cipher_seed_mnemonic=_seed.cipher_seed_mnemonic,
                          aezeed_passphrase=aezeed_passphrase,
                          recovery_window=recovery_window)
-        self.l_stub = None
-        sys.stdout.write('Disconnected from SSL connection\n')
-        self.connect_macaroon()
-        sys.stdout.write('Reconnected securely using macaroon\n')
         return _seed.cipher_seed_mnemonic, _seed.enciphered_seed
 
     def gen_seed(self,
@@ -163,7 +165,7 @@ class Client:
         if seed_entropy is not None:
             request.seed_entropy = seed_entropy.encode('utf-8')
 
-        response = self.w_stub.GenSeed(request)
+        response = self.wallet_unlocker_stub.GenSeed(request)
         return response
 
     def init_wallet(self,
@@ -186,7 +188,7 @@ class Client:
         if recovery_window is not None:
             request.recovery_window = recovery_window
 
-        response = self.wallet_unlocker.InitWallet(request)
+        response = self.wallet_unlocker_stub.InitWallet(request)
         return response
 
     def unlock_wallet(self,
@@ -196,7 +198,7 @@ class Client:
         request.wallet_password = wallet_password.encode('utf-8')
         if recovery_window is not None:
             request.recovery_window = recovery_window
-        response = self.wallet_unlocker.UnlockWallet(request)
+        response = self.wallet_unlocker_stub.UnlockWallet(request)
         return response
 
     def change_password(self,
@@ -205,22 +207,22 @@ class Client:
         request = ln.ChangePasswordRequest()
         request.current_password = current_password.encode('utf-8')
         request.new_password = new_password.encode('utf-8')
-        response = self.wallet_unlocker.ChangePassword(request)
+        response = self.wallet_unlocker_stub.ChangePassword(request)
         return response
 
     def wallet_balance(self):
         request = ln.WalletBalanceRequest()
-        response = self.l_stub.WalletBalance(request)
+        response = self.lightning_stub.WalletBalance(request)
         return response
 
     def channel_balance(self):
         request = ln.ChannelBalanceRequest()
-        response = self.l_stub.ChannelBalance(request)
+        response = self.lightning_stub.ChannelBalance(request)
         return response
 
     def get_transactions(self):
         request = ln.GetTransactionsRequest()
-        response = self.l_stub.GetTransactions(request)
+        response = self.lightning_stub.GetTransactions(request)
         return response
 
     def send_coins(self,
@@ -233,7 +235,7 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.SendCoins(request)
+        response = self.lightning_stub.SendCoins(request)
         return response
 
     def list_unspent(self,
@@ -243,12 +245,12 @@ class Client:
                 min_confs=min_confs,
                 max_confs=max_confs,
         )
-        response = self.l_stub.ListUnspent(request)
+        response = self.lightning_stub.ListUnspent(request)
         return response
 
     def subscribe_transactions(self):
-        request = ln.SubscribeTransactionsRequest()
-        response = self.l_stub.SubscribeTransactions(request)
+        request = ln.GetTransactionsRequest()
+        response = self.lightning_stub.SubscribeTransactions(request)
         return response
 
     def send_many(self,
@@ -259,24 +261,24 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.SendMany(request)
+        response = self.lightning_stub.SendMany(request)
         return response
 
     def new_address(self, address_type: int):  # TODO why do only '1' and '2' work here?
         request = ln.NewAddressRequest(type=address_type)
-        response = self.l_stub.NewAddress(request)
+        response = self.lightning_stub.NewAddress(request)
         return response
 
     def sign_message(self, msg: str):
         msg_bytes = msg.encode('utf-8')
         request = ln.SignMessageRequest(msg=msg_bytes)
-        response = self.l_stub.SignMessage(request)
+        response = self.lightning_stub.SignMessage(request)
         return response
 
     def verify_message(self, msg: str, signature: str):
         msg_bytes = msg.encode('utf-8')
         request = ln.VerifyMessageRequest(msg=msg_bytes, signature=signature)
-        response = self.l_stub.VerifyMessage(request)
+        response = self.lightning_stub.VerifyMessage(request)
         return response
 
     def connect_peer(self, pubkey: str, host: str, perm: bool = None):
@@ -284,27 +286,27 @@ class Client:
         request = ln.ConnectPeerRequest(addr=address)
         if perm is not None:
             request.perm = perm
-        response = self.l_stub.ConnectPeer(request)
+        response = self.lightning_stub.ConnectPeer(request)
         return response
 
     def disconnect_peer(self, pubkey: str):
         request = ln.DisconnectPeerRequest(pubkey=pubkey)
-        response = self.l_stub.DisconnectPeer(request)
+        response = self.lightning_stub.DisconnectPeer(request)
         return response
 
     def list_peers(self):
         request = ln.ListPeersRequest()
-        response = self.l_stub.ListPeers(request)
+        response = self.lightning_stub.ListPeers(request)
         return response.peers
 
     def get_info(self):
         request = ln.GetInfoRequest()
-        response = self.l_stub.GetInfo(request)
+        response = self.lightning_stub.GetInfo(request)
         return response
 
     def pending_channels(self):
         request = ln.PendingChannelsRequest()
-        response = self.l_stub.PendingChannels(request)
+        response = self.lightning_stub.PendingChannels(request)
         return response
 
     def list_channels(self, **kwargs):
@@ -312,7 +314,7 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.ListChannels(request)
+        response = self.lightning_stub.ListChannels(request)
         return response.channels
 
     def closed_channels(self, **kwargs):
@@ -320,7 +322,7 @@ class Client:
         # set options, can multi-select
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.ClosedChannels(request)
+        response = self.lightning_stub.ClosedChannels(request)
         return response.channels
 
     def open_channel_sync(self,
@@ -337,7 +339,7 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.OpenChannelSync(request)
+        response = self.lightning_stub.OpenChannelSync(request)
         return response
 
     def open_channel(self,
@@ -354,9 +356,9 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        if hasattr(request, 'node_pubkey') == False:
+        if not hasattr(request, 'node_pubkey'):
             request.node_pubkey = node_pubkey_string.encode('utf-8')
-        response = self.l_stub.OpenChannel(request)
+        response = self.lightning_stub.OpenChannel(request)
         return response
 
     def close_channel(self,
@@ -368,21 +370,20 @@ class Client:
         output. The format for a channel_point is 'funding_txid:output_index'.
         """
         # TODO: Can you actually use this (pass a ChannelPoint object)
-        request = ln.CloseChannelsRequest(channel_point=channel_point)
+        request = ln.CloseChannelRequest(channel_point=channel_point)
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.CloseChannel(request)
+        response = self.lightning_stub.CloseChannel(request)
         return response
 
     def abandon_channel(self, channel_point: ln.ChannelPoint):
         request = ln.AbandonChannelRequest(channel_point=channel_point)
-        response = self.l_stub.AbandonChannel(request)
+        response = self.lightning_stub.AbandonChannel(request)
         return response
 
-    def payment_request_generator(self,
-                                  dest: bytes,
-                                  dest_string: str,
+    @staticmethod
+    def payment_request_generator(dest_string: str,
                                   amt: int,
                                   payment_hash: bytes,
                                   payment_hash_string: str,
@@ -396,8 +397,8 @@ class Client:
                 request = ln.SendRequest(
                         payment_request=payment_request)
             else:
-                request = ln.SendRequest(   #TODO: will this work with **kwargs too?
-                        dest=dest,
+                request = ln.SendRequest(  # TODO: will this work with **kwargs too?
+                        dest=dest_string.encode('utf-8'),
                         dest_string=dest_string,
                         amt=amt,
                         payment_hash=payment_hash,
@@ -407,6 +408,7 @@ class Client:
                 )
             yield request
 
+    # noinspection PyArgumentList,PyArgumentList
     def send_payment(self,
                      dest_string: str,
                      amt: int,
@@ -419,6 +421,7 @@ class Client:
         _payment_hash = payment_hash_string.encode('utf-8')
         # TODO: Ask Justin about this one
         if payment_request is not None:
+            # noinspection PyArgumentList
             request_iterable = self.payment_request_generator(
                     payment_request=payment_request)
         else:
@@ -431,7 +434,7 @@ class Client:
                     final_cltv_delta=final_cltv_delta,
                     # TODO: fee_limit=fee_limit,
             )
-        for response in self.l_stub.SendPayment(request_iterable):
+        for response in self.lightning_stub.SendPayment(request_iterable):
             return response
 
     def send_payment_sync(self):
@@ -451,7 +454,7 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.AddInvoice(request)
+        response = self.lightning_stub.AddInvoice(request)
         return response
 
     def list_invoices(self,
@@ -461,7 +464,7 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.ListInvoices(request)
+        response = self.lightning_stub.ListInvoices(request)
         return response
 
     def lookup_invoice(self, r_hash_str: str):
@@ -469,7 +472,7 @@ class Client:
         request = ln.PaymentHash(
                 r_hash=r_hash,
                 r_hash_str=r_hash_str)
-        response = self.l_stub.LookupINvoice(request)
+        response = self.lightning_stub.LookupInvoice(request)
         return response
 
     def subscribe_invoices(self,
@@ -478,40 +481,40 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        for response in self.l_stub.SubscribeInvoices(request):
+        for response in self.lightning_stub.SubscribeInvoices(request):
             return response
 
     def decode_pay_req(self, pay_req: str):
         request = ln.PayReqString(pay_req=pay_req)
-        response = self.l_stub.DecodePayReq(request)
+        response = self.lightning_stub.DecodePayReq(request)
         return response
 
     def list_payments(self):
         request = ln.ListPaymentsRequest()
-        response = self.l_stub.ListPayments(request)
+        response = self.lightning_stub.ListPayments(request)
         return response
 
     def delete_all_payments(self):
         request = ln.DeleteAllPaymentsRequest()
-        response = self.l_stub.DeleteAllPayments(request)
+        response = self.lightning_stub.DeleteAllPayments(request)
         return response
 
     def describe_graph(self, **kwargs):
-        request = ln.ChannelgraphRequest()
+        request = ln.ChannelGraphRequest()
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.DescribeGraph(request)
+        response = self.lightning_stub.DescribeGraph(request)
         return response
 
     def get_chan_info(self, channel_id: int):
         request = ln.ChanInfoRequest(channel_id=channel_id)
-        response = self.l_stub.GetChanInfo(request)
+        response = self.lightning_stub.GetChanInfo(request)
         return response
 
     def get_node_info(self, pub_key: str):
         request = ln.NodeInfoRequest(pub_key=pub_key)
-        response = self.l_stub.GetNodeInfo(request)
+        response = self.lightning_stub.GetNodeInfo(request)
         return response
 
     def query_routes(self,
@@ -526,22 +529,22 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.QueryRoutesRequest(request)
+        response = self.lightning_stub.QueryRoutes(request)
         return response
 
     def get_network_info(self):
         request = ln.NetworkInfoRequest()
-        response = self.l_stub.GetNetworkInfo(request)
+        response = self.lightning_stub.GetNetworkInfo(request)
         return response
 
     def stop_daemon(self):
-        request = ln.StropRequest()
-        response = self.l_stub.StopDaemon(request)
+        request = ln.StopRequest()
+        response = self.lightning_stub.StopDaemon(request)
         return response
 
     def subscribe_channel_graph(self):
         request = ln.GraphTopologySubscription()
-        for response in self.l_stub.SubscribeChannelGraph(request):
+        for response in self.lightning_stub.SubscribeChannelGraph(request):
             return response
 
     def debug_level(self, **kwargs):
@@ -549,21 +552,21 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.DebugLevel(request)
+        response = self.lightning_stub.DebugLevel(request)
         return response
 
     def fee_report(self):
         request = ln.FeeReportRequest()
-        response = self.l_stub.FeeReport(request)
+        response = self.lightning_stub.FeeReport(request)
         return response
 
     def update_channel_policy(self, **kwargs):
         # TODO: by default lncli updates all channels with bool
-        request = ln.POlicyUpdateRequest()
+        request = ln.PolicyUpdateRequest()
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.UpdateChannelPolicy(request)
+        response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
     def forwarding_history(self,
@@ -573,5 +576,5 @@ class Client:
         # set options
         for key, value in kwargs.items():
             setattr(request, key, value)
-        response = self.l_stub.ForwardingHistory(request)
+        response = self.lightning_stub.ForwardingHistory(request)
         return response
