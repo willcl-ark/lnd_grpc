@@ -64,7 +64,7 @@ Note: If you have already created a wallet during lnd setup/installation you can
 If this is the first time you have run lnd you will not have a wallet created. 'Macaroons', the authentication technique used to communicate securely with lnd, are tied to a wallet (seed) and therefore an alternative connection must be made with lnd to create the wallet, before recreating the connection stub using the wallet's macaroon.
 
 Initialization requires the following steps:
-1. Create connection stub using 'wallet unlocker' `rpc.wallet_unlocker()`
+1. Create connection stub using 'wallet unlocker' `rpc.wallet_unlocker_stub()`
 2. Generate a new seed `rpc.gen_seed()`
 3. Initialize a new wallet `rpc.init_wallet()`
 4. Recreate the connection stub using wallet's admin.macaroon: `rpc.connect_macaroon()`
