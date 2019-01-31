@@ -12,9 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/willcl-ark/lnd_grpc",
-    packages=setuptools.find_packages(),
-    package_data={'': ['*.proto']},
-    package_dir={'':'src'},
+    packages=setuptools.find_packages(exclude='googleapis'),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
