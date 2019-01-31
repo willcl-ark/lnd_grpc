@@ -12,6 +12,10 @@ This version of the library has been compiled with rpc.proto from the v0.5.1-bet
 
 Note: Configuration for coins other than bitcoin will require modifying the source code directly.
 
+## Installation via pip
+
+`pip install lnd-grpc`
+
 ## Bitcoin setup
 
 bitcoind or btcd must be running and be ready to accept rpc connections from lnd.
