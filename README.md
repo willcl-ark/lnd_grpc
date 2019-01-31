@@ -2,6 +2,8 @@
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
+This version of the library has been compiled with rpc.proto from the v0.5.1-beta tag on github
+
 ## Install requires:
 * `grpcio`
 * `grpcio-tools`
@@ -35,7 +37,7 @@ lnd --bitcoin.active \
 ## Usage
 Import the module into your project:
 
-`import lnd_grpc`
+`from src import lnd_grpc`
 
 Create an instance of the client class: 
 
@@ -76,7 +78,7 @@ rpc.initialize(aezeed_passphrase:str = 'xxxxx' (optional),
                seed_entropy: '16 bytes' = xxxxx (optional)
                )
 ```
-The only required argument is wallet_password, which must be at least 8 characters long.
+Wallet_password must be at least 8 characters long.
 
 The helper function will return the cipher_seed_mnemonic and the enciphered_seed in case these were not provided and therefore were auto-generated.
 
