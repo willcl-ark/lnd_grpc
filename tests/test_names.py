@@ -1,7 +1,7 @@
 import inspect
 
-from lnd_grpc import rpc_pb2_grpc as pb2_grpc
-from lnd_grpc import lnd_grpc as py_rpc
+import lnd_grpc.rpc_pb2_grpc as pb2_grpc
+import lnd_grpc.lnd_grpc as py_rpc
 
 
 class Attributes:
