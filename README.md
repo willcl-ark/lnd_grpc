@@ -41,7 +41,7 @@ lnd --bitcoin.active \
 ## Usage
 Import the module into your project:
 
-`from src import lnd_grpc`
+`from lnd_grpc import lnd_grpc`
 
 Create an instance of the client class: 
 
