@@ -7,7 +7,7 @@ from lnd_grpc import lnd_grpc as py_rpc
 class Attributes:
 
     def __init__(self):
-        # Get all function names from src into a list
+        # Get all function names from lnd_grpc into a list
         self.lnd_grpc_list = [o for o in inspect.getmembers(py_rpc.Client) if
                               inspect.isfunction(o[1])]
         self.lnd_grpc_names = []
