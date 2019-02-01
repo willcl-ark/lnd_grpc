@@ -30,7 +30,6 @@ class Client:
         self.auth_creds = None
         self.combined_creds = None
         self.channel = None
-        self.address = str(self.grpc_host + ':' + self.grpc_port)
         self.grpc_options = [
             ('grpc.max_receive_message_length', 33554432),
             ('grpc.max_send_message_length', 33554432),
@@ -101,6 +100,19 @@ class Client:
         self.cert_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
         self.auth_creds = grpc.metadata_call_credentials(self.metadata_callback)
         self.combined_creds = grpc.composite_channel_credentials(self.cert_creds, self.auth_creds)
+
+    @property
+    def address(self):
+        self._address = str(self.grpc_host + ':' + self.grpc_port)
+        return self._address
+
+    @staticmethod
+    def channel_point_generator(funding_txid, output_index):
+        return ln.ChannelPoint(funding_txid_str=funding_txid, output_index=int(output_index))
+
+    @staticmethod
+    def lightning_address(pubkey, host):
+        return ln.LightningAddress(pubkey=pubkey, host=host)
 
     # Connection stubs will be generated dynamically for each request to ensure channel freshness
     @property
@@ -188,6 +200,7 @@ class Client:
         response = self.lightning_stub.SubscribeTransactions(request)
         return response
 
+    # TODO: fix addr_to_amount input
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         request = ln.SendManyRequest(addr_to_amount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
@@ -210,11 +223,9 @@ class Client:
         response = self.lightning_stub.VerifyMessage(request)
         return response
 
-    def connect_peer(self, pubkey: str, host: str, perm: bool = None):
-        address = ln.LightningAddress(pubkey=pubkey, host=host)
-        request = ln.ConnectPeerRequest(addr=address)
-        if perm is not None:
-            request.perm = perm
+    def connect_peer(self, pubkey: str, host: str, perm: bool = 0):
+        _address = self.lightning_address(pubkey=pubkey, host=host)
+        request = ln.ConnectPeerRequest(addr=_address, perm=perm)
         response = self.lightning_stub.ConnectPeer(request)
         return response
 
@@ -282,19 +293,19 @@ class Client:
         response = self.lightning_stub.OpenChannel(request)
         return response
 
-    def close_channel(self, channel_point: ln.ChannelPoint, **kwargs):
-        """
-        To view which funding_txids/output_indexes can be used for a channel
-        close, see the channel_point values within the list_channels() command
-        output. The format for a channel_point is 'funding_txid:output_index'.
-        """
-        # TODO: Can you actually use this in the real world (pass a ChannelPoint object)
-        request = ln.CloseChannelRequest(channel_point=channel_point, **kwargs)
+    def close_channel(self, channel_point, **kwargs):
+        funding_txid, output_index = channel_point.split(':')
+        _channel_point = self.channel_point_generator(funding_txid=funding_txid,
+                                                      output_index=output_index)
+        request = ln.CloseChannelRequest(channel_point=_channel_point, **kwargs)
         response = self.lightning_stub.CloseChannel(request)
         return response
 
     def abandon_channel(self, channel_point: ln.ChannelPoint):
-        request = ln.AbandonChannelRequest(channel_point=channel_point)
+        funding_txid, output_index = channel_point.split(':')
+        _channel_point = self.channel_point_generator(funding_txid=funding_txid,
+                                                      output_index=output_index)
+        request = ln.AbandonChannelRequest(channel_point=_channel_point)
         response = self.lightning_stub.AbandonChannel(request)
         return response
 
@@ -333,14 +344,14 @@ class Client:
                      payment_request: str = None,
                      # TODO: fee_limit: ln.FeeLimit = None,
                      ):
-        _dest = dest_string.encode('utf-8')
-        _payment_hash = payment_hash_string.encode('utf-8')
-        # TODO: Ask Justin about this one
         if payment_request is not None:
             # noinspection PyArgumentList
             request_iterable = self.payment_request_generator(
                     payment_request=payment_request)
         else:
+            _dest = dest_string.encode('utf-8')
+            _payment_hash = payment_hash_string.encode('utf-8')
+            # TODO: Ask Justin about this one
             request_iterable = self.payment_request_generator(
                     dest=_dest,
                     dest_string=dest_string,
@@ -452,7 +463,13 @@ class Client:
         return response
 
     def update_channel_policy(self, **kwargs):
-        # TODO: by default lncli updates all channels with bool
+        if 'chan_point' in kwargs:
+            funding_txid, output_index = kwargs.get('chan_point').split(':')
+            _channel_point = self.channel_point_generator(funding_txid=funding_txid,
+                                                          output_index=output_index)
+            kwargs['chan_point'] = _channel_point
+        if not 'global' in kwargs:
+            kwargs['global'] = 1
         request = ln.PolicyUpdateRequest(**kwargs)
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
