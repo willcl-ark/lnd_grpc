@@ -227,26 +227,13 @@ class Client:
         response = self.lightning_stub.GetTransactions(request)
         return response
 
-    def send_coins(self,
-                   addr: str,
-                   amount: int,
-                   **kwargs):
-        request = ln.SendCoinsRequest(
-                addr=addr,
-                amount=amount)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+    def send_coins(self, addr: str, amount: int, **kwargs):
+        request = ln.SendCoinsRequest(addr=addr, amount=amount, **kwargs)
         response = self.lightning_stub.SendCoins(request)
         return response
 
-    def list_unspent(self,
-                     min_confs: int,
-                     max_confs: int):
-        request = ln.ListUnspentRequest(
-                min_confs=min_confs,
-                max_confs=max_confs,
-        )
+    def list_unspent(self, min_confs: int, max_confs: int):
+        request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
         response = self.lightning_stub.ListUnspent(request)
         return response
 
@@ -258,11 +245,7 @@ class Client:
     def send_many(self,
                   addr_to_amount: json,  # TODO worth importing json just for type hint?
                   **kwargs):
-        request = ln.SendManyRequest()
-        request.addr_to_amount = addr_to_amount
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.SendManyRequest(addr_to_amount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
         return response
 
@@ -312,18 +295,12 @@ class Client:
         return response
 
     def list_channels(self, **kwargs):
-        request = ln.ListChannelsRequest()
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.ListChannelsRequest(**kwargs)
         response = self.lightning_stub.ListChannels(request)
         return response.channels
 
     def closed_channels(self, **kwargs):
-        request = ln.ClosedChannelsRequest()
-        # set options, can multi-select
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.ClosedChannelsRequest(**kwargs)
         response = self.lightning_stub.ClosedChannels(request)
         return response.channels
 
@@ -336,11 +313,9 @@ class Client:
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat)
+                push_sat=push_sat,
+                **kwargs)
         request.node_pubkey = node_pubkey.encode('utf-8')
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
@@ -354,10 +329,8 @@ class Client:
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+                push_sat=push_sat,
+                **kwargs)
         if not hasattr(request, 'node_pubkey'):
             request.node_pubkey = node_pubkey_string.encode('utf-8')
         response = self.lightning_stub.OpenChannel(request)
@@ -371,11 +344,8 @@ class Client:
         close, see the channel_point values within the list_channels() command
         output. The format for a channel_point is 'funding_txid:output_index'.
         """
-        # TODO: Can you actually use this (pass a ChannelPoint object)
-        request = ln.CloseChannelRequest(channel_point=channel_point)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        # TODO: Can you actually use this in the real world (pass a ChannelPoint object)
+        request = ln.CloseChannelRequest(channel_point=channel_point, **kwargs)
         response = self.lightning_stub.CloseChannel(request)
         return response
 
@@ -452,20 +422,14 @@ class Client:
                     r_preimage: bytes,
                     value: int,
                     **kwargs):
-        request = ln.Invoice(r_preimage=r_preimage, value=value)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.Invoice(r_preimage=r_preimage, value=value, **kwargs)
         response = self.lightning_stub.AddInvoice(request)
         return response
 
     def list_invoices(self,
                       reversed: bool = 1,
                       **kwargs):
-        request = ln.ListInvoiceRequest(reversed=reversed)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.ListInvoiceRequest(reversed=reversed, **kwargs)
         response = self.lightning_stub.ListInvoices(request)
         return response
 
@@ -479,10 +443,7 @@ class Client:
 
     def subscribe_invoices(self,
                            **kwargs):
-        request = ln.InvoiceSubscription()
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.InvoiceSubscription(**kwargs)
         for response in self.lightning_stub.SubscribeInvoices(request):
             return response
 
@@ -502,10 +463,7 @@ class Client:
         return response
 
     def describe_graph(self, **kwargs):
-        request = ln.ChannelGraphRequest()
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.ChannelGraphRequest(**kwargs)
         response = self.lightning_stub.DescribeGraph(request)
         return response
 
@@ -527,10 +485,8 @@ class Client:
         request = ln.QueryRoutesRequest(
                 pub_key=pub_key,
                 amt=amt,
-                num_routes=num_routes)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+                num_routes=num_routes,
+                **kwargs)
         response = self.lightning_stub.QueryRoutes(request)
         return response
 
@@ -550,10 +506,7 @@ class Client:
             return response
 
     def debug_level(self, **kwargs):
-        request = ln.DebugLevelRequest()
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.DebugLevelRequest(**kwargs)
         response = self.lightning_stub.DebugLevel(request)
         return response
 
@@ -564,19 +517,13 @@ class Client:
 
     def update_channel_policy(self, **kwargs):
         # TODO: by default lncli updates all channels with bool
-        request = ln.PolicyUpdateRequest()
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.PolicyUpdateRequest(**kwargs)
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
     def forwarding_history(self,
                            start_time: int,
                            **kwargs):
-        request = ln.ForwardingHistoryRequest(start_time=start_time)
-        # set options
-        for key, value in kwargs.items():
-            setattr(request, key, value)
+        request = ln.ForwardingHistoryRequest(start_time=start_time, **kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
