@@ -73,18 +73,6 @@ Initialization requires the following steps:
 1. Generate a new seed `rpc.gen_seed()`
 2. Initialize a new wallet `rpc.init_wallet()`
 
-These steps have been combined into a helper function which does not exist in the lnd gRPC, called 'initialize', which you can simply run passing it the arguments for those 2 functions to it. E.g.:
-
-```python
-rpc.initialize(aezeed_passphrase:str = 'xxxxx' (optional),
-               wallet_password:str = 'xxxxx',
-               recovery_window: int = xxxxx (optional),
-               seed_entropy: '16 bytes' = xxxxx (optional)
-               )
-```
-Wallet_password must be at least 8 characters long.
-
-The helper function will return the cipher_seed_mnemonic and the enciphered_seed in case these were not provided and therefore were auto-generated.
 
 ## Connecting and re-connecting after wallet created
 If you did not run the initialization sequence above, you will only need to unlock your wallet before issuing further RPC commands:

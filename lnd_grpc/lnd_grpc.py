@@ -1,5 +1,4 @@
 import codecs
-import json
 import sys
 from os import environ
 
@@ -13,7 +12,6 @@ from . import utilities as u
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
 
-# noinspection PyArgumentList
 class Client:
 
     def __init__(self,
@@ -52,19 +50,16 @@ class Client:
 
     @property
     def tls_cert_path(self):
-        # noinspection PyAttributeOutsideInit
         self._tls_cert_path = self.lnd_dir + 'tls.cert'
         return self._tls_cert_path
 
     @tls_cert_path.setter
     def tls_cert_path(self, path):
-        # noinspection PyAttributeOutsideInit
         self._tls_cert_path = path
 
     @property
     def tls_cert_key(self):
         try:
-            # noinspection PyAttributeOutsideInit
             self._tls_cert_key = open(self.tls_cert_path, 'rb').read()
         except FileNotFoundError:
             sys.stderr.write("TLS cert not found at %s" % self.tls_cert_path)
@@ -94,7 +89,6 @@ class Client:
         try:
             with open(self.macaroon_path, 'rb') as f:
                 macaroon_bytes = f.read()
-                # noinspection PyAttributeOutsideInit
                 self._macaroon = codecs.encode(macaroon_bytes, 'hex')
                 return self._macaroon
         except FileNotFoundError:
@@ -109,7 +103,6 @@ class Client:
         self.combined_creds = grpc.composite_channel_credentials(self.cert_creds, self.auth_creds)
 
     # Connection stubs will be generated dynamically for each request to ensure channel freshness
-
     @property
     def lightning_stub(self,
                        cert_path: str = None,
@@ -117,7 +110,6 @@ class Client:
 
         # set options
         if cert_path is not None:
-            # noinspection PyAttributeOutsideInit
             self.tls_cert_path = cert_path
         if macaroon_path is not None:
             self.macaroon_path = macaroon_path
@@ -133,82 +125,36 @@ class Client:
     def wallet_unlocker_stub(self,
                              cert_path: str = None):
         if cert_path is not None:
-            # noinspection PyAttributeOutsideInit
             self.tls_cert_path = cert_path
-        # noinspection PyAttributeOutsideInit
         self.ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
-        # noinspection PyAttributeOutsideInit
         self._w_channel = grpc.secure_channel(self.address,
                                               self.ssl_creds)
-        # noinspection PyAttributeOutsideInit
         self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
         return self._w_stub
 
-    def initialize(self,
-                   aezeed_passphrase: str = None,
-                   wallet_password: str = None,
-                   recovery_window: int = None,
-                   seed_entropy: bytes = None):
-        _seed = self.gen_seed(aezeed_passphrase=aezeed_passphrase, seed_entropy=seed_entropy)
-        self.init_wallet(wallet_password=wallet_password,
-                         cipher_seed_mnemonic=_seed.cipher_seed_mnemonic,
-                         aezeed_passphrase=aezeed_passphrase,
-                         recovery_window=recovery_window)
-        return _seed.cipher_seed_mnemonic, _seed.enciphered_seed
-
-    def gen_seed(self,
-                 aezeed_passphrase: str = None,
-                 seed_entropy=None):
-        request = ln.GenSeedRequest()
-
-        # set options
-        if aezeed_passphrase is not None:
-            request.aezeed_passphrase = aezeed_passphrase.encode('utf-8')
-        if seed_entropy is not None:
-            request.seed_entropy = seed_entropy.encode('utf-8')
-
+    def gen_seed(self, **kwargs):
+        request = ln.GenSeedRequest(**kwargs)
         response = self.wallet_unlocker_stub.GenSeed(request)
         return response
 
     def init_wallet(self,
-                    wallet_password: str = None,
-                    cipher_seed_mnemonic=None,
-                    aezeed_passphrase: str = None,
-                    recovery_window: int = None):
+                    wallet_password: str = None, **kwargs):
         try:
             assert len(wallet_password) >= 8
         except AssertionError:
             sys.stdout.write('Wallet password must be at least 8 characters long')
-        request = ln.InitWalletRequest()
-        request.wallet_password = wallet_password.encode('utf-8')
-
-        # set options
-        if cipher_seed_mnemonic is not None:
-            request.cipher_seed_mnemonic.extend(cipher_seed_mnemonic)
-        if aezeed_passphrase is not None:
-            request.aezeed_passphrase = aezeed_passphrase.encode('utf-8')
-        if recovery_window is not None:
-            request.recovery_window = recovery_window
-
+        request = ln.InitWalletRequest(wallet_password=wallet_password.encode('utf-8'), **kwargs)
         response = self.wallet_unlocker_stub.InitWallet(request)
         return response
 
-    def unlock_wallet(self,
-                      wallet_password: str,
-                      recovery_window: int = None):
-        request = ln.UnlockWalletRequest()
-        request.wallet_password = wallet_password.encode('utf-8')
-        if recovery_window is not None:
-            request.recovery_window = recovery_window
+    def unlock_wallet(self, wallet_password: str, **kwargs):
+        request = ln.UnlockWalletRequest(wallet_password=wallet_password.encode('utf-8'), **kwargs)
         response = self.wallet_unlocker_stub.UnlockWallet(request)
         return response
 
-    def change_password(self,
-                        current_password: str,
-                        new_password: str):
-        request = ln.ChangePasswordRequest()
-        request.current_password = current_password.encode('utf-8')
-        request.new_password = new_password.encode('utf-8')
+    def change_password(self, current_password: str, new_password: str):
+        request = ln.ChangePasswordRequest(current_password=current_password.encode('utf-8'),
+                                           new_password=new_password.encode('utf-8'))
         response = self.wallet_unlocker_stub.ChangePassword(request)
         return response
 
@@ -242,9 +188,7 @@ class Client:
         response = self.lightning_stub.SubscribeTransactions(request)
         return response
 
-    def send_many(self,
-                  addr_to_amount: json,  # TODO worth importing json just for type hint?
-                  **kwargs):
+    def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         request = ln.SendManyRequest(addr_to_amount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
         return response
@@ -273,6 +217,8 @@ class Client:
             request.perm = perm
         response = self.lightning_stub.ConnectPeer(request)
         return response
+
+    # TODO: add a connect() function here which takes pubkey:host string directly
 
     def disconnect_peer(self, pubkey: str):
         request = ln.DisconnectPeerRequest(pubkey=pubkey)
@@ -311,11 +257,11 @@ class Client:
                           push_sat: int,
                           **kwargs):
         request = ln.OpenChannelRequest(
+                node_pubkey=node_pubkey.encode('utf-8'),
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
                 push_sat=push_sat,
                 **kwargs)
-        request.node_pubkey = node_pubkey.encode('utf-8')
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
@@ -336,9 +282,7 @@ class Client:
         response = self.lightning_stub.OpenChannel(request)
         return response
 
-    def close_channel(self,
-                      channel_point: ln.ChannelPoint,
-                      **kwargs):
+    def close_channel(self, channel_point: ln.ChannelPoint, **kwargs):
         """
         To view which funding_txids/output_indexes can be used for a channel
         close, see the channel_point values within the list_channels() command
@@ -418,31 +362,23 @@ class Client:
     def send_to_route_sync(self):
         pass
 
-    def add_invoice(self,
-                    r_preimage: bytes,
-                    value: int,
-                    **kwargs):
+    def add_invoice(self, r_preimage: bytes, value: int, **kwargs):
         request = ln.Invoice(r_preimage=r_preimage, value=value, **kwargs)
         response = self.lightning_stub.AddInvoice(request)
         return response
 
-    def list_invoices(self,
-                      reversed: bool = 1,
-                      **kwargs):
+    def list_invoices(self, reversed: bool = 1, **kwargs):
         request = ln.ListInvoiceRequest(reversed=reversed, **kwargs)
         response = self.lightning_stub.ListInvoices(request)
         return response
 
     def lookup_invoice(self, r_hash_str: str):
         r_hash = r_hash_str.encode('utf-8')
-        request = ln.PaymentHash(
-                r_hash=r_hash,
-                r_hash_str=r_hash_str)
+        request = ln.PaymentHash(r_hash=r_hash, r_hash_str=r_hash_str)
         response = self.lightning_stub.LookupInvoice(request)
         return response
 
-    def subscribe_invoices(self,
-                           **kwargs):
+    def subscribe_invoices(self, **kwargs):
         request = ln.InvoiceSubscription(**kwargs)
         for response in self.lightning_stub.SubscribeInvoices(request):
             return response
@@ -521,9 +457,7 @@ class Client:
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
-    def forwarding_history(self,
-                           start_time: int,
-                           **kwargs):
+    def forwarding_history(self, start_time: int, **kwargs):
         request = ln.ForwardingHistoryRequest(start_time=start_time, **kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
