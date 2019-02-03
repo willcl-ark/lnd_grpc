@@ -235,6 +235,9 @@ class Client:
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         """
         Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
+
+        'addr_to_amount' should be passed in the following format:
+        {"ExampleAddr": NumCoinsInSatoshis, "SecondAddr": NumCoins}
         """
         request = ln.SendManyRequest(AddrToAmount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
@@ -280,12 +283,13 @@ class Client:
         return response
 
     # TODO: add a connect() function here which takes pubkey:host string directly
-    def connect(self, address: str):
+    def connect(self, address: str, perm: bool = 0):
         """
         Connect to peer as per 'connect_peer()' but using common 'pubkey@host:port' notation
+        Also can accept 'perm' bool to create a persistent connection.
         """
         pubkey, host = address.split('@')
-        return self.connect_peer(pubkey=pubkey, host=host)
+        return self.connect_peer(pubkey=pubkey, host=host, perm=perm)
 
     def disconnect_peer(self, pubkey: str):
         """
@@ -323,6 +327,11 @@ class Client:
     def list_channels(self, **kwargs):
         """
         List all open channels.
+        Kwargs:
+            active_only
+            inactive_only
+            public_only
+            private_only
         """
         request = ln.ListChannelsRequest(**kwargs)
         response = self.lightning_stub.ListChannels(request)
@@ -331,13 +340,19 @@ class Client:
     def closed_channels(self, **kwargs):
         """
         List all closed channels
+        Kwargs (can multi-select):
+            cooperative
+            local_force
+            remote_force
+            breach
+            funding_canceled
+            abandoned
         """
         request = ln.ClosedChannelsRequest(**kwargs)
         response = self.lightning_stub.ClosedChannels(request)
         return response.channels
 
     def open_channel_sync(self,
-                          node_pubkey: str,
                           node_pubkey_string: str,
                           local_funding_amount: int,
                           **kwargs):
@@ -345,10 +360,11 @@ class Client:
         A synchronous (blocking) version of the 'open_channel()' command
         """
         request = ln.OpenChannelRequest(
-                node_pubkey=node_pubkey.encode('utf-8'),
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
                 **kwargs)
+        if not hasattr(request, 'node_pubkey'):
+            request.node_pubkey = bytes.fromhex(node_pubkey_string)
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
@@ -372,14 +388,15 @@ class Client:
                 local_funding_amount=local_funding_amount,
                 **kwargs)
         if not hasattr(request, 'node_pubkey'):
-            request.node_pubkey = node_pubkey_string.encode('utf-8')
-        response = self.lightning_stub.OpenChannel(request)
-        return response
+            request.node_pubkey = bytes.fromhex(node_pubkey_string)
+        for response in self.lightning_stub.OpenChannel(request):
+            return response
 
     def close_channel(self, channel_point, **kwargs):
         """
         Close an existing channel. The channel can be closed either cooperatively,
         or unilaterally ('force=1').
+
         A unilateral channel closure means that the latest commitment
         transaction will be broadcast to the network. As a result, any settled
         funds will be time locked for a few blocks before they can be spent.
@@ -390,7 +407,7 @@ class Client:
         fee negotiation. This is optional.
 
         To view which funding_txids/output_indexes can be used for a channel close,
-        see the channel_point values within the 'listchannels' command output.
+        see the channel_point values within the 'list_channels()' command output.
         The format for a channel_point is 'funding_txid:output_index'.
         """
         funding_txid, output_index = channel_point.split(':')
@@ -404,12 +421,12 @@ class Client:
         """
         Close all channels (or 'inactive_only') by iterating through the 'list_channels()'
         command and passing each one to the 'close_channel()' command. Unlike when using the CLI
-        there is no confirmation on doing this, so be careful.
+        there is no confirmation prompt on doing this, so be careful!!!
         """
-        if inactive_only == 0:
+        if inactive_only == False:
             for channel in self.list_channels():
                 self.close_channel(channel_point=channel.channel_point)
-        if inactive_only == 1:
+        if inactive_only == True:
             for channel in self.list_channels(inactive_only=1):
                 self.close_channel(channel_point=channel.channel_point)
 
@@ -420,6 +437,7 @@ class Client:
         channels due to bugs fixed in newer versions of lnd.
 
         Only available when lnd is built in debug mode.
+
         To view which funding_txids/output_indexes can be used for this command,
         see the channel_point values within the listchannels command output.
         The format for a channel_point is 'funding_txid:output_index'.
@@ -432,37 +450,16 @@ class Client:
         return response
 
     @staticmethod
-    def payment_request_generator(dest_string: str,
-                                  amt: int,
-                                  payment_hash: bytes,
-                                  payment_hash_string: str,
-                                  final_cltv_delta: int,
-                                  payment_request: str = None,
-                                  # TODO: fee_limit: ln.FeeLimit,
-                                  ):
+    def send_request_generator(**kwargs):
         while True:
-            # Parameters here can be set as arguments to the generator.
-            if payment_request is not None:
-                request = ln.SendRequest(
-                        payment_request=payment_request)
+            if kwargs['payment_request']:
+                request = ln.SendRequest(payment_request=kwargs['payment_request'])
             else:
-                request = ln.SendRequest(  # TODO: will this work with **kwargs too?
-                        dest=dest_string.encode('utf-8'),
-                        dest_string=dest_string,
-                        amt=amt,
-                        payment_hash=payment_hash,
-                        payment_hash_string=payment_hash_string,
-                        final_cltv_delta=final_cltv_delta,
-                        # fee_limit=fee_limit,
-                )
+                request = ln.SendRequest(**kwargs)
             yield request
 
-    # noinspection PyArgumentList,PyArgumentList
-    def send_payment(self,
-                     payment_request: str = None,
-                     **kwargs
-                     # TODO: fee_limit: ln.FeeLimit = None,
-                     ):
+    # Bi-directional streaming RPC
+    def send_payment(self, **kwargs):
         """
         Send a payment over Lightning. One can either specify the full
         parameters of the payment, or just use a payment request which encodes
@@ -476,43 +473,55 @@ class Client:
             * final_cltv_delta=T
             * payment_hash_string=H
         """
-        if payment_request is not None:
-            # noinspection PyArgumentList
-            request_iterable = self.payment_request_generator(
-                    payment_request=payment_request)
+        if kwargs['payment_request']:
+            request_iterable = self.send_request_generator(
+                    payment_request=kwargs['payment_request'])
         else:
-            _dest = kwargs['dest_string'].encode('utf-8')
-            _payment_hash = kwargs['payment_hash_string'].encode('utf-8')
-            # TODO: Ask Justin about this one
-            request_iterable = self.payment_request_generator(
-                    dest=_dest,
-                    dest_string=kwargs['dest_string'],
-                    amt=kwargs['amt'],
-                    payment_hash=_payment_hash,
-                    payment_hash_string=kwargs['payment_hash_string'],
-                    final_cltv_delta=kwargs['final_cltv_delta'],
-                    # TODO: fee_limit=fee_limit,
-            )
+            kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
+            kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
+            request_iterable = self.send_request_generator(**kwargs)
         for response in self.lightning_stub.SendPayment(request_iterable):
             return response
 
-    def pay_invoice(self, payment_request: str):
+    def pay_invoice(self, payment_request: str, **kwargs):
         """
         lncli equivalent function which passes the payment request to send_payment()
         """
-        response = self.send_payment(payment_request=payment_request)
+        response = self.send_payment(payment_request=payment_request, **kwargs)
         return response
 
-    def send_payment_sync(self):
-        pass
+    def send_payment_sync(self, **kwargs):
+        """
+        SendPaymentSync is the synchronous non-streaming version of SendPayment.
+        This RPC is intended to be consumed by clients of the REST proxy.
+        Additionally, this RPC expects the destination’s public key and the payment hash (if any)
+        to be encoded as hex strings.
+
+        See help docstring for send_payment() for more info on acceptable arguments
+        """
+        if kwargs['payment_request']:
+            request = ln.SendRequest(payment_request=kwargs['payment_request'])
+        else:
+            kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
+            kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
+            request = ln.SendRequest(**kwargs)
+        response = self.lightning_stub.SendPaymentSync(request)
+        return response
+
+    @staticmethod
+    def send_to_route_generator(**kwargs):
+        while True:
+            request = ln.SendToRouteRequest(**kwargs)
+            yield request
 
     def send_to_route(self):
         """
-        Send a payment over Lightning using a specific route. One must specify
-        a list of routes to attempt and the payment hash.
-        This command can even be chained with the response to query_routes.
-        This command can be used to implement channel rebalancing by crafting a self-route, or even
-        atomic swaps using a self-route that crosses multiple chains.
+        Not implemented yet
+
+        SendToRoute is a bi-directional streaming RPC for sending payment through
+        the Lightning Network. This method differs from SendPayment in that it allows
+        users to specify a full route manually. This can be used for things like
+        re-balancing, and atomic swaps.
         """
         pass
 
