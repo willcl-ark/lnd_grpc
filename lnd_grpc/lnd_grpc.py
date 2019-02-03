@@ -4,9 +4,7 @@ from os import environ
 
 import grpc
 
-from . import rpc_pb2 as ln
-from . import rpc_pb2_grpc as lnrpc
-from . import utilities as u
+from . import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc, utilities as u
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -102,7 +100,7 @@ class Client:
         self.combined_creds = grpc.composite_channel_credentials(self.cert_creds, self.auth_creds)
 
     @property
-    def address(self):
+    def grpc_address(self):
         self._address = str(self.grpc_host + ':' + self.grpc_port)
         return self._address
 
@@ -127,7 +125,7 @@ class Client:
             self.macaroon_path = macaroon_path
 
         self.build_credentials()
-        self.channel = grpc.secure_channel(target=self.address,
+        self.channel = grpc.secure_channel(target=self.grpc_address,
                                            credentials=self.combined_creds,
                                            options=self.grpc_options)
         self._lightning_stub = lnrpc.LightningStub(self.channel)
@@ -139,7 +137,7 @@ class Client:
         if cert_path is not None:
             self.tls_cert_path = cert_path
         self.ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
-        self._w_channel = grpc.secure_channel(self.address,
+        self._w_channel = grpc.secure_channel(self.grpc_address,
                                               self.ssl_creds)
         self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
         return self._w_stub
@@ -151,6 +149,8 @@ class Client:
 
     def init_wallet(self,
                     wallet_password: str = None, **kwargs):
+        # TODO: remove this try/except
+        # TODO: add a confirmation prompt?
         try:
             assert len(wallet_password) >= 8
         except AssertionError:
@@ -159,23 +159,46 @@ class Client:
         response = self.wallet_unlocker_stub.InitWallet(request)
         return response
 
-    def unlock_wallet(self, wallet_password: str, **kwargs):
-        request = ln.UnlockWalletRequest(wallet_password=wallet_password.encode('utf-8'), **kwargs)
+    def unlock_wallet(self, wallet_password: str, recovery_window: int = 0):
+        """
+        The unlock command is used to decrypt lnd's wallet state in order to
+        start up. This command MUST be run after booting up lnd before it's
+        able to carry out its duties. An exception is if a user is running with
+        --noseedbackup, then a default passphrase will be used.
+        """
+        request = ln.UnlockWalletRequest(wallet_password=wallet_password.encode('utf-8'),
+                                         recover_window=recovery_window)
         response = self.wallet_unlocker_stub.UnlockWallet(request)
         return response
 
     def change_password(self, current_password: str, new_password: str):
+        """
+        The change_password command is used to change lnd's encrypted wallet's
+        password. It will automatically unlock the daemon if the password change
+        is successful.
+
+        If one did not specify a password for their wallet (running lnd with
+        --noseedbackup), one must restart their daemon without
+        --noseedbackup and use this command.
+        The "current password" field should be left empty.
+        """
         request = ln.ChangePasswordRequest(current_password=current_password.encode('utf-8'),
                                            new_password=new_password.encode('utf-8'))
         response = self.wallet_unlocker_stub.ChangePassword(request)
         return response
 
     def wallet_balance(self):
+        """
+        Compute and display the wallet's current balance.
+        """
         request = ln.WalletBalanceRequest()
         response = self.lightning_stub.WalletBalance(request)
         return response
 
     def channel_balance(self):
+        """
+        Returns the sum of the total available channel balance across all open channels.
+        """
         request = ln.ChannelBalanceRequest()
         response = self.lightning_stub.ChannelBalance(request)
         return response
@@ -185,29 +208,51 @@ class Client:
         response = self.lightning_stub.GetTransactions(request)
         return response
 
+    # On Chain
     def send_coins(self, addr: str, amount: int, **kwargs):
+        """
+        Send 'amount' coins in satoshis to the BASE58 encoded bitcoin address 'addr'.
+        Fees used when sending the transaction can be specified via 'conf_target', or
+        'sat_per_byte' optional kwargs.
+        """
         request = ln.SendCoinsRequest(addr=addr, amount=amount, **kwargs)
         response = self.lightning_stub.SendCoins(request)
         return response
 
-    def list_unspent(self, min_confs: int, max_confs: int):
-        request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
-        response = self.lightning_stub.ListUnspent(request)
-        return response
+    # RPC not available in v0.5.1-beta
+    # def list_unspent(self, min_confs: int, max_confs: int):
+    #    request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
+    #    response = self.lightning_stub.ListUnspent(request)
+    #    return response
 
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
-        response = self.lightning_stub.SubscribeTransactions(request)
-        return response
+        for response in self.lightning_stub.SubscribeTransactions(request):
+            print(response)
 
-    # TODO: fix addr_to_amount input
+    # TODO: check this more. It works with regular python dicts so I think it's ok
+    # On Chain
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
-        request = ln.SendManyRequest(addr_to_amount=addr_to_amount, **kwargs)
+        """
+        Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
+        """
+        request = ln.SendManyRequest(AddrToAmount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
         return response
 
-    def new_address(self, address_type: int):  # TODO why do only '1' and '2' work here?
-        request = ln.NewAddressRequest(type=address_type)
+    def new_address(self, address_type: str):
+        """
+        Map the string encoded address type to the concrete typed address \
+	    type enum. An unrecognized address type will result in an error.
+	    """
+        # TODO: should there be a kwarg type check here?
+        if address_type == 'p2wkh':
+            request = ln.NewAddressRequest(type='WITNESS_PUBKEY_HASH')
+        elif address_type == 'np2wkh':
+            request = ln.NewAddressRequest(type='NESTED_PUBKEY_HASH')
+        else:
+            return TypeError("invalid address type %s, support address type are: p2wkh and np2wkh" \
+                             % address_type)
         response = self.lightning_stub.NewAddress(request)
         return response
 
@@ -224,39 +269,69 @@ class Client:
         return response
 
     def connect_peer(self, pubkey: str, host: str, perm: bool = 0):
+        """
+        Connect to a remote lnd peer.
+        If 'perm' set the daemon will attempt to connect persistently, otherwise connection will be
+        synchronous.
+        """
         _address = self.lightning_address(pubkey=pubkey, host=host)
         request = ln.ConnectPeerRequest(addr=_address, perm=perm)
         response = self.lightning_stub.ConnectPeer(request)
         return response
 
     # TODO: add a connect() function here which takes pubkey:host string directly
+    def connect(self, address: str):
+        """
+        Connect to peer as per 'connect_peer()' but using common 'pubkey@host:port' notation
+        """
+        pubkey, host = address.split('@')
+        return self.connect_peer(pubkey=pubkey, host=host)
 
     def disconnect_peer(self, pubkey: str):
+        """
+        Disconnect a remote lnd peer identified by hex encoded public key.
+        """
         request = ln.DisconnectPeerRequest(pubkey=pubkey)
         response = self.lightning_stub.DisconnectPeer(request)
         return response
 
     def list_peers(self):
+        """
+        List all active, currently connected peers.
+        :return:
+        """
         request = ln.ListPeersRequest()
         response = self.lightning_stub.ListPeers(request)
         return response.peers
 
     def get_info(self):
+        """
+        Returns basic information related to the active daemon.
+        """
         request = ln.GetInfoRequest()
         response = self.lightning_stub.GetInfo(request)
         return response
 
     def pending_channels(self):
+        """
+        Display information pertaining to pending channels.
+        """
         request = ln.PendingChannelsRequest()
         response = self.lightning_stub.PendingChannels(request)
         return response
 
     def list_channels(self, **kwargs):
+        """
+        List all open channels.
+        """
         request = ln.ListChannelsRequest(**kwargs)
         response = self.lightning_stub.ListChannels(request)
         return response.channels
 
     def closed_channels(self, **kwargs):
+        """
+        List all closed channels
+        """
         request = ln.ClosedChannelsRequest(**kwargs)
         response = self.lightning_stub.ClosedChannels(request)
         return response.channels
@@ -265,13 +340,14 @@ class Client:
                           node_pubkey: str,
                           node_pubkey_string: str,
                           local_funding_amount: int,
-                          push_sat: int,
                           **kwargs):
+        """
+        A synchronous (blocking) version of the 'open_channel()' command
+        """
         request = ln.OpenChannelRequest(
                 node_pubkey=node_pubkey.encode('utf-8'),
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat,
                 **kwargs)
         response = self.lightning_stub.OpenChannelSync(request)
         return response
@@ -279,14 +355,21 @@ class Client:
     def open_channel(self,
                      node_pubkey_string: str,
                      local_funding_amount: int,
-                     push_sat: int,
                      **kwargs):
         # TODO: mirror `lncli openchannel --connect` function
+        """
+        Attempt to open a new channel to an existing peer with the key node-key.
+        The channel will be initialized with 'local_amt' satoshis local and optional 'push_amt'
+        satoshis for the remote node. Note that specifying 'push_amt' means you give that
+        amount to the remote node as part of the channel opening.
+        Once the channel is open, a channelPoint (txid:vout) of the funding output is returned.
 
+        One can manually set the fee to be used for the funding transaction via either
+        the --conf_target or --sat_per_byte arguments. This is optional.
+        """
         request = ln.OpenChannelRequest(
                 node_pubkey_string=node_pubkey_string,
                 local_funding_amount=local_funding_amount,
-                push_sat=push_sat,
                 **kwargs)
         if not hasattr(request, 'node_pubkey'):
             request.node_pubkey = node_pubkey_string.encode('utf-8')
@@ -294,6 +377,22 @@ class Client:
         return response
 
     def close_channel(self, channel_point, **kwargs):
+        """
+        Close an existing channel. The channel can be closed either cooperatively,
+        or unilaterally ('force=1').
+        A unilateral channel closure means that the latest commitment
+        transaction will be broadcast to the network. As a result, any settled
+        funds will be time locked for a few blocks before they can be spent.
+
+        In the case of a cooperative closure, One can manually set the fee to
+        be used for the closing transaction via either the 'conf_target' or
+        'sat_per_byte' arguments. This will be the starting value used during
+        fee negotiation. This is optional.
+
+        To view which funding_txids/output_indexes can be used for a channel close,
+        see the channel_point values within the 'listchannels' command output.
+        The format for a channel_point is 'funding_txid:output_index'.
+        """
         funding_txid, output_index = channel_point.split(':')
         _channel_point = self.channel_point_generator(funding_txid=funding_txid,
                                                       output_index=output_index)
@@ -301,7 +400,30 @@ class Client:
         response = self.lightning_stub.CloseChannel(request)
         return response
 
+    def close_all_channels(self, inactive_only: bool = 0):
+        """
+        Close all channels (or 'inactive_only') by iterating through the 'list_channels()'
+        command and passing each one to the 'close_channel()' command. Unlike when using the CLI
+        there is no confirmation on doing this, so be careful.
+        """
+        if inactive_only == 0:
+            for channel in self.list_channels():
+                self.close_channel(channel_point=channel.channel_point)
+        if inactive_only == 1:
+            for channel in self.list_channels(inactive_only=1):
+                self.close_channel(channel_point=channel.channel_point)
+
     def abandon_channel(self, channel_point: ln.ChannelPoint):
+        """
+        Removes all channel state from the database except for a close
+        summary. This method can be used to get rid of permanently unusable
+        channels due to bugs fixed in newer versions of lnd.
+
+        Only available when lnd is built in debug mode.
+        To view which funding_txids/output_indexes can be used for this command,
+        see the channel_point values within the listchannels command output.
+        The format for a channel_point is 'funding_txid:output_index'.
+        """
         funding_txid, output_index = channel_point.split(':')
         _channel_point = self.channel_point_generator(funding_txid=funding_txid,
                                                       output_index=output_index)
@@ -337,54 +459,102 @@ class Client:
 
     # noinspection PyArgumentList,PyArgumentList
     def send_payment(self,
-                     dest_string: str,
-                     amt: int,
-                     payment_hash_string: str,
-                     final_cltv_delta: int,
                      payment_request: str = None,
+                     **kwargs
                      # TODO: fee_limit: ln.FeeLimit = None,
                      ):
+        """
+        Send a payment over Lightning. One can either specify the full
+        parameters of the payment, or just use a payment request which encodes
+        all the payment details.
+        If payment isn't manually specified, then only a payment request needs
+        to be passed using the payment_request argument.
+        If the payment *is* manually specified, then all four alternative
+        arguments need to be specified in order to complete the payment:
+            * dest_string=N
+            * amt=A
+            * final_cltv_delta=T
+            * payment_hash_string=H
+        """
         if payment_request is not None:
             # noinspection PyArgumentList
             request_iterable = self.payment_request_generator(
                     payment_request=payment_request)
         else:
-            _dest = dest_string.encode('utf-8')
-            _payment_hash = payment_hash_string.encode('utf-8')
+            _dest = kwargs['dest_string'].encode('utf-8')
+            _payment_hash = kwargs['payment_hash_string'].encode('utf-8')
             # TODO: Ask Justin about this one
             request_iterable = self.payment_request_generator(
                     dest=_dest,
-                    dest_string=dest_string,
-                    amt=amt,
+                    dest_string=kwargs['dest_string'],
+                    amt=kwargs['amt'],
                     payment_hash=_payment_hash,
-                    payment_hash_string=payment_hash_string,
-                    final_cltv_delta=final_cltv_delta,
+                    payment_hash_string=kwargs['payment_hash_string'],
+                    final_cltv_delta=kwargs['final_cltv_delta'],
                     # TODO: fee_limit=fee_limit,
             )
         for response in self.lightning_stub.SendPayment(request_iterable):
             return response
 
+    def pay_invoice(self, payment_request: str):
+        """
+        lncli equivalent function which passes the payment request to send_payment()
+        """
+        response = self.send_payment(payment_request=payment_request)
+        return response
+
     def send_payment_sync(self):
         pass
 
     def send_to_route(self):
+        """
+        Send a payment over Lightning using a specific route. One must specify
+        a list of routes to attempt and the payment hash.
+        This command can even be chained with the response to query_routes.
+        This command can be used to implement channel rebalancing by crafting a self-route, or even
+        atomic swaps using a self-route that crosses multiple chains.
+        """
         pass
 
     def send_to_route_sync(self):
         pass
 
-    def add_invoice(self, r_preimage: bytes, value: int, **kwargs):
-        request = ln.Invoice(r_preimage=r_preimage, value=value, **kwargs)
+    def add_invoice(self, value: int = 0, **kwargs):
+        """
+        Add a new invoice, expressing intent for a future payment.
+        Invoices without an amount can be created by not supplying any
+        parameters or providing an amount of 0. These invoices allow the payee
+        to specify the amount of satoshis they wish to send.
+        """
+        request = ln.Invoice(value=value, **kwargs)
         response = self.lightning_stub.AddInvoice(request)
         return response
 
     def list_invoices(self, reversed: bool = 1, **kwargs):
+        """
+        This command enables the retrieval of all invoices currently stored
+        within the database. It has full support for paginationed responses,
+        allowing users to query for specific invoices through their add_index.
+        This can be done by using either the first_index_offset or
+        last_index_offset fields included in the response as the index_offset of
+        the next request.
+
+        The reversed flag is set by default in order to
+        paginate backwards. If you wish to paginate forwards, you must
+        explicitly set the flag to false. If none of the parameters are
+        specified, then the last 100 invoices will be returned.
+        """
         request = ln.ListInvoiceRequest(reversed=reversed, **kwargs)
         response = self.lightning_stub.ListInvoices(request)
         return response
 
     def lookup_invoice(self, r_hash_str: str):
-        r_hash = r_hash_str.encode('utf-8')
+        """
+        Lookup an existing invoice by its payment hash.
+        The r_hash is the 32 byte payment hash of the invoice to query for, the hash
+        should be supplied as a hex encoded string (r_hash_str).
+        """
+        r_hash = bytes.fromhex(r_hash_str)
         request = ln.PaymentHash(r_hash=r_hash, r_hash_str=r_hash_str)
         response = self.lightning_stub.LookupInvoice(request)
         return response

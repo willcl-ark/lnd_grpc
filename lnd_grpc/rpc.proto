@@ -140,7 +140,7 @@ message InitWalletRequest {
     bytes aezeed_passphrase = 3;
 
     /**
-    recovery_window is an optional argument specifying the address lookahead
+    recovery_window is an optional argument specifying the grpc_address lookahead
     when restoring a wallet seed. The recovery window applies to each
     invdividual branch of the BIP44 derivation paths. Supplying a recovery
     window of zero indicates that no addresses should be recovered, such after
@@ -160,7 +160,7 @@ message UnlockWalletRequest {
     bytes wallet_password = 1;
 
     /**
-    recovery_window is an optional argument specifying the address lookahead
+    recovery_window is an optional argument specifying the grpc_address lookahead
     when restoring a wallet seed. The recovery window applies to each
     invdividual branch of the BIP44 derivation paths. Supplying a recovery
     window of zero indicates that no addresses should be recovered, such after
@@ -218,7 +218,7 @@ service Lightning {
     }
 
     /** lncli: `sendcoins`
-    SendCoins executes a request to send coins to a particular address. Unlike
+    SendCoins executes a request to send coins to a particular grpc_address. Unlike
     SendMany, this RPC call only allows creating a single output at a time. If
     neither target_conf, or sat_per_byte are set, then the internal wallet will
     consult its fee model to determine a fee for the default confirmation
@@ -247,7 +247,7 @@ service Lightning {
     rpc SendMany (SendManyRequest) returns (SendManyResponse);
 
     /** lncli: `newaddress`
-    NewAddress creates a new address under control of the local wallet.
+    NewAddress creates a new grpc_address under control of the local wallet.
     */
     rpc NewAddress (NewAddressRequest) returns (NewAddressResponse) {
         option (google.api.http) = {
@@ -780,7 +780,7 @@ message SendManyResponse {
 }
 
 message SendCoinsRequest {
-    /// The address to send coins to 
+    /// The grpc_address to send coins to
     string addr = 1;
 
     /// The amount in satoshis to send
@@ -809,12 +809,12 @@ message NewAddressRequest {
         NESTED_PUBKEY_HASH = 1;
     }
 
-    /// The address type
+    /// The grpc_address type
     AddressType type = 1;
 }
 message NewAddressResponse {
-    /// The newly generated wallet address
-    string address = 1 [json_name = "address"];
+    /// The newly generated wallet grpc_address
+    string grpc_address = 1 [json_name = "grpc_address"];
 }
 
 message SignMessageRequest {
@@ -842,7 +842,7 @@ message VerifyMessageResponse {
 }
 
 message ConnectPeerRequest {
-    /// Lightning address of the peer, in the format `<pubkey>@host`
+    /// Lightning grpc_address of the peer, in the format `<pubkey>@host`
     LightningAddress addr = 1;
 
     /** If set, the daemon will attempt to persistently connect to the target
@@ -1018,8 +1018,8 @@ message Peer {
     /// The identity pubkey of the peer
     string pub_key = 1 [json_name = "pub_key"];
 
-    /// Network address of the peer; eg `127.0.0.1:10011`
-    string address = 3 [json_name = "address"];
+    /// Network grpc_address of the peer; eg `127.0.0.1:10011`
+    string grpc_address = 3 [json_name = "grpc_address"];
 
     /// Bytes of data transmitted to this peer
     uint64 bytes_sent = 4 [json_name = "bytes_sent"];
@@ -1667,7 +1667,7 @@ message Invoice {
     /// Payment request expiry time in seconds. Default is 3600 (1 hour).
     int64 expiry = 11 [json_name = "expiry"];
 
-    /// Fallback on-chain address.
+    /// Fallback on-chain grpc_address.
     string fallback_addr = 12 [json_name = "fallback_addr"];
 
     /// Delta to use for the time-lock of the CLTV extended to the final hop.
