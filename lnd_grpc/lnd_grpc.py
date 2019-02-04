@@ -152,12 +152,6 @@ class Client:
     @handle_error
     def init_wallet(self,
                     wallet_password: str = None, **kwargs):
-        # TODO: remove this try/except
-        # TODO: add a confirmation prompt?
-        try:
-            assert len(wallet_password) >= 8
-        except AssertionError:
-            sys.stdout.write('Wallet password must be at least 8 characters long')
         request = ln.InitWalletRequest(wallet_password=wallet_password.encode('utf-8'), **kwargs)
         response = self.wallet_unlocker_stub.InitWallet(request)
         return response
@@ -238,16 +232,19 @@ class Client:
 
     @handle_error
     def subscribe_transactions(self):
+        """
+        Creates a uni-directional stream from server to client
+        """
         request = ln.GetTransactionsRequest()
         for response in self.lightning_stub.SubscribeTransactions(request):
-            print(response)
+            return response
 
     # TODO: check this more. It works with regular python dicts so I think it's ok
-    # On Chain
     @handle_error
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         """
-        Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
+        Create and broadcast an on-chain transaction paying the specified amount(s)
+        to the passed address(es).
 
         'addr_to_amount' should be passed in the following format:
         {"ExampleAddr": NumCoinsInSatoshis, "SecondAddr": NumCoins}
@@ -312,7 +309,6 @@ class Client:
         response = self.lightning_stub.ConnectPeer(request)
         return response
 
-    # TODO: add a connect() function here which takes pubkey:host string directly
     @handle_error
     def connect(self, address: str, perm: bool = 0):
         """
@@ -504,6 +500,8 @@ class Client:
     @handle_error
     def send_payment(self, **kwargs):
         """
+        Not implemented yet.
+
         Send a payment over Lightning. One can either specify the full
         parameters of the payment, or just use a payment request which encodes
         all the payment details.
@@ -516,15 +514,16 @@ class Client:
             * final_cltv_delta=T
             * payment_hash_string=H
         """
-        if kwargs['payment_request']:
-            request_iterable = self.send_request_generator(
-                    payment_request=kwargs['payment_request'])
-        else:
-            kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
-            kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
-            request_iterable = self.send_request_generator(**kwargs)
-        for response in self.lightning_stub.SendPayment(request_iterable):
-            print(response)
+        return NotImplementedError
+        # if kwargs['payment_request']:
+        #     request_iterable = self.send_request_generator(
+        #             payment_request=kwargs['payment_request'])
+        # else:
+        #     kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
+        #     kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
+        #     request_iterable = self.send_request_generator(**kwargs)
+        # for response in self.lightning_stub.SendPayment(request_iterable):
+        #     print(response)
 
     @handle_error
     def pay_invoice(self, payment_request: str):
@@ -570,11 +569,20 @@ class Client:
         users to specify a full route manually. This can be used for things like
         re-balancing, and atomic swaps.
         """
-        pass
+        return NotImplementedError
 
     @handle_error
-    def send_to_route_sync(self):
-        pass
+    def send_to_route_sync(self, payment_hash_string: str, routes: ln.Route):
+        """
+        SendToRouteSync is a synchronous version of SendToRoute.
+        It Will block until the payment either fails or succeeds.
+        """
+        _payment_hash = bytes.fromhex(payment_hash_string)
+        request = ln.SendToRouteRequest(payment_hash=_payment_hash,
+                                        payment_hash_string=payment_hash_string,
+                                        route=routes)
+        response = self.lightning_stub.SendToRouteSync(request)
+        return response
 
     @handle_error
     def add_invoice(self, value: int = 0, **kwargs):
