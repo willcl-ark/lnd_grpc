@@ -8,7 +8,6 @@ This version of the library has been compiled with rpc.proto from the v0.5.1-bet
 * `grpcio`
 * `grpcio-tools`
 * `googleapis-common-protos`
-* `codecs` 
 
 Note: Configuration for coins other than bitcoin will require modifying the source code directly.
 
@@ -88,4 +87,4 @@ Further RPC commands can then be issued to the lnd gRPC interface using the foll
 Valid gRPC commands and their keyword arguments can be found [here](https://api.lightning.community/?python#lnd-grpc-api-reference)
  
 ### Additional Notes
-This library does not handle any errors directly, except for notifying the user of missing tls certificate or macaroon  .
+This library will handle gRPC errors for functions decorated with @handle_error and will also alert for invalid/missing tls cert and macaroon.
