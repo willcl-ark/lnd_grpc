@@ -321,7 +321,8 @@ class Client:
         """
         pubkey, host = address.split('@')
         _address = self.lightning_address(pubkey=pubkey, host=host)
-        return self.connect_peer(addr=_address, perm=perm)
+        response = self.connect_peer(addr=_address, perm=perm)
+        return response
 
     @handle_error
     def disconnect_peer(self, pubkey: str):
@@ -425,8 +426,8 @@ class Client:
         One can manually set the fee to be used for the funding transaction via either
         the --conf_target or --sat_per_byte arguments. This is optional.
         """
-        return NotImplementedError("Asynchronous method open_channel() not implemented yet. \
-        Use synchronous (blocking) open_channel_sync() method instead")
+        return NotImplementedError("Asynchronous method open_channel() not implemented yet.\n"
+                                   "Use synchronous (blocking) open_channel_sync() method instead")
         # request = ln.OpenChannelRequest(
         #         node_pubkey_string=node_pubkey_string,
         #         local_funding_amount=local_funding_amount,
@@ -523,8 +524,8 @@ class Client:
             * final_cltv_delta=T
             * payment_hash_string=H
         """
-        return NotImplementedError("Asynchronous method send_payment() not implemented yet. \
-        Use synchronous (blocking) send_payment_sync() method instead")
+        return NotImplementedError("Asynchronous method send_payment() not implemented yet.\n"
+                                   "Use synchronous (blocking) send_payment_sync() method instead")
         # if kwargs['payment_request']:
         #     request_iterable = self.send_request_generator(
         #             payment_request=kwargs['payment_request'])
@@ -534,15 +535,6 @@ class Client:
         #     request_iterable = self.send_request_generator(**kwargs)
         # for response in self.lightning_stub.SendPayment(request_iterable):
         #     print(response)
-
-    @handle_error
-    def pay_invoice(self, payment_request: str):
-        """
-        lncli equivalent function which passes the payment request to send_payment()
-        """
-        # TODO: I think this should technically use non-blocking send_payment()
-        response = self.send_payment_sync(payment_request=payment_request)
-        return response
 
     @handle_error
     def send_payment_sync(self, **kwargs):
@@ -561,6 +553,15 @@ class Client:
             kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
             request = ln.SendRequest(**kwargs)
         response = self.lightning_stub.SendPaymentSync(request)
+        return response
+
+    @handle_error
+    def pay_invoice(self, payment_request: str):
+        """
+        lncli equivalent function which passes the payment request to send_payment()
+        """
+        # TODO: I think this should technically use non-blocking send_payment()
+        response = self.send_payment_sync(payment_request=payment_request)
         return response
 
     @staticmethod
@@ -627,14 +628,13 @@ class Client:
         return response
 
     @handle_error
-    def lookup_invoice(self, r_hash_str: str):
+    def lookup_invoice(self, r_hash: bytes):
         """
         Lookup an existing invoice by its payment hash.
-        The r_hash is the 32 byte payment hash of the invoice to query for, the hash
-        should be supplied as a hex encoded string (r_hash_str).
+        The r_hash is the 32 byte payment hash of the invoice to query for.
         """
-        _r_hash = bytes.fromhex(r_hash_str)
-        request = ln.PaymentHash(r_hash=_r_hash, r_hash_str=r_hash_str)
+        _r_hash_str = r_hash.hex()
+        request = ln.PaymentHash(r_hash=r_hash, r_hash_str=_r_hash_str)
         response = self.lightning_stub.LookupInvoice(request)
         return response
 
@@ -684,14 +684,14 @@ class Client:
         return response
 
     @handle_error
-    def get_chan_info(self, channel_id: int):
+    def get_chan_info(self, chan_id: int):
         """
         Get the state of a channel.
         Prints out the latest authenticated state for a particular channel.
 
         chan_id accessible from within list_channels()
         """
-        request = ln.ChanInfoRequest(channel_id=channel_id)
+        request = ln.ChanInfoRequest(chan_id=chan_id)
         response = self.lightning_stub.GetChanInfo(request)
         return response
 
