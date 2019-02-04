@@ -2,7 +2,7 @@ import functools
 import grpc
 
 
-def grpc_error(function):
+def handle_error(function):
     """
         A decorator that wraps the passed in function and prints grpc error
         exceptions should one occur
@@ -18,5 +18,7 @@ def grpc_error(function):
             status_code = e.code()
             print(status_code.name)
             print(status_code.value)
+        except TypeError as t:
+            print('TypeError: %s' % t)
 
     return wrapper

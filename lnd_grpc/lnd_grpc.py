@@ -5,7 +5,7 @@ from os import environ
 import grpc
 
 from . import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc, utilities as u
-from .grpc_error import grpc_error as grpc_error
+from .handle_error import handle_error as handle_error
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -143,13 +143,13 @@ class Client:
         self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
         return self._w_stub
 
-    @grpc_error
+    @handle_error
     def gen_seed(self, **kwargs):
         request = ln.GenSeedRequest(**kwargs)
         response = self.wallet_unlocker_stub.GenSeed(request)
         return response
 
-    @grpc_error
+    @handle_error
     def init_wallet(self,
                     wallet_password: str = None, **kwargs):
         # TODO: remove this try/except
@@ -162,7 +162,7 @@ class Client:
         response = self.wallet_unlocker_stub.InitWallet(request)
         return response
 
-    @grpc_error
+    @handle_error
     def unlock_wallet(self, wallet_password: str, recovery_window: int = 0):
         """
         The unlock command is used to decrypt lnd's wallet state in order to
@@ -175,7 +175,7 @@ class Client:
         response = self.wallet_unlocker_stub.UnlockWallet(request)
         return response
 
-    @grpc_error
+    @handle_error
     def change_password(self, current_password: str, new_password: str):
         """
         The change_password command is used to change lnd's encrypted wallet's
@@ -192,7 +192,7 @@ class Client:
         response = self.wallet_unlocker_stub.ChangePassword(request)
         return response
 
-    @grpc_error
+    @handle_error
     def wallet_balance(self):
         """
         Compute and display the wallet's current balance.
@@ -201,7 +201,7 @@ class Client:
         response = self.lightning_stub.WalletBalance(request)
         return response
 
-    @grpc_error
+    @handle_error
     def channel_balance(self):
         """
         Returns the sum of the total available channel balance across all open channels.
@@ -210,14 +210,14 @@ class Client:
         response = self.lightning_stub.ChannelBalance(request)
         return response
 
-    @grpc_error
+    @handle_error
     def get_transactions(self):
         request = ln.GetTransactionsRequest()
         response = self.lightning_stub.GetTransactions(request)
         return response
 
     # On Chain
-    @grpc_error
+    @handle_error
     def send_coins(self, addr: str, amount: int, **kwargs):
         """
         Send 'amount' coins in satoshis to the BASE58 encoded bitcoin address 'addr'.
@@ -234,7 +234,7 @@ class Client:
     #    response = self.lightning_stub.ListUnspent(request)
     #    return response
 
-    @grpc_error
+    @handle_error
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
         for response in self.lightning_stub.SubscribeTransactions(request):
@@ -242,7 +242,7 @@ class Client:
 
     # TODO: check this more. It works with regular python dicts so I think it's ok
     # On Chain
-    @grpc_error
+    @handle_error
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         """
         Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
@@ -254,7 +254,7 @@ class Client:
         response = self.lightning_stub.SendMany(request)
         return response
 
-    @grpc_error
+    @handle_error
     def new_address(self, address_type: str):
         """
         Map the string encoded address type to the concrete typed address \
@@ -271,21 +271,21 @@ class Client:
         response = self.lightning_stub.NewAddress(request)
         return response
 
-    @grpc_error
+    @handle_error
     def sign_message(self, msg: str):
         msg_bytes = msg.encode('utf-8')
         request = ln.SignMessageRequest(msg=msg_bytes)
         response = self.lightning_stub.SignMessage(request)
         return response
 
-    @grpc_error
+    @handle_error
     def verify_message(self, msg: str, signature: str):
         msg_bytes = msg.encode('utf-8')
         request = ln.VerifyMessageRequest(msg=msg_bytes, signature=signature)
         response = self.lightning_stub.VerifyMessage(request)
         return response
 
-    @grpc_error
+    @handle_error
     def connect_peer(self, pubkey: str, host: str, perm: bool = 0):
         """
         Connect to a remote lnd peer.
@@ -298,7 +298,7 @@ class Client:
         return response
 
     # TODO: add a connect() function here which takes pubkey:host string directly
-    @grpc_error
+    @handle_error
     def connect(self, address: str, perm: bool = 0):
         """
         Connect to peer as per 'connect_peer()' but using common 'pubkey@host:port' notation
@@ -307,7 +307,7 @@ class Client:
         pubkey, host = address.split('@')
         return self.connect_peer(pubkey=pubkey, host=host, perm=perm)
 
-    @grpc_error
+    @handle_error
     def disconnect_peer(self, pubkey: str):
         """
         Disconnect a remote lnd peer identified by hex encoded public key.
@@ -316,7 +316,7 @@ class Client:
         response = self.lightning_stub.DisconnectPeer(request)
         return response
 
-    @grpc_error
+    @handle_error
     def list_peers(self):
         """
         List all active, currently connected peers.
@@ -326,7 +326,7 @@ class Client:
         response = self.lightning_stub.ListPeers(request)
         return response.peers
 
-    @grpc_error
+    @handle_error
     def get_info(self):
         """
         Returns basic information related to the active daemon.
@@ -335,7 +335,7 @@ class Client:
         response = self.lightning_stub.GetInfo(request)
         return response
 
-    @grpc_error
+    @handle_error
     def pending_channels(self):
         """
         Display information pertaining to pending channels.
@@ -344,7 +344,7 @@ class Client:
         response = self.lightning_stub.PendingChannels(request)
         return response
 
-    @grpc_error
+    @handle_error
     def list_channels(self, **kwargs):
         """
         List all open channels.
@@ -358,7 +358,7 @@ class Client:
         response = self.lightning_stub.ListChannels(request)
         return response.channels
 
-    @grpc_error
+    @handle_error
     def closed_channels(self, **kwargs):
         """
         List all closed channels
@@ -374,7 +374,7 @@ class Client:
         response = self.lightning_stub.ClosedChannels(request)
         return response.channels
 
-    @grpc_error
+    @handle_error
     def open_channel_sync(self,
                           node_pubkey_string: str,
                           local_funding_amount: int,
@@ -391,7 +391,7 @@ class Client:
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
-    @grpc_error
+    @handle_error
     def open_channel(self,
                      node_pubkey_string: str,
                      local_funding_amount: int,
@@ -416,7 +416,7 @@ class Client:
         for response in self.lightning_stub.OpenChannel(request):
             return response
 
-    @grpc_error
+    @handle_error
     def close_channel(self, channel_point, **kwargs):
         """
         Close an existing channel. The channel can be closed either cooperatively,
@@ -442,7 +442,7 @@ class Client:
         response = self.lightning_stub.CloseChannel(request)
         return response
 
-    @grpc_error
+    @handle_error
     def close_all_channels(self, inactive_only: bool = 0):
         """
         Close all channels (or 'inactive_only') by iterating through the 'list_channels()'
@@ -456,7 +456,7 @@ class Client:
             for channel in self.list_channels(inactive_only=1):
                 self.close_channel(channel_point=channel.channel_point)
 
-    @grpc_error
+    @handle_error
     def abandon_channel(self, channel_point: ln.ChannelPoint):
         """
         Removes all channel state from the database except for a close
@@ -486,7 +486,7 @@ class Client:
             yield request
 
     # Bi-directional streaming RPC
-    @grpc_error
+    @handle_error
     def send_payment(self, **kwargs):
         """
         Send a payment over Lightning. One can either specify the full
@@ -511,7 +511,7 @@ class Client:
         for response in self.lightning_stub.SendPayment(request_iterable):
             print(response)
 
-    @grpc_error
+    @handle_error
     def pay_invoice(self, payment_request: str):
         """
         lncli equivalent function which passes the payment request to send_payment()
@@ -520,7 +520,7 @@ class Client:
         response = self.send_payment_sync(payment_request=payment_request)
         return response
 
-    @grpc_error
+    @handle_error
     def send_payment_sync(self, **kwargs):
         """
         SendPaymentSync is the synchronous non-streaming version of SendPayment.
@@ -545,7 +545,7 @@ class Client:
             request = ln.SendToRouteRequest(**kwargs)
             yield request
 
-    @grpc_error
+    @handle_error
     def send_to_route(self):
         """
         Not implemented yet
@@ -557,11 +557,11 @@ class Client:
         """
         pass
 
-    @grpc_error
+    @handle_error
     def send_to_route_sync(self):
         pass
 
-    @grpc_error
+    @handle_error
     def add_invoice(self, value: int = 0, **kwargs):
         """
         Add a new invoice, expressing intent for a future payment.
@@ -573,7 +573,7 @@ class Client:
         response = self.lightning_stub.AddInvoice(request)
         return response
 
-    @grpc_error
+    @handle_error
     def list_invoices(self, reversed: bool = 1, **kwargs):
         """
         This command enables the retrieval of all invoices currently stored
@@ -592,7 +592,7 @@ class Client:
         response = self.lightning_stub.ListInvoices(request)
         return response
 
-    @grpc_error
+    @handle_error
     def lookup_invoice(self, r_hash_str: str):
         """
         Lookup an existing invoice by its payment hash.
@@ -604,49 +604,49 @@ class Client:
         response = self.lightning_stub.LookupInvoice(request)
         return response
 
-    @grpc_error
+    @handle_error
     def subscribe_invoices(self, **kwargs):
         request = ln.InvoiceSubscription(**kwargs)
         for response in self.lightning_stub.SubscribeInvoices(request):
             return response
 
-    @grpc_error
+    @handle_error
     def decode_pay_req(self, pay_req: str):
         request = ln.PayReqString(pay_req=pay_req)
         response = self.lightning_stub.DecodePayReq(request)
         return response
 
-    @grpc_error
+    @handle_error
     def list_payments(self):
         request = ln.ListPaymentsRequest()
         response = self.lightning_stub.ListPayments(request)
         return response
 
-    @grpc_error
+    @handle_error
     def delete_all_payments(self):
         request = ln.DeleteAllPaymentsRequest()
         response = self.lightning_stub.DeleteAllPayments(request)
         return response
 
-    @grpc_error
+    @handle_error
     def describe_graph(self, **kwargs):
         request = ln.ChannelGraphRequest(**kwargs)
         response = self.lightning_stub.DescribeGraph(request)
         return response
 
-    @grpc_error
+    @handle_error
     def get_chan_info(self, channel_id: int):
         request = ln.ChanInfoRequest(channel_id=channel_id)
         response = self.lightning_stub.GetChanInfo(request)
         return response
 
-    @grpc_error
+    @handle_error
     def get_node_info(self, pub_key: str):
         request = ln.NodeInfoRequest(pub_key=pub_key)
         response = self.lightning_stub.GetNodeInfo(request)
         return response
 
-    @grpc_error
+    @handle_error
     def query_routes(self,
                      pub_key: str,
                      amt: int,
@@ -660,37 +660,37 @@ class Client:
         response = self.lightning_stub.QueryRoutes(request)
         return response
 
-    @grpc_error
+    @handle_error
     def get_network_info(self):
         request = ln.NetworkInfoRequest()
         response = self.lightning_stub.GetNetworkInfo(request)
         return response
 
-    @grpc_error
+    @handle_error
     def stop_daemon(self):
         request = ln.StopRequest()
         response = self.lightning_stub.StopDaemon(request)
         return response
 
-    @grpc_error
+    @handle_error
     def subscribe_channel_graph(self):
         request = ln.GraphTopologySubscription()
         for response in self.lightning_stub.SubscribeChannelGraph(request):
             return response
 
-    @grpc_error
+    @handle_error
     def debug_level(self, **kwargs):
         request = ln.DebugLevelRequest(**kwargs)
         response = self.lightning_stub.DebugLevel(request)
         return response
 
-    @grpc_error
+    @handle_error
     def fee_report(self):
         request = ln.FeeReportRequest()
         response = self.lightning_stub.FeeReport(request)
         return response
 
-    @grpc_error
+    @handle_error
     def update_channel_policy(self, **kwargs):
         if 'chan_point' in kwargs:
             funding_txid, output_index = kwargs.get('chan_point').split(':')
@@ -703,7 +703,7 @@ class Client:
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
-    @grpc_error
+    @handle_error
     def forwarding_history(self, start_time: int, **kwargs):
         request = ln.ForwardingHistoryRequest(start_time=start_time, **kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
