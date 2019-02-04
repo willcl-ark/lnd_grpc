@@ -219,6 +219,10 @@ class Client:
         Send 'amount' coins in satoshis to the BASE58 encoded bitcoin address 'addr'.
         Fees used when sending the transaction can be specified via 'conf_target', or
         'sat_per_byte' optional kwargs.
+
+        If 'send_all' is set, then the amount field will be ignored, and lnd will
+        attempt to send all the coins under control of the internal wallet to the
+        specified address.
         """
         request = ln.SendCoinsRequest(addr=addr, amount=amount, **kwargs)
         response = self.lightning_stub.SendCoins(request)
@@ -257,15 +261,16 @@ class Client:
     def new_address(self, address_type: str):
         """
         Map the string encoded address type to the concrete typed address \
-	    type enum. An unrecognized address type will result in an error.
-	    """
-        # TODO: should there be a kwarg type check here?
+        type enum. An unrecognized address type will result in an error.
+
+        Acceptable address_types are 'p2wkh' and 'np2wkh'
+        """
         if address_type == 'p2wkh':
             request = ln.NewAddressRequest(type='WITNESS_PUBKEY_HASH')
         elif address_type == 'np2wkh':
             request = ln.NewAddressRequest(type='NESTED_PUBKEY_HASH')
         else:
-            return TypeError("invalid address type %s, support address type are: p2wkh and np2wkh" \
+            return TypeError("invalid address type %s, supported address type are: p2wkh and np2wkh" \
                              % address_type)
         response = self.lightning_stub.NewAddress(request)
         return response
@@ -278,8 +283,8 @@ class Client:
 
         Positional arguments and flags can be used interchangeably but not at the same time!
         """
-        msg_bytes = msg.encode('utf-8')
-        request = ln.SignMessageRequest(msg=msg_bytes)
+        _msg_bytes = msg.encode('utf-8')
+        request = ln.SignMessageRequest(msg=_msg_bytes)
         response = self.lightning_stub.SignMessage(request)
         return response
 
@@ -292,20 +297,19 @@ class Client:
 
         Positional arguments and flags can be used interchangeably but not at the same time!
         """
-        msg_bytes = msg.encode('utf-8')
-        request = ln.VerifyMessageRequest(msg=msg_bytes, signature=signature)
+        _msg_bytes = msg.encode('utf-8')
+        request = ln.VerifyMessageRequest(msg=_msg_bytes, signature=signature)
         response = self.lightning_stub.VerifyMessage(request)
         return response
 
     @handle_error
-    def connect_peer(self, pubkey: str, host: str, perm: bool = 0):
+    def connect_peer(self, addr: ln.LightningAddress, perm: bool = 0):
         """
         Connect to a remote lnd peer.
         If 'perm' set the daemon will attempt to connect persistently, otherwise connection will be
         synchronous.
         """
-        _address = self.lightning_address(pubkey=pubkey, host=host)
-        request = ln.ConnectPeerRequest(addr=_address, perm=perm)
+        request = ln.ConnectPeerRequest(addr=addr, perm=perm)
         response = self.lightning_stub.ConnectPeer(request)
         return response
 
@@ -316,7 +320,8 @@ class Client:
         Also can accept 'perm' bool to create a persistent connection.
         """
         pubkey, host = address.split('@')
-        return self.connect_peer(pubkey=pubkey, host=host, perm=perm)
+        _address = self.lightning_address(pubkey=pubkey, host=host)
+        return self.connect_peer(addr=_address, perm=perm)
 
     @handle_error
     def disconnect_peer(self, pubkey: str):
@@ -359,7 +364,7 @@ class Client:
     def list_channels(self, **kwargs):
         """
         List all open channels.
-        Kwargs:
+        Optional kwargs:
             active_only
             inactive_only
             public_only
@@ -372,8 +377,8 @@ class Client:
     @handle_error
     def closed_channels(self, **kwargs):
         """
-        List all closed channels
-        Kwargs (can multi-select):
+        List closed channels
+        Optional kwargs (can multi-select):
             cooperative
             local_force
             remote_force
@@ -409,6 +414,8 @@ class Client:
                      **kwargs):
         # TODO: mirror `lncli openchannel --connect` function
         """
+        Not implemented yet, awaiting async protocol
+
         Attempt to open a new channel to an existing peer with the key node-key.
         The channel will be initialized with 'local_amt' satoshis local and optional 'push_amt'
         satoshis for the remote node. Note that specifying 'push_amt' means you give that
@@ -418,14 +425,16 @@ class Client:
         One can manually set the fee to be used for the funding transaction via either
         the --conf_target or --sat_per_byte arguments. This is optional.
         """
-        request = ln.OpenChannelRequest(
-                node_pubkey_string=node_pubkey_string,
-                local_funding_amount=local_funding_amount,
-                **kwargs)
-        if not hasattr(request, 'node_pubkey'):
-            request.node_pubkey = bytes.fromhex(node_pubkey_string)
-        for response in self.lightning_stub.OpenChannel(request):
-            return response
+        return NotImplementedError("Asynchronous method open_channel() not implemented yet. \
+        Use synchronous (blocking) open_channel_sync() method instead")
+        # request = ln.OpenChannelRequest(
+        #         node_pubkey_string=node_pubkey_string,
+        #         local_funding_amount=local_funding_amount,
+        #         **kwargs)
+        # if request.node_pubkey == b'':
+        #     request.node_pubkey = bytes.fromhex(node_pubkey_string)
+        # for response in self.lightning_stub.OpenChannel(request):
+        #     return response
 
     @handle_error
     def close_channel(self, channel_point, **kwargs):
@@ -514,7 +523,8 @@ class Client:
             * final_cltv_delta=T
             * payment_hash_string=H
         """
-        return NotImplementedError
+        return NotImplementedError("Asynchronous method send_payment() not implemented yet. \
+        Use synchronous (blocking) send_payment_sync() method instead")
         # if kwargs['payment_request']:
         #     request_iterable = self.send_request_generator(
         #             payment_request=kwargs['payment_request'])
@@ -569,7 +579,8 @@ class Client:
         users to specify a full route manually. This can be used for things like
         re-balancing, and atomic swaps.
         """
-        return NotImplementedError
+        return NotImplementedError("Asynchronous method send_to_route() not implemented yet. \
+        Use synchronous (blocking) send_to_route_sync() method instead")
 
     @handle_error
     def send_to_route_sync(self, payment_hash_string: str, routes: ln.Route):
