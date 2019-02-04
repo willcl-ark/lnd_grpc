@@ -20,5 +20,7 @@ def handle_error(function):
             print(status_code.value)
         except TypeError as t:
             print('TypeError: %s' % t)
+        except KeyError as k:
+            print('KeyError: %s' % k)
 
     return wrapper
