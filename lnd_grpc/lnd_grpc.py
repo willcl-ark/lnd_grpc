@@ -216,6 +216,8 @@ class Client:
         response = self.lightning_stub.GetTransactions(request)
         return response
 
+    # TODO: add listchaintxs() a-la lncli
+
     # On Chain
     @handle_error
     def send_coins(self, addr: str, amount: int, **kwargs):
@@ -273,6 +275,12 @@ class Client:
 
     @handle_error
     def sign_message(self, msg: str):
+        """
+        Sign msg with the resident node's private key.
+        Returns the signature as a zbase32 string.
+
+        Positional arguments and flags can be used interchangeably but not at the same time!
+        """
         msg_bytes = msg.encode('utf-8')
         request = ln.SignMessageRequest(msg=msg_bytes)
         response = self.lightning_stub.SignMessage(request)
@@ -280,6 +288,13 @@ class Client:
 
     @handle_error
     def verify_message(self, msg: str, signature: str):
+        """
+        Verify that the message was signed with a properly-formed signature
+        The signature must be zbase32 encoded and signed with the private key of
+        an active node in the resident node's channel database.
+
+        Positional arguments and flags can be used interchangeably but not at the same time!
+        """
         msg_bytes = msg.encode('utf-8')
         request = ln.VerifyMessageRequest(msg=msg_bytes, signature=signature)
         response = self.lightning_stub.VerifyMessage(request)
@@ -599,8 +614,8 @@ class Client:
         The r_hash is the 32 byte payment hash of the invoice to query for, the hash
         should be supplied as a hex encoded string (r_hash_str).
         """
-        r_hash = bytes.fromhex(r_hash_str)
-        request = ln.PaymentHash(r_hash=r_hash, r_hash_str=r_hash_str)
+        _r_hash = bytes.fromhex(r_hash_str)
+        request = ln.PaymentHash(r_hash=_r_hash, r_hash_str=r_hash_str)
         response = self.lightning_stub.LookupInvoice(request)
         return response
 
@@ -612,12 +627,19 @@ class Client:
 
     @handle_error
     def decode_pay_req(self, pay_req: str):
+        """
+        Decode the passed payment request revealing the destination, payment hash
+        and value of the payment request
+        """
         request = ln.PayReqString(pay_req=pay_req)
         response = self.lightning_stub.DecodePayReq(request)
         return response
 
     @handle_error
     def list_payments(self):
+        """
+        List all outgoing payments
+        """
         request = ln.ListPaymentsRequest()
         response = self.lightning_stub.ListPayments(request)
         return response
@@ -630,12 +652,26 @@ class Client:
 
     @handle_error
     def describe_graph(self, **kwargs):
+        """
+        Prints a human readable version of the known channel graph from the PoV of the node
+
+        optional argument: 'include_unannounced':
+            If set, unannounced channels will be included in the graph.
+            Unannounced channels are both private channels, and public channels that are
+            not yet announced to the network
+        """
         request = ln.ChannelGraphRequest(**kwargs)
         response = self.lightning_stub.DescribeGraph(request)
         return response
 
     @handle_error
     def get_chan_info(self, channel_id: int):
+        """
+        Get the state of a channel.
+        Prints out the latest authenticated state for a particular channel.
+
+        chan_id accessible from within list_channels()
+        """
         request = ln.ChanInfoRequest(channel_id=channel_id)
         response = self.lightning_stub.GetChanInfo(request)
         return response
@@ -652,6 +688,10 @@ class Client:
                      amt: int,
                      num_routes: int,
                      **kwargs):
+        """
+        Queries the channel router for a potential path to the destination that
+        has sufficient flow for the amount, including fees.
+        """
         request = ln.QueryRoutesRequest(
                 pub_key=pub_key,
                 amt=amt,
@@ -662,12 +702,19 @@ class Client:
 
     @handle_error
     def get_network_info(self):
+        """
+        Get statistical information about the current state of the network.
+        """
         request = ln.NetworkInfoRequest()
         response = self.lightning_stub.GetNetworkInfo(request)
         return response
 
     @handle_error
     def stop_daemon(self):
+        """
+        Gracefully stop all daemon subsystems before stopping the daemon itself.
+        This is equivalent to stopping it using CTRL-C.
+        """
         request = ln.StopRequest()
         response = self.lightning_stub.StopDaemon(request)
         return response
@@ -680,18 +727,39 @@ class Client:
 
     @handle_error
     def debug_level(self, **kwargs):
+        """
+        Set the debug level.
+
+        Logging level for all subsystems {trace, debug, info, warn, error, critical, off}
+
+        You may also specify <subsystem>=<level>,<subsystem2>=<level>,... to set the log
+        level for individual subsystems:
+        e.g. level_spec='SRVR=debug,RPCS=trace'
+        """
         request = ln.DebugLevelRequest(**kwargs)
         response = self.lightning_stub.DebugLevel(request)
         return response
 
     @handle_error
     def fee_report(self):
+        """
+        Returns the current fee policies of all active channels.
+        Fee policies can be updated using the update_chan_policy() function.
+        """
         request = ln.FeeReportRequest()
         response = self.lightning_stub.FeeReport(request)
         return response
 
     @handle_error
     def update_channel_policy(self, **kwargs):
+        """
+        Updates the channel policy for all channels, or just a particular channel
+        identified by its channel point.
+        The update will be committed, and broadcast to the rest of the network
+        within the next batch.
+
+        Channel points are encoded as: funding_txid:output_index
+        """
         if 'chan_point' in kwargs:
             funding_txid, output_index = kwargs.get('chan_point').split(':')
             _channel_point = self.channel_point_generator(funding_txid=funding_txid,
@@ -705,6 +773,21 @@ class Client:
 
     @handle_error
     def forwarding_history(self, start_time: int, **kwargs):
+        """
+        Query the HTLC switch's internal forwarding log for all completed
+        payment circuits (HTLCs) over a particular time range (--start_time and
+        --end_time).
+        The start and end times are meant to be expressed in
+        seconds since the Unix epoch. If a start and end time aren't provided,
+        then events over the past 24 hours are queried for.
+
+        The max number of events returned is 50k. The default number is 100,
+        callers can use the --max_events param to modify this value.
+
+        Finally, callers can skip a series of events using the --index_offset
+        parameter. Each response will contain the offset index of the last
+        entry. Using this callers can manually paginate within a time slice.
+        """
         request = ln.ForwardingHistoryRequest(start_time=start_time, **kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
