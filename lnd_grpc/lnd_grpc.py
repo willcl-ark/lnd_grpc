@@ -112,6 +112,14 @@ class Client:
     def lightning_address(pubkey, host):
         return ln.LightningAddress(pubkey=pubkey, host=host)
 
+    @staticmethod
+    def hex_to_bytes(hex_string: str):
+        return bytes.fromhex(hex_string)
+
+    @staticmethod
+    def bytes_to_hex(bytes: bytes):
+        return codecs.encode(bytes, 'hex')
+
     # Connection stubs will be generated dynamically for each request to ensure channel freshness
     @property
     def lightning_stub(self,
