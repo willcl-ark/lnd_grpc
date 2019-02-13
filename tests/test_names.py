@@ -1,7 +1,7 @@
 import inspect
 
-import lnd_grpc.rpc_pb2_grpc as pb2_grpc
-import lnd_grpc.lnd_grpc as py_rpc
+from lnd_grpc.protos import rpc_pb2_grpc as pb2_grpc
+from lnd_grpc import lnd_grpc as py_rpc
 
 
 class Attributes:
@@ -52,3 +52,7 @@ def test_names_appear():
             #    print(func, "found in pb2_grpc.WalletUnlockerServicer")
             # else:
             #    print("ERROR:", func, "NOT FOUND IN pb2_grpc")
+
+
+if __name__ == "__main__":
+    test_names_appear()
