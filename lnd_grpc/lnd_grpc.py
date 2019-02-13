@@ -4,7 +4,8 @@ from os import environ
 
 import grpc
 
-from . import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc, utilities as u
+from lnd_grpc import utilities as u
+from lnd_grpc.protos import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -196,11 +197,11 @@ class Client:
         response = self.lightning_stub.SendCoins(request)
         return response
 
-    # RPC not available in v0.5.1-beta
+    # Method not available in 0.5.2-beta proto file
     # def list_unspent(self, min_confs: int, max_confs: int):
-    #    request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
-    #    response = self.lightning_stub.ListUnspent(request)
-    #    return response
+    #     request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
+    #     response = self.lightning_stub.ListUnspent(request)
+    #     return response
 
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
@@ -333,29 +334,20 @@ class Client:
 
     @staticmethod
     def send_request_generator(**kwargs):
-        while True:
+        # i = 0
+         #while True:
             if kwargs['payment_request']:
                 request = ln.SendRequest(payment_request=kwargs['payment_request'])
             else:
                 request = ln.SendRequest(**kwargs)
             yield request
+        # i += 1
 
     # Bi-directional streaming RPC
     def send_payment(self, **kwargs):
-        """
-        Not implemented yet.
-        """
-        raise NotImplementedError("Asynchronous method send_payment() not implemented yet.\n"
-                                   "Use synchronous (blocking) send_payment_sync() method instead")
-        # if kwargs['payment_request']:
-        #     request_iterable = self.send_request_generator(
-        #             payment_request=kwargs['payment_request'])
-        # else:
-        #     kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
-        #     kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
-        #     request_iterable = self.send_request_generator(**kwargs)
-        # for response in self.lightning_stub.SendPayment(request_iterable):
-        #     print(response)
+        request_iterable = self.send_request_generator(**kwargs)
+        for response in self.lightning_stub.SendPayment(request_iterable):
+            print(response)
 
     def send_payment_sync(self, **kwargs):
         if kwargs['payment_request']:
@@ -368,32 +360,26 @@ class Client:
         return response
 
     def pay_invoice(self, payment_request: str):
-        # TODO: I think this should technically use non-blocking send_payment()
         response = self.send_payment_sync(payment_request=payment_request)
         return response
 
     @staticmethod
-    def send_to_route_generator(**kwargs):
-        while True:
-            request = ln.SendToRouteRequest(**kwargs)
-            yield request
+    def send_to_route_generator(invoices, route):
+        i = 0
+        j = len(invoices)
+        while i < j:
+            for invoice in invoices:
+                request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=route)
+                yield request
+                i += 1
 
-    def send_to_route(self):
-        """
-        Not implemented yet
-        """
-        raise NotImplementedError("Asynchronous method send_to_route() not implemented yet. \
-        Use synchronous (blocking) send_to_route_sync() method instead")
+    def send_to_route(self, invoices, route):
+        request_iterable = self.send_to_route_generator(invoices=invoices, route=route)
+        for response in self.lightning_stub.SendToRoute(request_iterable):
+            print(response)
 
-    def send_to_route_sync(self, payment_hash_string: str, routes: ln.Route):
-        """
-        SendToRouteSync is a synchronous version of SendToRoute.
-        It Will block until the payment either fails or succeeds.
-        """
-        _payment_hash = bytes.fromhex(payment_hash_string)
-        request = ln.SendToRouteRequest(payment_hash=_payment_hash,
-                                        payment_hash_string=payment_hash_string,
-                                        route=routes)
+    def send_to_route_sync(self, routes: ln.Route, **kwargs):
+        request = ln.SendToRouteRequest(routes=routes, **kwargs)
         response = self.lightning_stub.SendToRouteSync(request)
         return response
 
