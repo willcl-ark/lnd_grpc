@@ -1,5 +1,5 @@
 import lnd_grpc.lnd_grpc as py_rpc
-import lnd_grpc.rpc_pb2 as rpc_pb2
+import protos.rpc_pb2 as rpc_pb2
 
 # raise Exception("Comment me out if you know what you're doing and want to test this on mainnet")
 
@@ -71,15 +71,16 @@ def test_send_coins():
 def subscribe_transactions():
     response = rpc.subscribe_transactions()
     assert isinstance(response, rpc_pb2.Transaction)
-:test_init_wallet()
+
+
 def send_many():
     # TODO: add send_many test
     pass
 
 
 def test_new_address():
-    address1 = rpc.new_address(address_type=1)
-    address2 = rpc.new_address(address_type=2)
+    address1 = rpc.new_address(address_type='p2wkh')
+    address2 = rpc.new_address(address_type='np2wkh')
     assert isinstance(address1, rpc_pb2.NewAddressResponse)
     assert isinstance(address2, rpc_pb2.NewAddressResponse)
 
