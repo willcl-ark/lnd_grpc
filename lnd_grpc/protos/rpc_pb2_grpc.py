@@ -5,7 +5,28 @@ from lnd_grpc.protos import rpc_pb2 as lnd__grpc_dot_protos_dot_rpc__pb2
 
 
 class WalletUnlockerStub(object):
-  """The WalletUnlocker service is used to set up a wallet password for
+  """*
+  Comments in this file will be directly parsed into the API
+  Documentation as descriptions of the associated method, message, or field.
+  These descriptions should go right above the definition of the object, and
+  can be in either block or /// comment format.
+
+  One edge case exists where a // comment followed by a /// comment in the
+  next line will cause the description not to show up in the documentation. In
+  that instance, simply separate the two comments with a blank line.
+
+  An RPC method can be matched to an lncli command by placing a line in the
+  beginning of the description in exactly the following format:
+  lncli: `methodname`
+
+  Failure to specify the exact name of the command will cause documentation
+  generation to fail.
+
+  More information on how exactly the gRPC documentation is generated from
+  this proto file can be found here:
+  https://github.com/lightninglabs/lightning-api
+
+  The WalletUnlocker service is used to set up a wallet password for
   lnd at first startup, and unlock a previously set up wallet.
   """
 
@@ -38,7 +59,28 @@ class WalletUnlockerStub(object):
 
 
 class WalletUnlockerServicer(object):
-  """The WalletUnlocker service is used to set up a wallet password for
+  """*
+  Comments in this file will be directly parsed into the API
+  Documentation as descriptions of the associated method, message, or field.
+  These descriptions should go right above the definition of the object, and
+  can be in either block or /// comment format.
+
+  One edge case exists where a // comment followed by a /// comment in the
+  next line will cause the description not to show up in the documentation. In
+  that instance, simply separate the two comments with a blank line.
+
+  An RPC method can be matched to an lncli command by placing a line in the
+  beginning of the description in exactly the following format:
+  lncli: `methodname`
+
+  Failure to specify the exact name of the command will cause documentation
+  generation to fail.
+
+  More information on how exactly the gRPC documentation is generated from
+  this proto file can be found here:
+  https://github.com/lightninglabs/lightning-api
+
+  The WalletUnlocker service is used to set up a wallet password for
   lnd at first startup, and unlock a previously set up wallet.
   """
 
@@ -58,7 +100,7 @@ class WalletUnlockerServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def InitWallet(self, request, context):
-    """* 
+    """*
     InitWallet is used when lnd is starting up for the first time to fully
     initialize the daemon and its internal wallet. At the very least a wallet
     password must be provided. This will be used to encrypt sensitive material
@@ -153,6 +195,11 @@ class LightningStub(object):
         request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.SerializeToString,
         response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.FromString,
         )
+    self.ListUnspent = channel.unary_unary(
+        '/lnrpc.Lightning/ListUnspent',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.FromString,
+        )
     self.SubscribeTransactions = channel.unary_stream(
         '/lnrpc.Lightning/SubscribeTransactions',
         request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.SerializeToString,
@@ -207,6 +254,11 @@ class LightningStub(object):
         '/lnrpc.Lightning/ListChannels',
         request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.SerializeToString,
         response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.FromString,
+        )
+    self.SubscribeChannelEvents = channel.unary_stream(
+        '/lnrpc.Lightning/SubscribeChannelEvents',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.FromString,
         )
     self.ClosedChannels = channel.unary_unary(
         '/lnrpc.Lightning/ClosedChannels',
@@ -353,7 +405,7 @@ class LightningServicer(object):
     """* lncli: `walletbalance`
     WalletBalance returns total unspent outputs(confirmed and unconfirmed), all
     confirmed unspent outputs and all unconfirmed unspent outputs under control
-    of the wallet. 
+    of the wallet.
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
@@ -384,6 +436,15 @@ class LightningServicer(object):
     neither target_conf, or sat_per_byte are set, then the internal wallet will
     consult its fee model to determine a fee for the default confirmation
     target.
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def ListUnspent(self, request, context):
+    """* lncli: `listunspent`
+    ListUnspent returns a list of all utxos spendable by the wallet with a
+    number of confirmations between the specified minimum and maximum.
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
@@ -499,9 +560,20 @@ class LightningServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def SubscribeChannelEvents(self, request, context):
+    """* lncli: `subscribechannelevents`
+    SubscribeChannelEvents creates a uni-directional stream from the server to
+    the client in which any updates relevant to the state of the channels are
+    sent over. Events include new active channels, inactive channels, and closed
+    channels.
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
   def ClosedChannels(self, request, context):
     """* lncli: `closedchannels`
-    ClosedChannels returns a description of all the closed channels that 
+    ClosedChannels returns a description of all the closed channels that
     this node was a participant in.
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -615,10 +687,8 @@ class LightningServicer(object):
     paginated responses, allowing users to query for specific invoices through
     their add_index. This can be done by using either the first_index_offset or
     last_index_offset fields included in the response as the index_offset of the
-    next request. The reversed flag is set by default in order to paginate
-    backwards. If you wish to paginate forwards, you must explicitly set the
-    flag to false. If none of the parameters are specified, then the last 100
-    invoices will be returned.
+    next request. By default, the first 100 invoices created will be returned.
+    Backwards pagination is also supported through the Reversed flag.
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
@@ -821,6 +891,11 @@ def add_LightningServicer_to_server(servicer, server):
           request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.FromString,
           response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.SerializeToString,
       ),
+      'ListUnspent': grpc.unary_unary_rpc_method_handler(
+          servicer.ListUnspent,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.SerializeToString,
+      ),
       'SubscribeTransactions': grpc.unary_stream_rpc_method_handler(
           servicer.SubscribeTransactions,
           request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.FromString,
@@ -875,6 +950,11 @@ def add_LightningServicer_to_server(servicer, server):
           servicer.ListChannels,
           request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.FromString,
           response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.SerializeToString,
+      ),
+      'SubscribeChannelEvents': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeChannelEvents,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.SerializeToString,
       ),
       'ClosedChannels': grpc.unary_unary_rpc_method_handler(
           servicer.ClosedChannels,
