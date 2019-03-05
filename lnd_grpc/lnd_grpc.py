@@ -279,33 +279,17 @@ class Client:
         response = self.lightning_stub.ClosedChannels(request)
         return response.channels
 
-    def open_channel_sync(self,
-                          node_pubkey_string: str,
-                          local_funding_amount: int,
-                          **kwargs):
-        """
-        A synchronous (blocking) version of the 'open_channel()' command
-        """
-        request = ln.OpenChannelRequest(
-                node_pubkey_string=node_pubkey_string,
-                local_funding_amount=local_funding_amount,
-                **kwargs)
-        if not hasattr(request, 'node_pubkey'):
-            request.node_pubkey = bytes.fromhex(node_pubkey_string)
+    def open_channel_sync(self, local_funding_amount: int, **kwargs):
+        request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
-    def open_channel(self,
-                     node_pubkey_string: str,
-                     local_funding_amount: int,
-                     **kwargs):
-        # TODO: mirror `lncli openchannel --connect` function
-        request = ln.OpenChannelRequest(
-                node_pubkey_string=node_pubkey_string,
-                local_funding_amount=local_funding_amount,
-                **kwargs)
+    # Response-streaming RPC
+    def open_channel(self, local_funding_amount: int, **kwargs):
+        # TODO: implement `lncli openchannel --connect` function
+        request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
         if request.node_pubkey == b'':
-            request.node_pubkey = bytes.fromhex(node_pubkey_string)
+            request.node_pubkey = bytes.fromhex(request.node_pubkey_string)
         for response in self.lightning_stub.OpenChannel(request):
             print(response)
 
