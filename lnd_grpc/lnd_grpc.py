@@ -197,11 +197,10 @@ class Client:
         response = self.lightning_stub.SendCoins(request)
         return response
 
-    # Method not available in 0.5.2-beta proto file
-    # def list_unspent(self, min_confs: int, max_confs: int):
-    #     request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
-    #     response = self.lightning_stub.ListUnspent(request)
-    #     return response
+    def list_unspent(self, min_confs: int, max_confs: int):
+        request = ln.ListUnspentRequest(min_confs=min_confs, max_confs=max_confs)
+        response = self.lightning_stub.ListUnspent(request)
+        return response
 
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
