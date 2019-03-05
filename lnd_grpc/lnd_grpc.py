@@ -320,28 +320,37 @@ class Client:
 
     @staticmethod
     def send_request_generator(**kwargs):
-        # i = 0
-         #while True:
-            if kwargs['payment_request']:
-                request = ln.SendRequest(payment_request=kwargs['payment_request'])
-            else:
-                request = ln.SendRequest(**kwargs)
+        while True:
+            request = ln.SendRequest(**kwargs)
             yield request
-        # i += 1
+            break
 
     # Bi-directional streaming RPC
     def send_payment(self, **kwargs):
-        request_iterable = self.send_request_generator(**kwargs)
+        # Use payment request as first choice
+        if 'payment_request' in kwargs:
+            request_iterable = self.send_request_generator(
+                    payment_request=kwargs['payment_request']
+            )
+        else:
+            # Helper to try and convert hex to bytes automatically
+            try:
+                if 'payment_hash' not in kwargs:
+                    kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
+                if 'dest' not in kwargs:
+                    kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
+            except ValueError as e:
+                raise e
+            request_iterable = self.send_request_generator(**kwargs)
         for response in self.lightning_stub.SendPayment(request_iterable):
             print(response)
 
     # Synchronous non-streaming RPC
     def send_payment_sync(self, **kwargs):
-        if kwargs['payment_request']:
+        # Use payment request as first choice
+        if 'payment_request' in kwargs:
             request = ln.SendRequest(payment_request=kwargs['payment_request'])
         else:
-            kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
-            kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
             request = ln.SendRequest(**kwargs)
         response = self.lightning_stub.SendPaymentSync(request)
         return response
