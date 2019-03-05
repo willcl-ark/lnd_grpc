@@ -335,6 +335,7 @@ class Client:
         for response in self.lightning_stub.SendPayment(request_iterable):
             print(response)
 
+    # Synchronous non-streaming RPC
     def send_payment_sync(self, **kwargs):
         if kwargs['payment_request']:
             request = ln.SendRequest(payment_request=kwargs['payment_request'])
@@ -359,11 +360,13 @@ class Client:
                 yield request
                 i += 1
 
+    # Bi-directional streaming RPC
     def send_to_route(self, invoices, route):
         request_iterable = self.send_to_route_generator(invoices=invoices, route=route)
         for response in self.lightning_stub.SendToRoute(request_iterable):
             print(response)
 
+    # Synchronous non-streaming RPC
     def send_to_route_sync(self, routes: ln.Route, **kwargs):
         request = ln.SendToRouteRequest(routes=routes, **kwargs)
         response = self.lightning_stub.SendToRouteSync(request)
