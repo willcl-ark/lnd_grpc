@@ -432,6 +432,12 @@ class Client:
         response = self.lightning_stub.GetChanInfo(request)
         return response
 
+    # Uni-directional stream
+    def subscribe_channel_events(self, **kwargs):
+        request = ln.ChannelEventSubscription(**kwargs)
+        for response in self.lightning_stub.SubscribeChannelEvents(request):
+            print(response)
+
     def get_node_info(self, pub_key: str):
         request = ln.NodeInfoRequest(pub_key=pub_key)
         response = self.lightning_stub.GetNodeInfo(request)
