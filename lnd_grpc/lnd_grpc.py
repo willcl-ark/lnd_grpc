@@ -1,7 +1,7 @@
 import codecs
 import sys
-from os import environ
 import time
+from os import environ
 
 import grpc
 
