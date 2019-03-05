@@ -86,5 +86,3 @@ Further RPC commands can then be issued to the lnd gRPC interface using the foll
 
 Valid gRPC commands and their keyword arguments can be found [here](https://api.lightning.community/?python#lnd-grpc-api-reference)
  
-### Additional Notes
-This library will handle gRPC errors for functions decorated with @handle_error and will also alert for invalid/missing tls cert and macaroon.
