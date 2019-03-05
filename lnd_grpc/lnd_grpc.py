@@ -222,7 +222,7 @@ class Client:
         elif address_type == 'np2wkh':
             request = ln.NewAddressRequest(type='NESTED_PUBKEY_HASH')
         else:
-            return TypeError("invalid address type %s, supported address type are: p2wkh and np2wkh" \
+            return TypeError("invalid address type %s, supported address type are: p2wkh and np2wkh"
                              % address_type)
         response = self.lightning_stub.NewAddress(request)
         return response
@@ -360,18 +360,16 @@ class Client:
         return response
 
     @staticmethod
-    def send_to_route_generator(invoices, route):
+    def send_to_route_generator(invoice, route):
         i = 0
-        j = len(invoices)
-        while i < j:
-            for invoice in invoices:
-                request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=route)
-                yield request
-                i += 1
+        while i < 1:
+            request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=route)
+            yield request
+            i += 1
 
     # Bi-directional streaming RPC
-    def send_to_route(self, invoices, route):
-        request_iterable = self.send_to_route_generator(invoices=invoices, route=route)
+    def send_to_route(self, invoice, route):
+        request_iterable = self.send_to_route_generator(invoice=invoice, route=route)
         for response in self.lightning_stub.SendToRoute(request_iterable):
             print(response)
 
