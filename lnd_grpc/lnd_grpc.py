@@ -118,10 +118,13 @@ class Client:
         return bytes.fromhex(hex_string)
 
     @staticmethod
-    def bytes_to_hex(bytes: bytes):
-        return codecs.encode(bytes, 'hex')
+    def bytes_to_hex(bytestring: bytes):
+        return bytestring.hex()
 
     # Connection stubs will be generated dynamically for each request to ensure channel freshness
+    # This can slow down interfacing programs considerably. Performance can be increased by
+    # configuring a static lightning stub to use. This can be done simply by removing the property
+    # decorator from the stub class below.
     @property
     def lightning_stub(self,
                        cert_path: str = None,
@@ -207,7 +210,6 @@ class Client:
         for response in self.lightning_stub.SubscribeTransactions(request):
             return response
 
-    # TODO: check this more. It works with regular python dicts so I think it's ok
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         request = ln.SendManyRequest(AddrToAmount=addr_to_amount, **kwargs)
         response = self.lightning_stub.SendMany(request)
