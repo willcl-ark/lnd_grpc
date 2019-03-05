@@ -35,7 +35,7 @@ def test_async_payments():
     print("Starting test...")
 
     # set payment amount and cycles
-    invoice_value = 1500
+    invoice_value = 1000
     invoice_frequency = 100
     channel_tx_fee = 9050
 
@@ -173,7 +173,7 @@ def test_async_payments():
 
     # Alice pays the invoices
     print("Alice starting payment of Bob's invoices")
-    alice.send_payment(invoices=invoices)
+    alice.send_payment_sync(invoices=invoices)
     print("Complete")
 
     print("...sleeping...")

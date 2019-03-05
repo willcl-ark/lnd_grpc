@@ -222,8 +222,8 @@ class Client:
         elif address_type == 'np2wkh':
             request = ln.NewAddressRequest(type='NESTED_PUBKEY_HASH')
         else:
-            return TypeError("invalid address type %s, supported address type are: p2wkh and np2wkh" \
-                             % address_type)
+            return TypeError("invalid address type %s, supported address type are: p2wkh and"
+                             "np2wkh" % address_type)
         response = self.lightning_stub.NewAddress(request)
         return response
 
