@@ -46,9 +46,9 @@ Create an instance of the client class:
 
 `rpc = lnd_grpc.Client()`
 
-Note: The class is instantiated to work with default bitcoind rpc port and lnd in default installation path unless additional arguments are passed.
+Note: The class is instantiated to work with default bitcoind rpc port and lnd in default installation directory, on mainnet, unless additional arguments are passed.
 
-The class instantiation takes the the following arguments which you can change as required by your bitcoin node setup:
+The class instantiation takes the the following arguments which you can change as required:
 
 ```
     (
