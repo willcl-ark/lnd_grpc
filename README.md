@@ -2,7 +2,7 @@
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-This version of the library has been compiled with rpc.proto from the v0.5.1-beta tag on github
+This version of the library has been compiled with rpc.proto from the v0.5.2-beta tag on github
 
 ## Install requires:
 * `grpcio`
