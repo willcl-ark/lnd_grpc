@@ -206,6 +206,7 @@ class Client:
         response = self.lightning_stub.ListUnspent(request)
         return response
 
+    # Response-streaming RPC
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
         for response in self.lightning_stub.SubscribeTransactions(request):
@@ -464,6 +465,7 @@ class Client:
         response = self.lightning_stub.StopDaemon(request)
         return response
 
+    # Response-streaming RPC
     def subscribe_channel_graph(self):
         request = ln.GraphTopologySubscription()
         for response in self.lightning_stub.SubscribeChannelGraph(request):
