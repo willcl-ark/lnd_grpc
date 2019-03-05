@@ -302,12 +302,12 @@ class Client:
         return response
 
     def close_all_channels(self, inactive_only: bool = 0):
-        if inactive_only == False:
+        if not inactive_only:
             for channel in self.list_channels():
-                self.close_channel(channel_point=channel.channel_point)
-        if inactive_only == True:
+                return self.close_channel(channel_point=channel.channel_point)
+        if inactive_only:
             for channel in self.list_channels(inactive_only=1):
-                self.close_channel(channel_point=channel.channel_point)
+                return self.close_channel(channel_point=channel.channel_point)
 
     def abandon_channel(self, channel_point: ln.ChannelPoint):
         funding_txid, output_index = channel_point.split(':')
