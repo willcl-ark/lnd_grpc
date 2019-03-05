@@ -1,6 +1,7 @@
 import codecs
 import sys
 from os import environ
+import time
 
 import grpc
 
@@ -368,8 +369,14 @@ class Client:
         response = self.lightning_stub.SendToRouteSync(request)
         return response
 
-    def add_invoice(self, value: int = 0, **kwargs):
-        request = ln.Invoice(value=value, **kwargs)
+    def add_invoice(self,
+                    memo: str = '',
+                    value: int = 0,
+                    expiry: int = 3600,
+                    creation_date: int = int(time.time()),
+                    **kwargs):
+        request = ln.Invoice(memo=memo, value=value, expiry=expiry,
+                             creation_date=creation_date, **kwargs)
         response = self.lightning_stub.AddInvoice(request)
         return response
 
@@ -386,7 +393,7 @@ class Client:
     def subscribe_invoices(self, **kwargs):
         request = ln.InvoiceSubscription(**kwargs)
         for response in self.lightning_stub.SubscribeInvoices(request):
-            return response
+            print(response)
 
     def decode_pay_req(self, pay_req: str):
         request = ln.PayReqString(pay_req=pay_req)
@@ -444,7 +451,7 @@ class Client:
     def subscribe_channel_graph(self):
         request = ln.GraphTopologySubscription()
         for response in self.lightning_stub.SubscribeChannelGraph(request):
-            return response
+            print(response)
 
     def debug_level(self, **kwargs):
         request = ln.DebugLevelRequest(**kwargs)
@@ -462,7 +469,7 @@ class Client:
             _channel_point = self.channel_point_generator(funding_txid=funding_txid,
                                                           output_index=output_index)
             kwargs['chan_point'] = _channel_point
-        if not 'global' in kwargs:
+        if 'global' not in kwargs:
             kwargs['global'] = 1
         request = ln.PolicyUpdateRequest(**kwargs)
         response = self.lightning_stub.UpdateChannelPolicy(request)
