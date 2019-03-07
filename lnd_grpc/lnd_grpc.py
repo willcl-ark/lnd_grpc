@@ -30,6 +30,7 @@ class Client:
         self.auth_creds = None
         self.combined_creds = None
         self.channel = None
+        self.version = None
         self.grpc_options = [
             ('grpc.max_receive_message_length', 33554432),
             ('grpc.max_send_message_length', 33554432),
@@ -105,6 +106,18 @@ class Client:
     def grpc_address(self):
         self._address = str(self.grpc_host + ':' + self.grpc_port)
         return self._address
+
+    @property
+    def version(self):
+        if self._version:
+            return self._version
+        else:
+            self._version = self.get_info().version.split(" ")[0]
+            return self._version
+
+    @version.setter
+    def version(self, version: str):
+        self._version = version
 
     @staticmethod
     def channel_point_generator(funding_txid, output_index):
