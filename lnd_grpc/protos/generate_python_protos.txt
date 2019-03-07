@@ -7,7 +7,8 @@ For when the project is cloned from source (github), the process is as follows:
 1) Either, you can manually download the appropriate rpc.proto file from:
    https://raw.githubusercontent.com/lightningnetwork/lnd/v{lnd_version}/lnrpc/rpc.proto
 
-   Alternatively you can use the included 'download_proto_file.py' script. Run using:
+   Alternatively you can use the included 'download_proto_file.py' script. Make sure your current working
+   directory is inside /lnd_grpc/protos/ and then run using:
    > python download_proto_file.py
 
    Note:
