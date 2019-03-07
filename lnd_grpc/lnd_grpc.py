@@ -17,12 +17,14 @@ class Client:
     def __init__(self,
                  lnd_dir: str = None,
                  macaroon_path: str = None,
+                 tls_cert_path: str = None,
                  network: str = 'mainnet',
                  grpc_host: str = 'localhost',
                  grpc_port: str = '10009'):
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
+        self.tls_cert_path = tls_cert_path
         self.network = network
         self.grpc_host = grpc_host
         self.grpc_port = grpc_port
@@ -49,7 +51,8 @@ class Client:
 
     @property
     def tls_cert_path(self):
-        self._tls_cert_path = self.lnd_dir + 'tls.cert'
+        if self._tls_cert_path is None:
+            self._tls_cert_path = self.lnd_dir + 'tls.cert'
         return self._tls_cert_path
 
     @tls_cert_path.setter
