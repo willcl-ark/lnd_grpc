@@ -67,7 +67,7 @@ class Client:
             assert self._tls_cert_key.startswith(b'-----BEGIN CERTIFICATE-----')
             return self._tls_cert_key
         except (AssertionError, AttributeError):
-            sys.stderr.write("TLS cert at %s did not start with b'-----BEGIN CERTIFICATE-----')" \
+            sys.stderr.write("TLS cert at %s did not start with b'-----BEGIN CERTIFICATE-----')"
                              % self.tls_cert_path)
 
     @property
@@ -206,9 +206,8 @@ class Client:
         response = self.lightning_stub.GetTransactions(request)
         return response
 
-    # TODO: add listchaintxs() a-la lncli
-
     # On Chain
+    # TODO: remove the amount here in v0.5.3-beta if the 'send_all' bool makes it into the release
     def send_coins(self, addr: str, amount: int, **kwargs):
         request = ln.SendCoinsRequest(addr=addr, amount=amount, **kwargs)
         response = self.lightning_stub.SendCoins(request)
