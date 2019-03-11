@@ -92,7 +92,10 @@ class Client:
                 self._macaroon = codecs.encode(macaroon_bytes, 'hex')
                 return self._macaroon
         except FileNotFoundError:
-            sys.stderr.write("Could not find macaroon in %s\n" % self.macaroon_path)
+            sys.stderr.write(f"Could not find macaroon in {self.macaroon_path}. This might happen"
+                             f"in versions of lnd < v0.5-beta or those not using default"
+                             f"installation path. Set client object's macaroon_path attribute"
+                             f"manually.")
 
     def metadata_callback(self, context, callback):
         callback([('macaroon', self.macaroon)], None)
