@@ -144,7 +144,6 @@ class Client:
                        cert_path: str = None,
                        macaroon_path: str = None):
 
-        # set options
         if cert_path is not None:
             self.tls_cert_path = cert_path
         if macaroon_path is not None:
