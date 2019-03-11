@@ -135,10 +135,6 @@ class Client:
     def bytes_to_hex(bytestring: bytes):
         return bytestring.hex()
 
-    # Connection stubs will be generated dynamically for each request to ensure channel freshness
-    # This can slow down interfacing programs considerably. Performance can be increased by
-    # configuring a static lightning stub to use. This can be done simply by removing the property
-    # decorator from the stub class below.
     @property
     def lightning_stub(self,
                        cert_path: str = None,

@@ -86,3 +86,8 @@ Further RPC commands can then be issued to the lnd gRPC interface using the foll
 
 Valid gRPC commands and their keyword arguments can be found [here](https://api.lightning.community/?python#lnd-grpc-api-reference)
  
+Connection stubs will be generated dynamically for each request to ensure channel freshness
+This can slow down interfacing programs considerably. Performance can be increased by
+configuring a static lightning stub to use. This can be done simply by removing the property
+decorator from the stub class below and adding
+'self.lightning_stub = self.set_lightning_stub()' to the __init__() method. 
