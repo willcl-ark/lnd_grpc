@@ -36,7 +36,16 @@ class Attributes:
                         'ConnectMacaroon',
                         'Initialize',
                         'MetadataCallback',
-                        'PaymentRequestGenerator']
+                        'PaymentRequestGenerator',
+                        'SendToRouteGenerator',
+                        'SendRequestGenerator',
+                        'HexToBytes',
+                        'LightningAddress',
+                        'PayInvoice',
+                        'Connect',
+                        'ChannelPointGenerator',
+                        'CloseAllChannels',
+                        'BytesToHex']
 
 
 # test to see if functions still appear in the grpc protocol
@@ -45,13 +54,9 @@ def test_names_appear():
     for func in a.lnd_grpc_names:
         if func not in a.exclude:
             if func in a.lightning_servicer_names or func in a.wallet_unlocker_names:
-                print(func, "OK!")
-            # if func in lightning_servicer_names:
-            #    print(func, "found in pb2_grpc.LightningServicer")
-            # elif func in wallet_unlocker_names:
-            #    print(func, "found in pb2_grpc.WalletUnlockerServicer")
-            # else:
-            #    print("ERROR:", func, "NOT FOUND IN pb2_grpc")
+                print(f"{func} OK!")
+            else:
+                print(f"ERROR: {func} NOT FOUND IN pb2_grpc")
 
 
 if __name__ == "__main__":
