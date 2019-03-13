@@ -1,0 +1,6 @@
+git+git://github.com/petertodd/python-bitcoinlib.git#egg=python_bitcoinlib-0.10.2.dev0-py3.7.egg
+googleapis-common-protos>=1.5.8
+grpcio>=1.19.0
+grpcio-tools>=1.19.0
+protobuf>=3.7.0
+lnd-grpc>=0.2.5
