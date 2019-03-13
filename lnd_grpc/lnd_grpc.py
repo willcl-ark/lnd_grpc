@@ -334,10 +334,13 @@ class Client:
 
     @staticmethod
     def send_request_generator(**kwargs):
-        while True:
+        # Commented out to complement the magic sleep below...
+        # while True:
             request = ln.SendRequest(**kwargs)
             yield request
-            break
+        # Magic sleep which tricks the response to the send_payment() method to actually
+        # contain data...
+        time.sleep(5)
 
     # Bi-directional streaming RPC
     def send_payment(self, **kwargs):
@@ -347,7 +350,7 @@ class Client:
                     payment_request=kwargs['payment_request']
             )
         else:
-            # Helper to try and convert hex to bytes automatically
+            # Helper to convert hex to bytes automatically
             try:
                 if 'payment_hash' not in kwargs:
                     kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
