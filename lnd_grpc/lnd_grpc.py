@@ -336,9 +336,9 @@ class Client:
         # while True:
             request = ln.SendRequest(**kwargs)
             yield request
-        # Magic sleep which tricks the response to the send_payment() method to actually
-        # contain data...
-        time.sleep(5)
+            # Magic sleep which tricks the response to the send_payment() method to actually
+            # contain data...
+            time.sleep(5)
 
     # Bi-directional streaming RPC
     def send_payment(self, **kwargs):
