@@ -264,8 +264,8 @@ class Client:
         response = self.connect_peer(addr=_address, perm=perm)
         return response
 
-    def disconnect_peer(self, pubkey: str):
-        request = ln.DisconnectPeerRequest(pubkey=pubkey)
+    def disconnect_peer(self, pub_key: str):
+        request = ln.DisconnectPeerRequest(pub_key=pub_key)
         response = self.lightning_stub.DisconnectPeer(request)
         return response
 
