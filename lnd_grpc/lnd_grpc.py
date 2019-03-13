@@ -222,8 +222,7 @@ class Client:
     # Response-streaming RPC
     def subscribe_transactions(self):
         request = ln.GetTransactionsRequest()
-        for response in self.lightning_stub.SubscribeTransactions(request):
-            return response
+        return self.lightning_stub.SubscribeTransactions(request)
 
     def send_many(self, addr_to_amount: ln.SendManyRequest.AddrToAmountEntry, **kwargs):
         request = ln.SendManyRequest(AddrToAmount=addr_to_amount, **kwargs)
@@ -305,8 +304,7 @@ class Client:
         request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
         if request.node_pubkey == b'':
             request.node_pubkey = bytes.fromhex(request.node_pubkey_string)
-        for response in self.lightning_stub.OpenChannel(request):
-            print(response)
+        return self.lightning_stub.OpenChannel(request)
 
     def close_channel(self, channel_point, **kwargs):
         funding_txid, output_index = channel_point.split(':')
@@ -359,8 +357,7 @@ class Client:
             except ValueError as e:
                 raise e
             request_iterable = self.send_request_generator(**kwargs)
-        for response in self.lightning_stub.SendPayment(request_iterable):
-            print(response)
+        return self.lightning_stub.SendPayment(request_iterable)
 
     # Synchronous non-streaming RPC
     def send_payment_sync(self, **kwargs):
@@ -387,8 +384,7 @@ class Client:
     # Bi-directional streaming RPC
     def send_to_route(self, invoice, route):
         request_iterable = self.send_to_route_generator(invoice=invoice, route=route)
-        for response in self.lightning_stub.SendToRoute(request_iterable):
-            print(response)
+        return self.lightning_stub.SendToRoute(request_iterable)
 
     # Synchronous non-streaming RPC
     def send_to_route_sync(self, routes: ln.Route, **kwargs):
@@ -419,8 +415,7 @@ class Client:
 
     def subscribe_invoices(self, **kwargs):
         request = ln.InvoiceSubscription(**kwargs)
-        for response in self.lightning_stub.SubscribeInvoices(request):
-            print(response)
+        return self.lightning_stub.SubscribeInvoices(request)
 
     def decode_pay_req(self, pay_req: str):
         request = ln.PayReqString(pay_req=pay_req)
@@ -450,8 +445,7 @@ class Client:
     # Uni-directional stream
     def subscribe_channel_events(self, **kwargs):
         request = ln.ChannelEventSubscription(**kwargs)
-        for response in self.lightning_stub.SubscribeChannelEvents(request):
-            print(response)
+        return self.lightning_stub.SubscribeChannelEvents(request)
 
     def get_node_info(self, pub_key: str):
         request = ln.NodeInfoRequest(pub_key=pub_key)
@@ -484,8 +478,7 @@ class Client:
     # Response-streaming RPC
     def subscribe_channel_graph(self):
         request = ln.GraphTopologySubscription()
-        for response in self.lightning_stub.SubscribeChannelGraph(request):
-            print(response)
+        return self.lightning_stub.SubscribeChannelGraph(request)
 
     def debug_level(self, **kwargs):
         request = ln.DebugLevelRequest(**kwargs)
