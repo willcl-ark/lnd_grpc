@@ -1,4 +1,5 @@
 import inspect
+import unittest
 
 from lnd_grpc.protos import rpc_pb2_grpc as pb2_grpc
 from lnd_grpc import lnd_grpc as py_rpc
@@ -48,16 +49,15 @@ class Attributes:
                         'BytesToHex']
 
 
-# test to see if functions still appear in the grpc protocol
-def test_names_appear():
-    a = Attributes()
-    for func in a.lnd_grpc_names:
-        if func not in a.exclude:
-            if func in a.lightning_servicer_names or func in a.wallet_unlocker_names:
-                print(f"{func} OK!")
-            else:
-                print(f"ERROR: {func} NOT FOUND IN pb2_grpc")
+class NameTest(unittest.TestCase):
+
+    # test to see if functions still appear in the grpc protocol
+    def test_names_appear(self):
+        a = Attributes()
+        for func in a.lnd_grpc_names:
+            if func not in a.exclude:
+                self.assertTrue(func in a.lightning_servicer_names or a.wallet_unlocker_names)
 
 
 if __name__ == "__main__":
-    test_names_appear()
+    unittest.main()
