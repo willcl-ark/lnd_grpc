@@ -63,7 +63,8 @@ class Client:
     @property
     def tls_cert_key(self):
         try:
-            self._tls_cert_key = open(self.tls_cert_path, 'rb').read()
+            with open(self.tls_cert_path, 'rb') as r:
+                self._tls_cert_key = r.read()
         except FileNotFoundError:
             sys.stderr.write("TLS cert not found at %s" % self.tls_cert_path)
         try:
