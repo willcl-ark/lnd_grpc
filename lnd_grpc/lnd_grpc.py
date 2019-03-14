@@ -307,21 +307,21 @@ class Client:
             request.node_pubkey = bytes.fromhex(request.node_pubkey_string)
         return self.lightning_stub.OpenChannel(request)
 
+    # Response-streaming RPC
     def close_channel(self, channel_point, **kwargs):
         funding_txid, output_index = channel_point.split(':')
         _channel_point = self.channel_point_generator(funding_txid=funding_txid,
                                                       output_index=output_index)
         request = ln.CloseChannelRequest(channel_point=_channel_point, **kwargs)
-        response = self.lightning_stub.CloseChannel(request)
-        return response
+        return self.lightning_stub.CloseChannel(request)
 
     def close_all_channels(self, inactive_only: bool = 0):
         if not inactive_only:
             for channel in self.list_channels():
-                return self.close_channel(channel_point=channel.channel_point)
+                self.close_channel(channel_point=channel.channel_point).next()
         if inactive_only:
             for channel in self.list_channels(inactive_only=1):
-                return self.close_channel(channel_point=channel.channel_point)
+                self.close_channel(channel_point=channel.channel_point).next()
 
     def abandon_channel(self, channel_point: ln.ChannelPoint):
         funding_txid, output_index = channel_point.split(':')

@@ -92,3 +92,5 @@ This can slow down interfacing programs considerably. Performance can be increas
 configuring a static lightning stub to use. This can be done simply by removing the property
 decorator from the stub class below and adding
 'self.lightning_stub = self.set_lightning_stub()' to the __init__() method. 
+
+Response-streaming RPCs now return the python iterators to be operated on.
