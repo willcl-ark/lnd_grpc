@@ -415,4 +415,81 @@ class TestLightningStubResponses(unittest.TestCase):
                               rpc_pb2.ChannelEdge)
 
     def test_subscribe_channel_events(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+        results = []
+
+        subscription = self.alice.subscribe_channel_events()
+        self.assertIsInstance(subscription, grpc._channel._Rendezvous)
+
+        self.alice.open_channel_sync(local_funding_amount=500_000,
+                                     node_pubkey_string=self.bob.pub_key)
+        self.bitcoin_rpc.generatetoaddress(3, BITCOIN_ADDR)
+        time.sleep(SLEEP_TIME)
+        results.append(subscription.next())
+        self.assertGreater(len(results), 0)
+
+    def test_get_node_info(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+
+        self.assertIsInstance(self.alice.get_node_info(pub_key=self.bob.pub_key),
+                              rpc_pb2.NodeInfo)
+
+    def test_query_routes(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+
+        self.assertIsInstance(self.alice.query_routes(pub_key=self.bob.pub_key,
+                                                      amt=10000,
+                                                      num_routes=1),
+                              rpc_pb2.QueryRoutesResponse)
+
+    def test_network_info(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+
+        self.assertIsInstance(self.alice.get_network_info(), rpc_pb2.NetworkInfo)
+
+    def test_stop_daemon(self):
         pass
+
+    def test_subscribe_channel_graph(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+        results = []
+
+        subscription = self.alice.subscribe_channel_graph()
+        self.assertIsInstance(subscription, grpc._channel._Rendezvous)
+
+    def test_debug_level(self):
+        self.assertIsInstance(self.alice.debug_level(level_spec='off'),
+                              rpc_pb2.DebugLevelResponse)
+
+    def test_fee_report(self):
+        self.assertIsInstance(self.alice.fee_report(), rpc_pb2.FeeReportResponse)
+
+    def test_update_channel_policy(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+
+        # testing global policy setting
+        self.assertIsInstance(self.alice.update_channel_policy(base_fee_msat=1000,
+                                                               fee_rate=1,
+                                                               time_lock_delta=144),
+                              rpc_pb2.PolicyUpdateResponse)
+
+        # test single channel
+        channel_point = self.alice.list_channels()[0].channel_point
+        self.assertIsInstance(self.alice.update_channel_policy(base_fee_msat=1000,
+                                                               fee_rate=1,
+                                                               time_lock_delta=144,
+                                                               chan_point=channel_point),
+                              rpc_pb2.PolicyUpdateResponse)
+
+    def test_forwarding_history(self):
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, BITCOIN_ADDR)
+
+        self.assertIsInstance(self.alice.forwarding_history(),
+                              rpc_pb2.ForwardingHistoryResponse)
