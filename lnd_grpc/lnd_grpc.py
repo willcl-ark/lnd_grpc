@@ -503,7 +503,7 @@ class Client:
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
-    def forwarding_history(self, start_time: int, **kwargs):
-        request = ln.ForwardingHistoryRequest(start_time=start_time, **kwargs)
+    def forwarding_history(self, **kwargs):
+        request = ln.ForwardingHistoryRequest(**kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
