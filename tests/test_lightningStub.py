@@ -36,6 +36,7 @@ BITCOIN_SERVICE_PORT = 18443
 BITCOIN_CONF_FILE = '/Users/will/regtest/.bitcoin/bitcoin.conf'
 
 DEBUG_LEVEL = 'error'
+SLEEP_TIME = 0.25
 
 
 def initialise_clients():
@@ -73,23 +74,25 @@ def ensure_peer_connected(alice, bob):
 
 def ensure_channel_open(alice, bob, bitcoin_rpc, address):
     if len(alice.list_channels()) == 0:
-        alice.open_channel_sync(local_funding_amount=500_000,
+        alice.open_channel_sync(local_funding_amount=1_000_000,
+                                push_amt=500_000,
                                 node_pubkey_string=bob.pub_key)
     bitcoin_rpc.generatetoaddress(3, address)
+    time.sleep(SLEEP_TIME)
     assert (len(alice.list_channels()) > 0)
 
 
 def disconnect_all_peers(alice):
     for peer in alice.list_peers():
         alice.disconnect_peer(pub_key=peer.pub_key)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
     assert (0 == len(alice.list_peers()))
 
 
 def close_all_channels(peer):
     if len(peer.list_channels()) > 0:
         peer.close_all_channels()
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
     assert (0 == len(peer.list_channels()))
 
 
@@ -175,17 +178,17 @@ class TestLightningStubResponses(unittest.TestCase):
         # make sure we have a peer
         ensure_peer_connected(self.alice, self.bob)
 
-        # make sure all channels closed
+        # make sure all channels closed otherwise disconnect will fail
         close_all_channels(self.alice)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
 
         # now disconnect all peers
         for peer in self.alice.list_peers():
             self.alice.disconnect_peer(pub_key=peer.pub_key)
-            time.sleep(0.5)
+            time.sleep(SLEEP_TIME)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
         self.assertEqual(0, len(self.alice.list_peers()))
 
     def test_connect(self):
@@ -200,7 +203,7 @@ class TestLightningStubResponses(unittest.TestCase):
         # now test the connect
         self.alice.connect_peer(addr=self.bob.lightning_addr)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
         self.assertEqual(1, len(self.alice.list_peers()))
         self.assertEqual(self.alice.list_peers()[0].pub_key, self.bob.pub_key)
 
@@ -216,7 +219,7 @@ class TestLightningStubResponses(unittest.TestCase):
         # close and active channels before disconnect
         close_all_channels(self.alice)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
 
         # disconnect
         disconnect_all_peers(self.alice)
@@ -253,7 +256,7 @@ class TestLightningStubResponses(unittest.TestCase):
                                                            node_pubkey_string=self.bob.pub_key),
                               rpc_pb2.ChannelPoint)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
         end_channels = len(self.alice.list_channels())
 
         self.assertEqual(start_channels + 1, end_channels)
@@ -262,12 +265,9 @@ class TestLightningStubResponses(unittest.TestCase):
         pass
 
     def test_close_channel(self):
+        # setup
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
-
-        # make sure we are connected
         ensure_peer_connected(self.alice, self.bob)
-
-        # make sure we have a mature channel to close
         ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, bitcoin_address)
 
         self.assertGreater(len(self.alice.list_channels()), 0)
@@ -275,9 +275,131 @@ class TestLightningStubResponses(unittest.TestCase):
         # close all active channels
         self.alice.close_all_channels()
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
 
         # mature the channel closes on-chain
         # self.bitcoin_rpc.generatetoaddress(145, bitcoin_address)
         # time.sleep(12)
         self.assertEqual(0, len(self.alice.list_channels()))
+
+    def test_abandon_channel(self):
+        # this is a development function only and does not need test
+        pass
+
+    def test_send_payment(self):
+        pass
+
+    def test_send_payment_sync(self):
+        # setup
+        bitcoin_address = self.bitcoin_rpc.getnewaddress()
+        inv_amt = 10000
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, bitcoin_address)
+
+        # test payment_request
+        payment_request = self.bob.add_invoice(value=inv_amt).payment_request
+        start_len = len(self.alice.list_payments().payments)
+        self.assertIsInstance(self.alice.send_payment_sync(payment_request=payment_request),
+                              rpc_pb2.SendResponse)
+        time.sleep(SLEEP_TIME)
+        end_len = len(self.alice.list_payments().payments)
+        self.assertGreater(end_len, start_len)
+
+        # test manual request
+        invoice = self.bob.add_invoice(value=inv_amt)
+        start_len = len(self.alice.list_payments().payments)
+        self.assertIsInstance(self.alice.send_payment_sync(dest_string=self.bob.pub_key,
+                                                           amt=inv_amt,
+                                                           payment_hash=invoice.r_hash,
+                                                           final_cltv_delta=144),
+                              rpc_pb2.SendResponse)
+        time.sleep(SLEEP_TIME)
+        end_len = len(self.alice.list_payments().payments)
+        self.assertGreater(end_len, start_len)
+
+    def test_send_to_route(self):
+        pass
+
+    def test_send_to_route_sync(self):
+        pass
+
+    def test_add_invoice(self):
+        # setup
+        bitcoin_address = self.bitcoin_rpc.getnewaddress()
+        ensure_peer_connected(self.alice, self.bob)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, bitcoin_address)
+        channel_0_balance = self.alice.list_channels()[0].local_balance
+
+        # test valid
+        start_index = self.alice.list_invoices().invoices[0].add_index
+        self.assertIsInstance(self.alice.add_invoice(memo='test',
+                                                     value=channel_0_balance // 2,
+                                                     expiry=3600),
+                              rpc_pb2.AddInvoiceResponse)
+        end_index = self.alice.list_invoices().invoices[0].add_index
+        time.sleep(SLEEP_TIME)
+        self.assertGreater(end_index, start_index)
+
+        # test invalid
+        start_index = self.alice.list_invoices().invoices[0].add_index
+        self.assertRaises(grpc.RpcError,
+                          lambda:
+                          self.alice.add_invoice(memo='test',
+                                                 value=100_000_000,
+                                                 expiry=3600)
+                          )
+
+        end_index = self.alice.list_invoices().invoices[0].add_index
+        self.assertEqual(end_index, start_index)
+
+    def test_list_invoices(self):
+        self.assertIsInstance(self.alice.list_invoices(),
+                              rpc_pb2.ListInvoiceResponse)
+
+    def test_lookup_invoice(self):
+        test_invoice = self.alice.list_invoices().invoices[0]
+
+        self.assertIsInstance(self.alice.lookup_invoice(r_hash=test_invoice.r_hash),
+                              rpc_pb2.Invoice)
+
+    def test_subscribe_invoices(self):
+        self.assertIsInstance(self.alice.subscribe_invoices(),
+                              grpc._channel._Rendezvous)
+
+    def test_decode_pay_req(self):
+        inv_value = 15000
+        expiry = 3600
+        cltv_expiry = 144
+        invoice = self.bob.add_invoice(value=inv_value, expiry=expiry,
+                                       cltv_expiry=cltv_expiry)
+        decoded_inv = self.alice.decode_pay_req(pay_req=invoice.payment_request)
+
+        self.assertEqual(invoice.r_hash, bytes.fromhex(decoded_inv.payment_hash))
+        self.assertEqual(self.bob.pub_key, decoded_inv.destination)
+        self.assertEqual(inv_value, decoded_inv.num_satoshis)
+        self.assertEqual(expiry, decoded_inv.expiry)
+        self.assertEqual(cltv_expiry, decoded_inv.cltv_expiry)
+
+    def test_list_payments(self):
+        self.assertIsInstance(self.alice.list_payments(), rpc_pb2.ListPaymentsResponse)
+
+    def test_z_delete_all_payments(self):
+        # this will delete your payment history -- be careful
+        # pass
+
+        start_len = len(self.alice.list_payments().payments)
+        if start_len == 0:
+            bitcoin_address = self.bitcoin_rpc.getnewaddress()
+            ensure_peer_connected(self.alice, self.bob)
+            ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, bitcoin_address)
+            invoice = self.bob.add_invoice(value=5000)
+            self.alice.pay_invoice(payment_request=invoice.payment_request)
+
+        self.assertGreater(start_len, 0)
+
+        self.assertIsInstance(self.alice.delete_all_payments(),
+                              rpc_pb2.DeleteAllPaymentsResponse)
+        time.sleep(SLEEP_TIME)
+        end_len = len(self.alice.list_payments().payments)
+
+        self.assertEqual(end_len, 0)
