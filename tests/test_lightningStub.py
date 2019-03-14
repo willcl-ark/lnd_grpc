@@ -65,10 +65,32 @@ def initialise_clients():
     return alice, bob, bitcoin_rpc
 
 
-def disconnect_all_peers(peer):
-    for peer in peer.list_peers():
-        peer.disconnect_peer(pub_key=peer.pub_key)
+def ensure_peer_connected(alice, bob):
+    if len(alice.list_peers()) == 0:
+        alice.connect_peer(addr=bob.lightning_addr)
+    assert (len(alice.list_peers()) > 0)
+
+
+def ensure_channel_open(alice, bob, bitcoin_rpc, address):
+    if len(alice.list_channels()) == 0:
+        alice.open_channel_sync(local_funding_amount=500_000,
+                                node_pubkey_string=bob.pub_key)
+    bitcoin_rpc.generatetoaddress(3, address)
+    assert (len(alice.list_channels()) > 0)
+
+
+def disconnect_all_peers(alice):
+    for peer in alice.list_peers():
+        alice.disconnect_peer(pub_key=peer.pub_key)
         time.sleep(0.5)
+    assert (0 == len(alice.list_peers()))
+
+
+def close_all_channels(peer):
+    if len(peer.list_channels()) > 0:
+        peer.close_all_channels()
+        time.sleep(0.5)
+    assert (0 == len(peer.list_channels()))
 
 
 ##################
@@ -101,19 +123,22 @@ class TestLightningStubResponses(unittest.TestCase):
         self.assertRaises(TypeError, lambda: self.alice.get_transactions('please'))
 
     def test_send_coins(self):
-        response1 = self.alice.send_coins(self.alice.new_address(address_type='p2wkh').address, amount=100000)
+        response1 = self.alice.send_coins(self.alice.new_address(address_type='p2wkh').address,
+                                          amount=100000)
         response2 = self.alice.send_coins(self.alice.new_address(address_type='np2wkh').address,
-                                     amount=100000)
+                                          amount=100000)
         self.assertIsInstance(response1, rpc_pb2.SendCoinsResponse)
         self.assertIsInstance(response2, rpc_pb2.SendCoinsResponse)
         # negative send
         self.assertRaises(grpc.RpcError,
-                          lambda: self.alice.send_coins(self.alice.new_address(address_type='p2wkh').address,
-                                                   amount=100000 * -1))
+                          lambda: self.alice.send_coins(
+                                  self.alice.new_address(address_type='p2wkh').address,
+                                  amount=100000 * -1))
         # impossibly large send
         self.assertRaises(grpc.RpcError,
-                          lambda: self.alice.send_coins(self.alice.new_address(address_type='p2wkh').address,
-                                                   amount=1_000_000_000_000_000))
+                          lambda: self.alice.send_coins(
+                                  self.alice.new_address(address_type='p2wkh').address,
+                                  amount=1_000_000_000_000_000))
 
     def test_list_unspent(self):
         self.assertIsInstance(self.alice.list_unspent(0, 1000), rpc_pb2.ListUnspentResponse)
@@ -148,16 +173,12 @@ class TestLightningStubResponses(unittest.TestCase):
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
 
         # make sure we have a peer
-        if len(self.alice.list_peers()) == 0:
-            self.alice.connect_peer(addr=self.bob.lightning_addr)
-            time.sleep(0.5)
-        self.assertGreater(len(self.alice.list_peers()), 0)
+        ensure_peer_connected(self.alice, self.bob)
 
         # make sure all channels closed
-        if len(self.alice.list_channels()) > 0:
-            self.alice.close_all_channels()
-            time.sleep(0.5)
-            self.assertEqual(0, len(self.alice.list_channels()))
+        close_all_channels(self.alice)
+        self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
+        time.sleep(0.5)
 
         # now disconnect all peers
         for peer in self.alice.list_peers():
@@ -167,23 +188,14 @@ class TestLightningStubResponses(unittest.TestCase):
         time.sleep(0.5)
         self.assertEqual(0, len(self.alice.list_peers()))
 
-        return True
-
     def test_connect(self):
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
 
         # close any open channels:
-        if len(self.alice.list_channels()) > 0:
-            self.alice.close_all_channels()
+        close_all_channels(self.alice)
 
         # check we are fully disconnected from peer before proceeding
-        if len(self.alice.list_peers()) > 0:
-            for peer in self.alice.list_peers():
-                self.alice.disconnect_peer(pub_key=peer.pub_key)
-            self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-            time.sleep(0.5)
-
-        self.assertEqual(0, len(self.alice.list_peers()))
+        disconnect_all_peers(self.alice)
 
         # now test the connect
         self.alice.connect_peer(addr=self.bob.lightning_addr)
@@ -192,29 +204,22 @@ class TestLightningStubResponses(unittest.TestCase):
         self.assertEqual(1, len(self.alice.list_peers()))
         self.assertEqual(self.alice.list_peers()[0].pub_key, self.bob.pub_key)
 
-        return True
-
     def test_list_peers(self):
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
 
         # make sure we are connected to one peer
-        if len(self.alice.list_peers()) == 0:
-            self.alice.connect_peer(addr=self.bob.lightning_addr)
+        ensure_peer_connected(self.alice, self.bob)
 
         # Test length with connected peer
         self.assertGreater(len(self.alice.list_peers()), 0)
 
         # close and active channels before disconnect
-        self.alice.close_all_channels()
+        close_all_channels(self.alice)
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
         time.sleep(0.5)
-        self.assertEqual(0, len(self.alice.list_channels()))
 
         # disconnect
-        for peer in self.alice.list_peers():
-            self.alice.disconnect_peer(pub_key=peer.pub_key)
-        self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        time.sleep(0.5)
+        disconnect_all_peers(self.alice)
 
         # test after disconnect
         self.assertEqual(0, len(self.alice.list_peers()))
@@ -239,23 +244,19 @@ class TestLightningStubResponses(unittest.TestCase):
 
     def test_open_channel_sync(self):
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
-        start_channels = len(self.alice.list_channels())
 
         # make sure we are connected
-        if len(self.alice.list_peers()) == 0:
-            self.alice.connect_peer(addr=self.bob.lightning_addr)
+        ensure_peer_connected(self.alice, self.bob)
 
-        self.assertGreater(len(self.alice.list_peers()), 0)
+        start_channels = len(self.alice.list_channels())
         self.assertIsInstance(self.alice.open_channel_sync(local_funding_amount=500_000,
-                                                      node_pubkey_string=self.bob.pub_key),
+                                                           node_pubkey_string=self.bob.pub_key),
                               rpc_pb2.ChannelPoint)
-        # mature the channel open
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
         time.sleep(0.5)
-
         end_channels = len(self.alice.list_channels())
-        self.assertEqual(start_channels + 1, end_channels)
 
+        self.assertEqual(start_channels + 1, end_channels)
 
     def test_open_channel(self):
         pass
@@ -264,42 +265,19 @@ class TestLightningStubResponses(unittest.TestCase):
         bitcoin_address = self.bitcoin_rpc.getnewaddress()
 
         # make sure we are connected
-        if len(self.alice.list_peers()) == 0:
-            self.alice.connect_peer(pub_key=self.bob.pub_key)
+        ensure_peer_connected(self.alice, self.bob)
 
         # make sure we have a mature channel to close
-        if len(self.alice.list_channels()) == 0:
-            # open a channel
-            self.alice.open_channel_sync(local_funding_amount=500_000,
-                                         node_pubkey_string=self.bob.pub_key)
-            self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-            time.sleep(0.5)
+        ensure_channel_open(self.alice, self.bob, self.bitcoin_rpc, bitcoin_address)
 
         self.assertGreater(len(self.alice.list_channels()), 0)
 
         # close all active channels
         self.alice.close_all_channels()
         self.bitcoin_rpc.generatetoaddress(3, bitcoin_address)
-        # Mature any channel closes internally to lnd
-        time.sleep(2)
+        time.sleep(0.5)
 
         # mature the channel closes on-chain
         # self.bitcoin_rpc.generatetoaddress(145, bitcoin_address)
         # time.sleep(12)
         self.assertEqual(0, len(self.alice.list_channels()))
-        return True
-
-
-#if __name__ == '__main__':
-    # self.alice, self.bob, self.bitcoin_rpc = initialise_clients()
-    #
-    # # set debug level to off for speed
-    # self.alice.debug_level(level_spec=DEBUG_LEVEL)
-    # self.bob.debug_level(level_spec=DEBUG_LEVEL)
-    #
-    # unittest.main()
-    #
-    # # reset debug level to info
-    # self.alice.debug_level(level_spec='info')
-    # self.self.bob.debug_level(level_spec='info')
-
