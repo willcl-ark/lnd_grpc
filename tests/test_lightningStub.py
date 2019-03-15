@@ -145,7 +145,7 @@ class TestLightningStubResponses(unittest.TestCase):
         self.assertRaises(grpc.RpcError,
                           lambda: self.alice.send_coins(
                                   self.alice.new_address(address_type='p2wkh').address,
-                                  amount=1_000_000_000_000_000))
+                                  amount=1000000000000000))
 
     def test_list_unspent(self):
         self.assertIsInstance(self.alice.list_unspent(0, 1000), rpc_pb2.ListUnspentResponse)
