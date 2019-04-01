@@ -245,15 +245,16 @@ class Client:
         response = self.lightning_stub.VerifyMessage(request)
         return response
 
-    def connect_peer(self, addr: ln.LightningAddress, perm: bool = 0):
+    def connect_peer(self, addr: ln.LightningAddress, perm: bool = 0,
+                     timeout: int = None):
         request = ln.ConnectPeerRequest(addr=addr, perm=perm)
-        response = self.lightning_stub.ConnectPeer(request)
+        response = self.lightning_stub.ConnectPeer(request, timeout=timeout)
         return response
 
-    def connect(self, address: str, perm: bool = 0):
+    def connect(self, address: str, perm: bool = 0, timeout: int = None):
         pubkey, host = address.split('@')
         _address = self.lightning_address(pubkey=pubkey, host=host)
-        response = self.connect_peer(addr=_address, perm=perm)
+        response = self.connect_peer(addr=_address, perm=perm, timeout=timeout)
         return response
 
     def disconnect_peer(self, pub_key: str):
@@ -292,12 +293,13 @@ class Client:
         return response
 
     # Response-streaming RPC
-    def open_channel(self, local_funding_amount: int, **kwargs):
+    def open_channel(self, local_funding_amount: int, timeout: int = None,
+                     **kwargs):
         # TODO: implement `lncli openchannel --connect` function
         request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
         if request.node_pubkey == b'':
             request.node_pubkey = bytes.fromhex(request.node_pubkey_string)
-        return self.lightning_stub.OpenChannel(request)
+        return self.lightning_stub.OpenChannel(request, timeout=timeout)
 
     # Response-streaming RPC
     def close_channel(self, channel_point, **kwargs):
@@ -483,15 +485,28 @@ class Client:
         response = self.lightning_stub.FeeReport(request)
         return response
 
-    def update_channel_policy(self, **kwargs):
-        if 'chan_point' in kwargs:
-            funding_txid, output_index = kwargs.get('chan_point').split(':')
-            _channel_point = self.channel_point_generator(funding_txid=funding_txid,
-                                                          output_index=output_index)
-            kwargs['chan_point'] = _channel_point
-        if 'global' not in kwargs:
-            kwargs['global'] = 1
-        request = ln.PolicyUpdateRequest(**kwargs)
+    def update_channel_policy(self,
+                              chan_point: str,
+                              is_global: bool = False,
+                              base_fee_msat: int = 1000,
+                              fee_rate: float = 0.000001,
+                              time_lock_delta: int = 144
+                              ):
+        if chan_point:
+            funding_txid, output_index = chan_point.split(':')
+            channel_point = self.channel_point_generator(funding_txid=funding_txid,
+                                                         output_index=output_index)
+        else:
+            channel_point = None
+
+        request = ln.PolicyUpdateRequest(
+            chan_point=channel_point,
+            base_fee_msat=base_fee_msat,
+            fee_rate=fee_rate,
+            time_lock_delta=time_lock_delta
+        )
+        if is_global:
+            setattr(request, 'global', is_global)
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
