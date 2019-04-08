@@ -32,6 +32,8 @@ class Client:
         self.grpc_host = grpc_host
         self.grpc_port = grpc_port
         self.channel = None
+        self.connection_status = None
+        self.connection_status_change = False
         self.version = None
         self.grpc_options = [
             ('grpc.max_receive_message_length', 33554432),
@@ -107,6 +109,11 @@ class Client:
     def metadata_callback(self, context, callback):
         callback([('macaroon', self.macaroon)], None)
 
+    def connectivity_event_logger(self, channel_connectivity):
+        self.connection_status = channel_connectivity._name_
+        if self.connection_status == 'SHUTDOWN' or self.connection_status == 'TRANSIENT_FAILURE':
+            self.connection_status_change = True
+
     @property
     def combined_credentials(self) -> grpc.CallCredentials:
         cert_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
@@ -147,13 +154,32 @@ class Client:
 
     @property
     def lightning_stub(self) -> lnrpc.LightningStub:
+        # if the stub is already created and channel might recover, return current stub
+        if self._lightning_stub is not None \
+                and self.connection_status_change is False:
+            return self._lightning_stub
 
+        # otherwise, start by creating a fresh channel
         self.channel = grpc.secure_channel(target=self.grpc_address,
                                            credentials=self.combined_credentials,
                                            options=self.grpc_options)
-        if self._lightning_stub is None:
-            self._lightning_stub = lnrpc.LightningStub(self.channel)
-        return self._lightning_stub
+
+        # subscribe to channel connectivity updates with callback
+        self.channel.subscribe(self.connectivity_event_logger)
+
+        # create the new stub
+        self._lightning_stub = lnrpc.LightningStub(self.channel)
+
+        # 'None' is channel_status's initialization state.
+        # ensure connection_status_change is True to keep regenerating fresh stubs until channel
+        # comes online
+        if self.connection_status is None:
+            self.connection_status_change = True
+            return self._lightning_stub
+
+        else:
+            self.connection_status_change = False
+            return self._lightning_stub
 
     @property
     def wallet_unlocker_stub(self) -> lnrpc.WalletUnlockerStub:
@@ -161,6 +187,11 @@ class Client:
         if self._w_stub is None:
             _w_channel = grpc.secure_channel(self.grpc_address, ssl_creds)
             self._w_stub = lnrpc.WalletUnlockerStub(_w_channel)
+
+        # simulate connection status change after wallet stub used (typically wallet unlock) which
+        # stimulates lightning stub regeneration when necessary
+        self.connection_status_change = True
+
         return self._w_stub
 
     def gen_seed(self, **kwargs):

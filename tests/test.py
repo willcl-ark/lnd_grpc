@@ -1,5 +1,6 @@
 import sys
 import time
+
 import grpc
 
 from lnd_grpc.protos import rpc_pb2
@@ -319,6 +320,18 @@ class TestNonInteractiveLightning:
         gen_and_sync_lnd(alice.bitcoin, [alice])
         assert type(alice.forwarding_history()) == rpc_pb2.ForwardingHistoryResponse
 
+    def test_lightning_stub(self, alice):
+        gen_and_sync_lnd(alice.bitcoin, [alice])
+        original_stub = alice.lightning_stub
+        stub1 = alice.lightning_stub
+        assert original_stub == stub1
+        # not simulation of actual failure, but failure that should be detected by
+        # connectivity event logger
+        alice.connection_status_change = True
+        alice.get_info()
+        stub2 = alice.lightning_stub
+        assert original_stub != stub2
+
 
 class TestInteractiveLightning:
 
@@ -432,7 +445,7 @@ class TestInteractiveLightning:
         bob, carol = setup_nodes(bitcoind, [bob, carol])
 
         channel_point = bob.list_channels()[0].channel_point
-        print(bob.close_channel(channel_point=channel_point))
+        print(bob.close_channel(channel_point=channel_point).__next__())
         bitcoind.rpc.generate(6)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -576,4 +589,3 @@ class TestInteractiveLightning:
                                            time_lock_delta=9,
                                            is_global=True)
         assert type(update) == rpc_pb2.PolicyUpdateResponse
-
