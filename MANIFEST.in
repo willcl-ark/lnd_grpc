@@ -1,0 +1,1 @@
+exclude lnd_grpc/bin/lnd

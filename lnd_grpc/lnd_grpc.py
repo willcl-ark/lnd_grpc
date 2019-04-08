@@ -1,12 +1,13 @@
 import codecs
 import sys
 import time
-from os import environ
-
 import grpc
 
-from lnd_grpc import utilities as u
+from os import environ
+
+from lnd_grpc.utilities import get_lnd_dir
 from lnd_grpc.protos import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc
+
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -42,7 +43,7 @@ class Client:
         if self._lnd_dir:
             return self._lnd_dir
         else:
-            self._lnd_dir = u.get_lnd_dir()
+            self._lnd_dir = get_lnd_dir()
             return self._lnd_dir
 
     @lnd_dir.setter
@@ -369,20 +370,22 @@ class Client:
         return response
 
     @staticmethod
-    def send_to_route_generator(invoice, route):
-        i = 0
-        while i < 1:
-            request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=route)
+    def send_to_route_generator(invoice, routes):
+        # Commented out to complement the magic sleep below...
+        # while True:
+            request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=routes)
             yield request
-            i += 1
+            # Magic sleep which tricks the response to the send_to_route() method to actually
+            # contain data...
+            time.sleep(5)
 
     # Bi-directional streaming RPC
-    def send_to_route(self, invoice, route):
-        request_iterable = self.send_to_route_generator(invoice=invoice, route=route)
+    def send_to_route(self, invoice, routes):
+        request_iterable = self.send_to_route_generator(invoice=invoice, routes=routes)
         return self.lightning_stub.SendToRoute(request_iterable)
 
     # Synchronous non-streaming RPC
-    def send_to_route_sync(self, routes: ln.Route, **kwargs):
+    def send_to_route_sync(self, routes, **kwargs):
         request = ln.SendToRouteRequest(routes=routes, **kwargs)
         response = self.lightning_stub.SendToRouteSync(request)
         return response
@@ -438,8 +441,8 @@ class Client:
         return response
 
     # Uni-directional stream
-    def subscribe_channel_events(self, **kwargs):
-        request = ln.ChannelEventSubscription(**kwargs)
+    def subscribe_channel_events(self):
+        request = ln.ChannelEventSubscription()
         return self.lightning_stub.SubscribeChannelEvents(request)
 
     def get_node_info(self, pub_key: str):
@@ -458,7 +461,7 @@ class Client:
                 num_routes=num_routes,
                 **kwargs)
         response = self.lightning_stub.QueryRoutes(request)
-        return response
+        return response.routes
 
     def get_network_info(self):
         request = ln.NetworkInfoRequest()
