@@ -548,3 +548,6 @@ class Client:
         request = ln.ForwardingHistoryRequest(**kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
+
+
+__all__ = ['Client', ]
