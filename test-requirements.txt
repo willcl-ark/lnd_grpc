@@ -1,5 +1,5 @@
 psutil==5.4.8
-pytest==4.0.2
+pytest==4.4.0
 requests==2.21.0
 pytest-json==0.4.0
 cheroot==6.5.4
