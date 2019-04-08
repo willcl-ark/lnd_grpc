@@ -2,7 +2,7 @@
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-This version of the library has been compiled with rpc.proto from the v0.5.2-beta tag on github
+This version of the library has been compiled with rpc.proto from the v0.6-beta tag on github
 
 ## Install requires:
 * `grpcio`
@@ -77,20 +77,16 @@ Initialization requires the following steps:
 ## Connecting and re-connecting after wallet created
 If you did not run the initialization sequence above, you will only need to unlock your wallet before issuing further RPC commands:
 
-`rpc.unlock_wallet()`
+`rpc.unlock_wallet(password='wallet_password')`
 
 # General usage
 
-Further RPC commands can then be issued to the lnd gRPC interface using the following convention, where gRPC commands are converted from CamelCase to lowercase_with_underscores and keyword arguments named to exactly match the parameters the gRPC uses:
+Further RPC commands can then be issued to the lnd gRPC interface using the following convention, where LND gRPC commands are converted from CamelCase to lowercase_with_underscores and keyword arguments named to exactly match the parameters the gRPC uses:
 
 `rpc.grpc_command(keyword_arg=value)`
 
 Valid gRPC commands and their keyword arguments can be found [here](https://api.lightning.community/?python#lnd-grpc-api-reference)
  
-Connection stubs will be generated dynamically for each request to ensure channel freshness
-This can slow down interfacing programs considerably. Performance can be increased by
-configuring a static lightning stub to use. This can be done simply by removing the property
-decorator from the stub class below and adding
-'self.lightning_stub = self.set_lightning_stub()' to the __init__() method. 
+Connection stubs will be generated dynamically as required to ensure channel freshness. 
 
-Response-streaming RPCs now return the python iterators to be operated on.
+Response-streaming RPCs now return the python iterators to be operated on directly (e.g. with `.__next__()`)
