@@ -40,11 +40,11 @@ lnd --bitcoin.active \
 ## Usage
 Import the module into your project:
 
-`from lnd_grpc import lnd_grpc`
+`import lnd_grpc`
 
 Create an instance of the client class: 
 
-`rpc = lnd_grpc.Client()`
+`lnd_rpc = lnd_grpc.Client()`
 
 Note: The class is instantiated to work with default bitcoind rpc port and lnd in default installation directory, on mainnet, unless additional arguments are passed.
 
