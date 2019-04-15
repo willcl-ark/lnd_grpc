@@ -7,18 +7,22 @@ set -ev
 ## Install Bitcoin Core
 #######################
 
-wget https://bitcoincore.org/bin/bitcoin-core-0.17.0/bitcoin-0.17.0-x86_64-linux-gnu.tar.gz
-tar -xzf bitcoin-0.17.0-x86_64-linux-gnu.tar.gz
-sudo cp /home/travis/build/willcl-ark/lnd_grpc/bitcoin-0.17.0/bin/bitcoind /usr/local/bin/bitcoind
-sudo cp /home/travis/build/willcl-ark/lnd_grpc/bitcoin-0.17.0/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
+export CORE_VERSION="0.17.1"
+
+wget https://bitcoincore.org/bin/bitcoin-core-${CORE_VERSION}/bitcoin-${CORE_VERSION}-x86_64-linux-gnu.tar.gz
+tar -xzf bitcoin-${CORE_VERSION}-x86_64-linux-gnu.tar.gz -C ${TRAVIS_BUILD_DIR}
+sudo cp ${TRAVIS_BUILD_DIR}/bitcoin-${CORE_VERSION}/bin/bitcoind /usr/local/bin/bitcoind
+sudo cp ${TRAVIS_BUILD_DIR}/bitcoin-${CORE_VERSION}/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
 
 
 ######################
-# Install LND v-0.6-beta
+# Install LND
 ######################
+
+export LND_VERSION="v0.6-beta-rc4"
 
 # Install LND
-wget https://github.com/lightningnetwork/lnd/releases/download/v0.6-beta-rc3/lnd-linux-amd64-v0.6-beta-rc3.tar.gz
-tar -xzf lnd-linux-amd64-v0.6-beta-rc3.tar.gz
-sudo cp /home/travis/build/willcl-ark/lnd_grpc/lnd-linux-amd64-v0.6-beta-rc3/lnd /usr/local/bin/lnd
-sudo cp /home/travis/build/willcl-ark/lnd_grpc/lnd-linux-amd64-v0.6-beta-rc3/lncli /usr/local/bin/lncli
+wget https://github.com/lightningnetwork/lnd/releases/download/${LND_VERSION}/lnd-linux-amd64-${LND_VERSION}.tar.gz
+tar -xzf lnd-linux-amd64-${LND_VERSION}.tar.gz -C ${TRAVIS_BUILD_DIR}
+sudo cp ${TRAVIS_BUILD_DIR}/lnd-linux-amd64-${LND_VERSION}/lnd /usr/local/bin/lnd
+sudo cp ${TRAVIS_BUILD_DIR}/lnd-linux-amd64-${LND_VERSION}/lncli /usr/local/bin/lncli
