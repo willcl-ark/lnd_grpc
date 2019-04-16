@@ -1,13 +1,14 @@
 import codecs
+import grpc
 import sys
 import time
-import grpc
-
 from os import environ
 
+import lnd_grpc.protos.invoices_pb2 as inv
+import lnd_grpc.protos.invoices_pb2_grpc as invrpc
+import lnd_grpc.protos.rpc_pb2 as ln
+import lnd_grpc.protos.rpc_pb2_grpc as lnrpc
 from lnd_grpc.utilities import get_lnd_dir
-from lnd_grpc.protos import rpc_pb2 as ln, rpc_pb2_grpc as lnrpc
-
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -24,6 +25,7 @@ class Client:
 
         self._lightning_stub: lnrpc.LightningStub = None
         self._w_stub: lnrpc.WalletUnlockerStub = None
+        self._inv_stub: invrpc.InvoicesStub = None
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
@@ -183,9 +185,11 @@ class Client:
 
     @property
     def wallet_unlocker_stub(self) -> lnrpc.WalletUnlockerStub:
-        ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
         if self._w_stub is None:
-            _w_channel = grpc.secure_channel(self.grpc_address, ssl_creds)
+            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
+            _w_channel = grpc.secure_channel(target=self.grpc_address,
+                                             credentials=ssl_creds,
+                                             options=self.grpc_options)
             self._w_stub = lnrpc.WalletUnlockerStub(_w_channel)
 
         # simulate connection status change after wallet stub used (typically wallet unlock) which
@@ -193,6 +197,16 @@ class Client:
         self.connection_status_change = True
 
         return self._w_stub
+
+    @property
+    def invoice_stub(self) -> invrpc.InvoicesStub:
+        if self._inv_stub is None:
+            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
+            _inv_channel = grpc.secure_channel(target=self.grpc_address,
+                                               credentials=self.combined_credentials,
+                                               options=self.grpc_options)
+            self._inv_stub = invrpc.InvoicesStub(_inv_channel)
+        return self._inv_stub
 
     def gen_seed(self, **kwargs):
         request = ln.GenSeedRequest(**kwargs)
@@ -361,11 +375,11 @@ class Client:
     def send_request_generator(**kwargs):
         # Commented out to complement the magic sleep below...
         # while True:
-            request = ln.SendRequest(**kwargs)
-            yield request
-            # Magic sleep which tricks the response to the send_payment() method to actually
-            # contain data...
-            time.sleep(5)
+        request = ln.SendRequest(**kwargs)
+        yield request
+        # Magic sleep which tricks the response to the send_payment() method to actually
+        # contain data...
+        time.sleep(5)
 
     # Bi-directional streaming RPC
     def send_payment(self, **kwargs):
@@ -404,11 +418,11 @@ class Client:
     def send_to_route_generator(invoice, routes):
         # Commented out to complement the magic sleep below...
         # while True:
-            request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=routes)
-            yield request
-            # Magic sleep which tricks the response to the send_to_route() method to actually
-            # contain data...
-            time.sleep(5)
+        request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=routes)
+        yield request
+        # Magic sleep which tricks the response to the send_to_route() method to actually
+        # contain data...
+        time.sleep(5)
 
     # Bi-directional streaming RPC
     def send_to_route(self, invoice, routes):
@@ -534,10 +548,10 @@ class Client:
             channel_point = None
 
         request = ln.PolicyUpdateRequest(
-            chan_point=channel_point,
-            base_fee_msat=base_fee_msat,
-            fee_rate=fee_rate,
-            time_lock_delta=time_lock_delta
+                chan_point=channel_point,
+                base_fee_msat=base_fee_msat,
+                fee_rate=fee_rate,
+                time_lock_delta=time_lock_delta
         )
         if is_global:
             setattr(request, 'global', is_global)
@@ -547,6 +561,46 @@ class Client:
     def forwarding_history(self, **kwargs):
         request = ln.ForwardingHistoryRequest(**kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
+        return response
+
+    """
+    Invoices RPC
+    """
+
+    def subscribe_single_invoice(self,
+                                 r_hash: bytes = b'',
+                                 r_hash_str: str = '') -> ln.Invoice:
+        """
+        Uni-directional streaming RPC returns an iterable to be operated on
+        """
+        request = ln.PaymentHash(r_hash=r_hash, r_hash_str=r_hash_str)
+        response = self.invoice_stub.SubscribeSingleInvoice(request)
+        return response
+
+    def cancel_invoice(self, payment_hash: bytes = b'') -> inv.CancelInvoiceResp:
+        request = inv.CancelInvoiceMsg(payment_hash=payment_hash)
+        response = self.invoice_stub.CancelInvoice(request)
+        return response
+
+    def add_hold_invoice(self,
+                         memo: str = '',
+                         hash: bytes = b'',
+                         value: int = 0,
+                         expiry: int = 3600,
+                         fallback_addr: str = '',
+                         cltv_expiry: int = 7,
+                         route_hints: ln.RouteHint = [],
+                         private: bool = 1) -> inv.AddHoldInvoiceResp:
+        request = inv.AddHoldInvoiceRequest(
+                memo=memo, hash=hash, value=value, expiry=expiry,
+                fallback_addr=fallback_addr, cltv_expiry=cltv_expiry,
+                route_hints=route_hints, private=private)
+        response = self.invoice_stub.AddHoldInvoice(request)
+        return response
+
+    def settle_invoice(self, preimage: bytes = b'') -> inv.SettleInvoiceResp:
+        request = inv.SettleInvoiceMsg(preimage=preimage)
+        response = self.invoice_stub.SettleInvoice(request)
         return response
 
 

@@ -1,10 +1,21 @@
 import os
-
 import requests
 
 from lnd_grpc import lnd_grpc
 
 cwd = os.getcwd()
+
+"""
+Note: The script will attempt to connect to your instance of lnd to determine the correct version 
+of the proto file to download. If you are not running on mainnet and using default grpc_host 
+('localhost') and grpc_port ('10009') you should modify these values on lines 10 - 14 before 
+running the script.
+
+The script will currently only detect and download lnd proto files, not loop nor invoices.
+"""
+
+
+# TODO: add invoice and loop support
 
 
 def create_lnd_client(lnd_dir: str = None,
