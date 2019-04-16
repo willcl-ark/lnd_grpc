@@ -92,6 +92,7 @@ class LndNode(lndClient):
         self.node_id = node_id
         self.logger = logging.getLogger(name='lnd-node({})'.format(self.node_id))
         self.myid = None
+        self.invoice_rpc_active = False
         super().__init__(lnd_dir=lightning_dir,
                          grpc_host='localhost',
                          grpc_port=str(self.daemon.rpc_port),
@@ -114,7 +115,8 @@ class LndNode(lndClient):
 
     def start(self):
         self.daemon.start()
-        print(vars())
+        self.daemon.wait_for_log('Starting sub RPC server: InvoicesRPC', timeout=10)
+        self.invoice_rpc_active = True
 
     def add_funds(self, bitcoind, amount):
         start_amt = self.wallet_balance().total_balance

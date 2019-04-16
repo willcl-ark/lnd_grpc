@@ -8,14 +8,14 @@ setuptools.setup(
         version="0.2.6",
     author="Will Clark",
     author_email="will8clark@gmail.com",
-    description="An LND gRPC client for Python 3",
+        description="An LND gRPC client for Python 3.7",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/willcl-ark/lnd_grpc",
     packages=setuptools.find_packages(
             exclude=['googleapis', 'misc']),
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
@@ -25,5 +25,5 @@ setuptools.setup(
         "grpcio-tools",
         "googleapis-common-protos"
     ],
-    python_requires='>=3',
+        python_requires='>=3.7',
 )

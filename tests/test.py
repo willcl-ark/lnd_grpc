@@ -4,6 +4,7 @@ import time
 import grpc
 
 from lnd_grpc.protos import rpc_pb2
+from loop_rpc.protos import loop_client_pb2
 from test_utils.fixtures import *
 from test_utils.lnd import LndNode
 
@@ -304,7 +305,7 @@ class TestNonInteractiveLightning:
     def test_stop_daemon(self, node_factory):
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
         assert type(node.stop_daemon()) == rpc_pb2.StopResponse
-        time.sleep(1)
+        time.sleep(5)
         with pytest.raises(grpc.RpcError):
             node.get_info()
 
@@ -589,3 +590,25 @@ class TestInteractiveLightning:
                                            time_lock_delta=9,
                                            is_global=True)
         assert type(update) == rpc_pb2.PolicyUpdateResponse
+
+
+class TestLoop:
+
+    def test_loop_out_quote(self, bitcoind, alice, bob, loopd):
+        alice, bob = setup_nodes(bitcoind, [alice, bob])
+        if alice.invoice_rpc_active:
+            quote = loopd.loop_out_quote(amt=250000)
+            print(quote)
+            assert quote is not None
+            assert type(quote) == loop_client_pb2.QuoteResponse
+        else:
+            logging.info("test_loop_out() skipped as invoice RPC not detected")
+
+    def test_loop_out_terms(self, bitcoind, alice, bob, loopd):
+        alice, bob = setup_nodes(bitcoind, [alice, bob])
+        if alice.invoice_rpc_active:
+            terms = loopd.loop_out_terms()
+            assert terms is not None
+            assert type(terms) == loop_client_pb2.TermsResponse
+        else:
+            logging.info("test_loop_out() skipped as invoice RPC not detected")

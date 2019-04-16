@@ -35,6 +35,7 @@ from ephemeral_port_reserve import reserve
 
 from test_utils.btcproxy import ProxiedBitcoinD
 from test_utils.lnd import LndNode
+from test_utils.loop import LoopNode
 
 TEST_DIR = tempfile.mkdtemp(prefix='lightning-')
 TEST_DEBUG = os.getenv("TEST_DEBUG", "0") == "1"
@@ -138,6 +139,19 @@ def bitcoind(directory):
     except Exception:
         btc.proc.kill()
     btc.proc.wait()
+
+
+@pytest.fixture(scope='class')
+def loopd(alice):
+    loop = LoopNode(host='localhost', rpc_port='11010', lnd=alice)
+    loop.start()
+
+    yield loop
+
+    try:
+        loop.stop()
+    except Exception:
+        loop.daemon.stop()
 
 
 @pytest.fixture(scope="class")

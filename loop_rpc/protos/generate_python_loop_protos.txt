@@ -1,0 +1,22 @@
+For when the project is cloned from source (github), the process is as follows:
+
+1) Download rpc.proto file from lnd github
+2) Generate python-specific proto files from this base proto
+
+
+1) You can manually download the appropriate client.proto file from (or substitute appropriate branch/tag for 'master'):
+   https://raw.githubusercontent.com/lightninglabs/loop/master/looprpc/client.proto
+
+2) Navigate to project protos directory:
+   cd .../lnd_grpc/loop_rpc/protos/
+
+   Make sure googleapis is cloned in this protos folder:
+   > git clone https://github.com/googleapis/googleapis.git
+
+   Activate your venv if necessary!
+
+   Move up *two* directories:
+   > cd ../..
+
+   Run command to generate proto gRPC files:
+   > python -m grpc_tools.protoc --proto_path=loop_rpc/protos/googleapis:. --python_out=. --grpc_python_out=. loop_rpc/protos/loop_client.proto

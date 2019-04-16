@@ -15,9 +15,9 @@ sudo cp ${TRAVIS_BUILD_DIR}/bitcoin-${CORE_VERSION}/bin/bitcoind /usr/local/bin/
 sudo cp ${TRAVIS_BUILD_DIR}/bitcoin-${CORE_VERSION}/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
 
 
-######################
+#############
 # Install LND
-######################
+#############
 
 export LND_VERSION="v0.6-beta-rc4"
 
@@ -26,3 +26,16 @@ wget https://github.com/lightningnetwork/lnd/releases/download/${LND_VERSION}/ln
 tar -xzf lnd-linux-amd64-${LND_VERSION}.tar.gz -C ${TRAVIS_BUILD_DIR}
 sudo cp ${TRAVIS_BUILD_DIR}/lnd-linux-amd64-${LND_VERSION}/lnd /usr/local/bin/lnd
 sudo cp ${TRAVIS_BUILD_DIR}/lnd-linux-amd64-${LND_VERSION}/lncli /usr/local/bin/lncli
+
+
+##############
+# Install loop
+##############
+
+export LOOP_VERSION="v0.1-alpha"
+
+# Install Loop
+wget https://github.com/lightninglabs/loop/releases/download/${LOOP_VERSION}/loop-linux-amd64-${LOOP_VERSION}.tar.gz
+tar -xzf loop-linux-amd64-${LOOP_VERSION}.tar.gz -C ${TRAVIS_BUILD_DIR}
+sudo cp ${TRAVIS_BUILD_DIR}/loop-linux-amd64-${LOOP_VERSION}/loopd /usr/local/bin/loopd
+sudo cp ${TRAVIS_BUILD_DIR}/loop-linux-amd64-${LOOP_VERSION}/loop /usr/local/bin/loop

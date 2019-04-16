@@ -24,9 +24,11 @@ For when the project is cloned from source (github), the process is as follows:
 
    Activate your venv if necessary!
 
-   Move up *two* directories:
-   > cd ../..
-
    Run command to generate proto gRPC files:
-   > python -m grpc_tools.protoc --proto_path=lnd_grpc/protos/googleapis:. --python_out=. --grpc_python_out=. lnd_grpc/protos/rpc.proto
+   > python -m grpc_tools.protoc --proto_path=googleapis:. --python_out=. --grpc_python_out=. rpc.proto
 
+   To generate loop protos:
+   > python -m grpc_tools.protoc --proto_path=lnd_grpc/protos/googleapis:. --python_out=. --grpc_python_out=. loop_rpc/protos/loop_client.proto
+
+   To generate invoices protos:
+   > python -m grpc_tools.protoc --proto_path=googleapis:. --python_out=. --grpc_python_out=. rpc.proto invoices_rpc.proto
