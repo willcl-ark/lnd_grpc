@@ -5,13 +5,13 @@ import grpc
 
 import lnd_grpc.protos.rpc_pb2 as ln
 import lnd_grpc.protos.rpc_pb2_grpc as lnrpc
-from lnd_grpc.wallet_unlocker import WalletUnlocker
+from lnd_grpc.base_client import BaseClient
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
 
-class Lightning(WalletUnlocker):
+class Lightning(BaseClient):
 
     def __init__(self,
                  lnd_dir: str = None,

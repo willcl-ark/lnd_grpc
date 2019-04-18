@@ -5,13 +5,13 @@ import grpc
 import lnd_grpc.protos.invoices_pb2 as inv
 import lnd_grpc.protos.invoices_pb2_grpc as invrpc
 import lnd_grpc.protos.rpc_pb2 as ln
-from lnd_grpc.lightning import Lightning
+from lnd_grpc.base_client import BaseClient
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
 
-class Invoices(Lightning):
+class Invoices(BaseClient):
 
     def __init__(self,
                  lnd_dir: str = None,

@@ -1,15 +1,10 @@
-from os import environ
-
 from lnd_grpc.base_client import BaseClient
 from lnd_grpc.invoices import Invoices
 from lnd_grpc.lightning import Lightning
 from lnd_grpc.wallet_unlocker import WalletUnlocker
 
-# tell gRPC which cypher suite to use
-environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
-
-class Client(Invoices):
+class Client(Lightning, WalletUnlocker, Invoices):
     def __init__(self,
                  lnd_dir: str = None,
                  macaroon_path: str = None,
