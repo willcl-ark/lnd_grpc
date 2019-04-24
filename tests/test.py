@@ -305,7 +305,7 @@ class TestNonInteractiveLightning:
     def test_stop_daemon(self, node_factory):
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
         assert type(node.stop_daemon()) == rpc_pb2.StopResponse
-        time.sleep(5)
+        node.daemon.wait_for_log("Shutdown complete")
         with pytest.raises(grpc.RpcError):
             node.get_info()
 
