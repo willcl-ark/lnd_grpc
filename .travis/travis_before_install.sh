@@ -32,7 +32,7 @@ sudo cp ${TRAVIS_BUILD_DIR}/lnd-linux-amd64-${LND_VERSION}/lncli /usr/local/bin/
 # Install loop
 ##############
 
-export LOOP_VERSION="v0.1-alpha"
+export LOOP_VERSION="v0.1.1-alpha"
 
 # Install Loop
 wget https://github.com/lightninglabs/loop/releases/download/${LOOP_VERSION}/loop-linux-amd64-${LOOP_VERSION}.tar.gz
