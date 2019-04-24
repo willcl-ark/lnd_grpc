@@ -408,3 +408,78 @@ class Lightning(BaseClient):
         request = ln.ForwardingHistoryRequest(**kwargs)
         response = self.lightning_stub.ForwardingHistory(request)
         return response
+
+    """
+    Static channel backup
+    """
+
+    def export_chan_backup(self, **kwargs):
+        """
+        DESCRIPTION:
+
+        This command allows a user to export a Static Channel Backup (SCB) for
+        as selected channel. SCB's are encrypted backups of a channel's initial
+        state that are encrypted with a key derived from the seed of a user.In
+        the case of partial or complete data loss, the SCB will allow the user
+        to reclaim settled funds in the channel at its final state. The
+        exported channel backups can be restored at a later time using the
+        restore_chan_backup method.
+        """
+
+        request = ln.ExportChannelBackupRequest(**kwargs)
+        response = self.lightning_stub.ExportChannelBackup(request)
+        return response
+
+    def export_all_channel_backups(self, **kwargs):
+        """
+        As above but for all channels?
+        """
+        request = ln.ChanBackupExportRequest(**kwargs)
+        response = self.lightning_stub.ExportAllChannelBackups(request)
+        return response
+
+    def restore_chan_backup(self, **kwargs):
+        """
+        DESCRIPTION:
+
+        Allows a user to restore a Static Channel Backup (SCB) that was
+        obtained either via the export_chan_backup command, or from lnd's
+        automatically manged channels.backup file. This command should be used
+        if a user is attempting to restore a channel due to data loss on a
+        running node restored with the same seed as the node that created the
+        channel. If successful, this command will allows the user to recover
+        the settled funds stored in the recovered channels.
+
+        The command will accept backups in one of three forms:
+
+           * A single channel packed SCB, which can be obtained from
+             export_chan_backup. This should be passed in hex encoded format.
+
+           * A packed multi-channel SCB, which couples several individual
+             static channel backups in single blob.
+
+           * A file path which points to a packed multi-channel backup within a
+             file, using the same format that lnd does in its channels.backup
+             file.
+
+
+        OPTIONS:
+           --single_backup value  a hex encoded single channel backup obtained from export_chan_backup
+           --multi_backup value   a hex encoded multi-channel backup obtained from export_chan_backup
+           --multi_file value     the path to a multi-channel back up file
+
+        """
+        request = ln.RestoreChanBackupRequest(**kwargs)
+        response = self.lightning_stub.RestoreChannelBackups(request)
+        return response
+
+    # Response-streaming RPC
+    def subscribe_channel_backups(self, **kwargs):
+        request = ln.ChannelBackupSubscription(**kwargs)
+        response = self.lightning_stub.SubscribeChannelBackups(request)
+        return response
+
+    def verify_chan_backup(self, **kwargs):
+        request = ln.ChanBackupSnapshot(**kwargs)
+        response = self.lightning_stub.VerifyChanBackup(request)
+        return response

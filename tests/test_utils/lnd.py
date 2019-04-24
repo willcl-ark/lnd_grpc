@@ -16,14 +16,14 @@ class LndD(TailableProc):
 
     CONF_NAME = 'lnd.conf'
 
-    def __init__(self, lightning_dir, bitcoind, port):
-        super().__init__(lightning_dir, 'lnd({})'.format(port))
+    def __init__(self, lightning_dir, bitcoind, port, node_id):
+        super().__init__(lightning_dir, 'lnd({})'.format(node_id))
         self.lightning_dir = lightning_dir
         self.bitcoind = bitcoind
         self.port = port
         self.rpc_port = str(reserve())
         self.rest_port = str(reserve())
-        self.prefix = 'lnd'
+        self.prefix = f'lnd-{node_id}'
         try:
             if os.environ['TRAVIS_BUILD_DIR']:
                 self.tlscertpath = os.environ[
@@ -88,7 +88,7 @@ class LndNode(lndClient):
     def __init__(self, lightning_dir, lightning_port, bitcoind, executor=None, node_id=0):
         self.bitcoin = bitcoind
         self.executor = executor
-        self.daemon = LndD(lightning_dir, bitcoind, port=lightning_port)
+        self.daemon = LndD(lightning_dir, bitcoind, port=lightning_port, node_id=node_id)
         self.node_id = node_id
         self.logger = logging.getLogger(name='lnd-node({})'.format(self.node_id))
         self.myid = None

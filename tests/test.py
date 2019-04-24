@@ -159,6 +159,17 @@ def idfn(impls):
     return "_".join([i.displayName for i in impls])
 
 
+def wipe_channels_from_disk(node, network='regtest'):
+    _channel_backup = node.lnd_dir + f'chain/bitcoin/{network}/channel.backup'
+    _channel_db = node.lnd_dir + f'graph/{network}/channel.db'
+    assert os.path.exists(_channel_backup)
+    assert os.path.exists(_channel_db)
+    os.remove(_channel_backup)
+    os.remove(_channel_db)
+    assert not os.path.exists(_channel_backup)
+    assert not os.path.exists(_channel_db)
+
+
 #########
 # Tests #
 #########
@@ -612,3 +623,40 @@ class TestLoop:
             assert type(terms) == loop_client_pb2.TermsResponse
         else:
             logging.info("test_loop_out() skipped as invoice RPC not detected")
+
+
+class TestChannelBackup:
+
+    def test_export_verify_restore_multi(self, bitcoind, bob, carol):
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
+        funding_txid, output_index = bob.list_channels()[0].channel_point.split(':')
+        channel_point = bob.channel_point_generator(funding_txid=funding_txid,
+                                                    output_index=output_index)
+
+        single_backup = bob.export_chan_backup(chan_point=channel_point)
+        assert type(single_backup) == rpc_pb2.ChannelBackup
+
+        all_backup = bob.export_all_channel_backups()
+        assert type(all_backup) == rpc_pb2.ChanBackupSnapshot
+
+        # assert the multi_chan backup
+        assert bob.verify_chan_backup(multi_chan_backup=all_backup.multi_chan_backup)
+
+        bob.stop()
+        time.sleep(5)
+        wipe_channels_from_disk(bob)
+        bob.start()
+
+        assert len(bob.list_channels()) == 0
+
+        assert bob.restore_chan_backup(
+                multi_chan_backup=all_backup.multi_chan_backup.multi_chan_backup)
+        bob.daemon.wait_for_log('Inserting 1 SCB channel shells into DB')
+        carol.daemon.wait_for_log('Broadcasting force close transaction')
+        bitcoind.rpc.generate(6)
+        bob.daemon.wait_for_log('Publishing sweep tx', timeout=120)
+        bitcoind.rpc.generate(6)
+        assert bob.daemon.wait_for_log('a contract has been fully resolved!', timeout=120)
+
+    # TODO: add single_chan_verify_restore
+    #   awaiting outcome of https://github.com/lightningnetwork/lnd/issues/3009
