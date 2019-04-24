@@ -13,9 +13,20 @@ This version of the library has been compiled with rpc.proto from the v0.6-beta 
 
 Note: Configuration for coins other than bitcoin will require modifying the source code directly.
 
-## Installation via pip
+## Installation
+#### Via pip:
 
 `pip install lnd-grpc`
+
+#### Cloning and installing source as editable package:
+
+`git clone https://github.com/willcl-ark/lnd_grpc.git`
+
+`cd lnd_grpc`
+
+Activate virtual env as required
+
+`pip install -e .`
 
 ## Bitcoin setup
 
@@ -39,7 +50,7 @@ lnd --bitcoin.active \
 --rpclisten=host:port
 ```
 
-## Usage
+## Using
 Import the module into your project:
 
 `import lnd_grpc`
@@ -79,8 +90,7 @@ If you did not run the initialization sequence above, you will only need to unlo
 
 `lnd_rpc.unlock_wallet(password='wallet_password')`
 
-# General usage
-
+## Interface conventions
 Further RPC commands can then be issued to the lnd gRPC interface using the following convention, where LND gRPC commands are converted from CamelCase to lowercase_with_underscores and keyword arguments named to exactly match the parameters the gRPC uses:
 
 `lnd_rpc.grpc_command(keyword_arg=value)`
@@ -91,7 +101,7 @@ Connection stubs will be generated dynamically as required to ensure channel fre
 
 Response-streaming RPCs now return the python iterators to be operated on directly (e.g. with `.__next__()`)
 
-## Loop usage
+# Loop 
 LND must be re-built and installed as per the loop instructions found at the [Loop Readme](https://github.com/lightninglabs/loop/blob/master/README.md).
 
 Loopd should then be installed as per the same instructions and started manually.
