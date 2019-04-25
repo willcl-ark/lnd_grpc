@@ -1,9 +1,11 @@
 import sys
 import time
+from hashlib import sha256
+from random import randint
 
 import grpc
 
-from lnd_grpc.protos import rpc_pb2
+from lnd_grpc.protos import invoices_pb2 as invoices_pb2, rpc_pb2
 from loop_rpc.protos import loop_client_pb2
 from test_utils.fixtures import *
 from test_utils.lnd import LndNode
@@ -170,6 +172,12 @@ def wipe_channels_from_disk(node, network='regtest'):
     assert not os.path.exists(_channel_db)
 
 
+def random_32_byte_hash():
+    n = str(randint(0, 1e32))
+    _hash = sha256(n.encode())
+    return _hash.digest(), n
+
+
 #########
 # Tests #
 #########
@@ -316,7 +324,7 @@ class TestNonInteractiveLightning:
     def test_stop_daemon(self, node_factory):
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
         assert type(node.stop_daemon()) == rpc_pb2.StopResponse
-        node.daemon.wait_for_log("Shutdown complete")
+        node.daemon.wait_for_log('LTND: Shutdown complete', timeout=60)
         with pytest.raises(grpc.RpcError):
             node.get_info()
 
@@ -603,6 +611,80 @@ class TestInteractiveLightning:
         assert type(update) == rpc_pb2.PolicyUpdateResponse
 
 
+class TestChannelBackup:
+
+    def test_export_verify_restore_multi(self, bitcoind, bob, carol):
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
+        funding_txid, output_index = bob.list_channels()[0].channel_point.split(':')
+        channel_point = bob.channel_point_generator(funding_txid=funding_txid,
+                                                    output_index=output_index)
+
+        all_backup = bob.export_all_channel_backups()
+        assert type(all_backup) == rpc_pb2.ChanBackupSnapshot
+        # assert the multi_chan backup
+        assert bob.verify_chan_backup(multi_chan_backup=all_backup.multi_chan_backup)
+
+        bob.stop()
+        time.sleep(5)
+        wipe_channels_from_disk(bob)
+        bob.start()
+
+        assert len(bob.list_channels()) == 0
+        assert bob.restore_chan_backup(
+                multi_chan_backup=all_backup.multi_chan_backup.multi_chan_backup)
+
+        bob.daemon.wait_for_log('Inserting 1 SCB channel shells into DB')
+        carol.daemon.wait_for_log('Broadcasting force close transaction')
+        bitcoind.rpc.generate(6)
+        bob.daemon.wait_for_log('Publishing sweep tx', timeout=120)
+        bitcoind.rpc.generate(6)
+        assert bob.daemon.wait_for_log('a contract has been fully resolved!', timeout=120)
+
+    def test_export_verify_restore_single(self, bitcoind, bob, carol):
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
+        funding_txid, output_index = bob.list_channels()[0].channel_point.split(':')
+        channel_point = bob.channel_point_generator(funding_txid=funding_txid,
+                                                    output_index=output_index)
+
+        single_backup = bob.export_chan_backup(chan_point=channel_point)
+        assert type(single_backup) == rpc_pb2.ChannelBackup
+        packed_backup = bob.pack_into_channelbackups(single_backup=single_backup)
+        # assert the single_chan_backup
+        assert bob.verify_chan_backup(single_chan_backups=packed_backup)
+
+        bob.stop()
+        time.sleep(5)
+        wipe_channels_from_disk(bob)
+        bob.start()
+
+        assert len(bob.list_channels()) == 0
+        assert bob.restore_chan_backup(chan_backups=packed_backup)
+
+        bob.daemon.wait_for_log('Inserting 1 SCB channel shells into DB')
+        carol.daemon.wait_for_log('Broadcasting force close transaction')
+        bitcoind.rpc.generate(6)
+        bob.daemon.wait_for_log('Publishing sweep tx', timeout=120)
+        bitcoind.rpc.generate(6)
+        assert bob.daemon.wait_for_log('a contract has been fully resolved!', timeout=120)
+
+
+class TestInvoices:
+
+    def test_add_cancel_invoice(self, bitcoind, bob, carol):
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
+        _hash, preimage = random_32_byte_hash()
+
+        invoice = bob.add_hold_invoice(memo='testing_hold invoice',
+                                       hash=_hash,
+                                       value=1000)
+        assert type(invoice) == invoices_pb2.AddHoldInvoiceResp
+
+        invoice_subscription = bob.subscribe_single_invoice(r_hash=_hash)
+        # assert type(invoice_subscription) == rpc_pb2.Invoice
+
+        print(carol.pay_invoice(payment_request=invoice.payment_request))
+
+
 class TestLoop:
 
     def test_loop_out_quote(self, bitcoind, alice, bob, loopd):
@@ -623,40 +705,3 @@ class TestLoop:
             assert type(terms) == loop_client_pb2.TermsResponse
         else:
             logging.info("test_loop_out() skipped as invoice RPC not detected")
-
-
-class TestChannelBackup:
-
-    def test_export_verify_restore_multi(self, bitcoind, bob, carol):
-        bob, carol = setup_nodes(bitcoind, [bob, carol])
-        funding_txid, output_index = bob.list_channels()[0].channel_point.split(':')
-        channel_point = bob.channel_point_generator(funding_txid=funding_txid,
-                                                    output_index=output_index)
-
-        single_backup = bob.export_chan_backup(chan_point=channel_point)
-        assert type(single_backup) == rpc_pb2.ChannelBackup
-
-        all_backup = bob.export_all_channel_backups()
-        assert type(all_backup) == rpc_pb2.ChanBackupSnapshot
-
-        # assert the multi_chan backup
-        assert bob.verify_chan_backup(multi_chan_backup=all_backup.multi_chan_backup)
-
-        bob.stop()
-        time.sleep(5)
-        wipe_channels_from_disk(bob)
-        bob.start()
-
-        assert len(bob.list_channels()) == 0
-
-        assert bob.restore_chan_backup(
-                multi_chan_backup=all_backup.multi_chan_backup.multi_chan_backup)
-        bob.daemon.wait_for_log('Inserting 1 SCB channel shells into DB')
-        carol.daemon.wait_for_log('Broadcasting force close transaction')
-        bitcoind.rpc.generate(6)
-        bob.daemon.wait_for_log('Publishing sweep tx', timeout=120)
-        bitcoind.rpc.generate(6)
-        assert bob.daemon.wait_for_log('a contract has been fully resolved!', timeout=120)
-
-    # TODO: add single_chan_verify_restore
-    #   awaiting outcome of https://github.com/lightningnetwork/lnd/issues/3009

@@ -480,6 +480,20 @@ class Lightning(BaseClient):
         return response
 
     def verify_chan_backup(self, **kwargs):
+        """
+        For multi_backup: works as expected.
+
+        For single_chan_backups:
+        Needs to be passed a single channel backup (ChannelBackup) packed into a ChannelBackups
+        to verify sucessfully.
+
+        export_chan_backup() returns a ChannelBackup but it is not packed properly.
+        export_all_channel_backups().single_chan_backups returns a ChannelBackups but as it contains
+        more than one channel, verify_chan_backup() will also reject it.
+
+        Use helper method pack_into_channelbackups() to pack individual ChannelBackup objects into
+        the appropriate ChannelBackups objects for verification.
+        """
         request = ln.ChanBackupSnapshot(**kwargs)
         response = self.lightning_stub.VerifyChanBackup(request)
         return response
