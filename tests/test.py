@@ -625,7 +625,6 @@ class TestChannelBackup:
         assert bob.verify_chan_backup(multi_chan_backup=all_backup.multi_chan_backup)
 
         bob.stop()
-        time.sleep(5)
         wipe_channels_from_disk(bob)
         bob.start()
 
@@ -653,7 +652,6 @@ class TestChannelBackup:
         assert bob.verify_chan_backup(single_chan_backups=packed_backup)
 
         bob.stop()
-        time.sleep(5)
         wipe_channels_from_disk(bob)
         bob.start()
 
@@ -670,6 +668,7 @@ class TestChannelBackup:
 
 class TestInvoices:
 
+    @pytest.mark.skip(reason="waiting on async client")
     def test_add_cancel_invoice(self, bitcoind, bob, carol):
         bob, carol = setup_nodes(bitcoind, [bob, carol])
         _hash, preimage = random_32_byte_hash()
