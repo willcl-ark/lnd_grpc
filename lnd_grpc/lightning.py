@@ -231,9 +231,10 @@ class Lightning(BaseClient):
     def send_payment(self, **kwargs):
         # Use payment request as first choice
         if 'payment_request' in kwargs:
-            request_iterable = self.send_request_generator(
-                    payment_request=kwargs['payment_request']
-            )
+            params = {'payment_request': kwargs['payment_request']}
+            if 'amt' in kwargs:
+                params['amt'] = kwargs['amt']
+            request_iterable = self.send_request_generator(**params)
         else:
             # Helper to convert hex to bytes automatically
             try:
@@ -250,7 +251,10 @@ class Lightning(BaseClient):
     def send_payment_sync(self, **kwargs):
         # Use payment request as first choice
         if 'payment_request' in kwargs:
-            request = ln.SendRequest(payment_request=kwargs['payment_request'])
+            params = {'payment_request': kwargs['payment_request']}
+            if 'amt' in kwargs:
+                params['amt'] = kwargs['amt']
+            request = ln.SendRequest(**params)
         else:
             request = ln.SendRequest(**kwargs)
         response = self.lightning_stub.SendPaymentSync(request)

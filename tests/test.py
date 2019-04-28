@@ -499,6 +499,23 @@ class TestInteractiveLightning:
         assert payment_hash2 in [p.payment_hash for p in bob.list_payments().payments]
         assert carol.lookup_invoice(r_hash_str=payment_hash).settled is True
 
+        # test any amt request
+        amt = 123
+        invoice3 = carol.add_invoice(value=0)
+        print(bob.send_payment_sync(payment_request=invoice3.payment_request,
+                                    amt=amt))
+        bitcoind.rpc.generate(3)
+        gen_and_sync_lnd(bitcoind, [bob, carol])
+
+        payment_hash = carol.decode_pay_req(
+            invoice3.payment_request).payment_hash
+        assert payment_hash in [p.payment_hash for p in
+                                bob.list_payments().payments]
+        inv_paid = carol.lookup_invoice(r_hash_str=payment_hash)
+        assert inv_paid.settled is True
+        assert inv_paid.amt_paid_sat == amt
+
+
     def test_send_payment(self, bitcoind, bob, carol):
         bob, carol = setup_nodes(bitcoind, [bob, carol])
         amount = 10000
@@ -525,6 +542,21 @@ class TestInteractiveLightning:
         payment_hash2 = carol.decode_pay_req(invoice2.payment_request).payment_hash
         assert payment_hash2 in [p.payment_hash for p in bob.list_payments().payments]
         assert carol.lookup_invoice(r_hash_str=payment_hash).settled is True
+
+        # test any amt request
+        amt = 123
+        invoice = carol.add_invoice(value=0)
+        print(bob.send_payment(payment_request=invoice.payment_request,
+                               amt=amt).__next__())
+        bitcoind.rpc.generate(3)
+        gen_and_sync_lnd(bitcoind, [bob, carol])
+
+        payment_hash = carol.decode_pay_req(invoice.payment_request).payment_hash
+        assert payment_hash in [p.payment_hash for p in bob.list_payments().payments]
+        inv_paid = carol.lookup_invoice(r_hash_str=payment_hash)
+        assert inv_paid.settled is True
+        assert inv_paid.amt_paid_sat == amt
+
 
     def test_send_to_route_sync(self, bitcoind, bob, carol, dave):
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
