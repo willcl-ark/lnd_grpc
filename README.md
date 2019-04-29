@@ -1,6 +1,6 @@
 # lnd-grpc
 
-[![Build Status](https://travis-ci.org/willcl-ark/lnd_grpc.svg?branch=master)](https://travis-ci.org/willcl-ark/lnd_grpc)
+[![Build Status](https://travis-ci.org/willcl-ark/lnd_grpc.svg?branch=master)](https://travis-ci.org/willcl-ark/lnd_grpc)  [![CodeFactor](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc/badge)](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
