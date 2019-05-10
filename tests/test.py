@@ -702,46 +702,6 @@ class TestChannelBackup:
 
 class TestInvoices:
 
-    @pytest.mark.skip(reason="waiting on async client")
-    def test_add_cancel_invoice(self, bitcoind, bob, carol):
-        bob, carol = setup_nodes(bitcoind, [bob, carol])
-        _hash, preimage = random_32_byte_hash()
-
-        invoice = bob.add_hold_invoice(memo='testing_hold invoice',
-                                       hash=_hash,
-                                       value=1000)
-        assert type(invoice) == invoices_pb2.AddHoldInvoiceResp
-
-        invoice_subscription = bob.subscribe_single_invoice(r_hash=_hash)
-        # assert type(invoice_subscription) == rpc_pb2.Invoice
-
-        print(carol.pay_invoice(payment_request=invoice.payment_request))
-
-
-class TestLoop:
-
-    def test_loop_out_quote(self, bitcoind, alice, bob, loopd):
-        alice, bob = setup_nodes(bitcoind, [alice, bob])
-        if alice.invoice_rpc_active:
-            quote = loopd.loop_out_quote(amt=250000)
-            print(quote)
-            assert quote is not None
-            assert type(quote) == loop_client_pb2.QuoteResponse
-        else:
-            logging.info("test_loop_out() skipped as invoice RPC not detected")
-
-    def test_loop_out_terms(self, bitcoind, alice, bob, loopd):
-        alice, bob = setup_nodes(bitcoind, [alice, bob])
-        if alice.invoice_rpc_active:
-            terms = loopd.loop_out_terms()
-            assert terms is not None
-            assert type(terms) == loop_client_pb2.TermsResponse
-        else:
-            logging.info("test_loop_out() skipped as invoice RPC not detected")
-
-
-class TestInvoices:
-
     def test_all_invoice(self, bitcoind, bob, carol):
         bob, carol = setup_nodes(bitcoind, [bob, carol])
         _hash, preimage = random_32_byte_hash()
@@ -764,18 +724,22 @@ class TestInvoices:
         def settle_inv_worker(_preimage):
             carol.settle_invoice(preimage=_preimage)
 
-        # start the threads
-        inv_sub = threading.Thread(target=inv_sub_worker, args=[_hash, ])
-        inv_sub.start()
-        time.sleep(1)
-
+        # setup the threads
+        inv_sub = threading.Thread(target=inv_sub_worker, name='inv_sub',
+                                   args=[_hash, ], daemon=True)
         pay_inv = threading.Thread(target=pay_hold_inv_worker, args=[invoice.payment_request, ])
+        settle_inv = threading.Thread(target=settle_inv_worker, args=[preimage, ])
+
+        # start the threads
+        inv_sub.start()
+        # wait for subscription to start
+        while not inv_sub.is_alive():
+            time.sleep(0.1)
         pay_inv.start()
         time.sleep(1)
-
-        settle_inv = threading.Thread(target=settle_inv_worker, args=[preimage, ])
         settle_inv.start()
-        time.sleep(1)
+        while settle_inv.is_alive():
+            time.sleep(0.1)
 
         settled = False
 
