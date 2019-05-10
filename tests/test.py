@@ -1,7 +1,9 @@
 import sys
 import time
+import threading
+import queue
 from hashlib import sha256
-from random import randint
+from secrets import token_bytes
 
 import grpc
 
@@ -173,9 +175,9 @@ def wipe_channels_from_disk(node, network='regtest'):
 
 
 def random_32_byte_hash():
-    n = str(randint(0, 1e32))
-    _hash = sha256(n.encode())
-    return _hash.digest(), n
+    preimage = token_bytes(32)
+    _hash = sha256(preimage)
+    return _hash.digest(), preimage
 
 
 #########
@@ -323,7 +325,7 @@ class TestNonInteractiveLightning:
 
     def test_stop_daemon(self, node_factory):
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
-        assert type(node.stop_daemon()) == rpc_pb2.StopResponse
+        node.stop_daemon()
         node.daemon.wait_for_log('LTND: Shutdown complete', timeout=60)
         with pytest.raises(grpc.RpcError):
             node.get_info()
@@ -714,6 +716,76 @@ class TestInvoices:
         # assert type(invoice_subscription) == rpc_pb2.Invoice
 
         print(carol.pay_invoice(payment_request=invoice.payment_request))
+
+
+class TestLoop:
+
+    def test_loop_out_quote(self, bitcoind, alice, bob, loopd):
+        alice, bob = setup_nodes(bitcoind, [alice, bob])
+        if alice.invoice_rpc_active:
+            quote = loopd.loop_out_quote(amt=250000)
+            print(quote)
+            assert quote is not None
+            assert type(quote) == loop_client_pb2.QuoteResponse
+        else:
+            logging.info("test_loop_out() skipped as invoice RPC not detected")
+
+    def test_loop_out_terms(self, bitcoind, alice, bob, loopd):
+        alice, bob = setup_nodes(bitcoind, [alice, bob])
+        if alice.invoice_rpc_active:
+            terms = loopd.loop_out_terms()
+            assert terms is not None
+            assert type(terms) == loop_client_pb2.TermsResponse
+        else:
+            logging.info("test_loop_out() skipped as invoice RPC not detected")
+
+
+class TestInvoices:
+
+    def test_all_invoice(self, bitcoind, bob, carol):
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
+        _hash, preimage = random_32_byte_hash()
+        invoice = carol.add_hold_invoice(memo='pytest hold invoice',
+                                         hash=_hash,
+                                         value=1000)
+        assert type(invoice) == invoices_pb2.AddHoldInvoiceResp
+
+        # slide into some threading to overcome blocking hold invoice methods
+        subscription_responses = queue.Queue()
+
+        # custom thread functions
+        def inv_sub_worker(_hash):
+            for _response in carol.subscribe_single_invoice(_hash):
+                subscription_responses.put(_response)
+
+        def pay_hold_inv_worker(payment_request):
+            bob.pay_invoice(payment_request=payment_request)
+
+        def settle_inv_worker(_preimage):
+            carol.settle_invoice(preimage=_preimage)
+
+        # start the threads
+        inv_sub = threading.Thread(target=inv_sub_worker, args=[_hash, ])
+        inv_sub.start()
+        time.sleep(1)
+
+        pay_inv = threading.Thread(target=pay_hold_inv_worker, args=[invoice.payment_request, ])
+        pay_inv.start()
+        time.sleep(1)
+
+        settle_inv = threading.Thread(target=settle_inv_worker, args=[preimage, ])
+        settle_inv.start()
+        time.sleep(1)
+
+        settled = False
+
+        # check the response queue for settled status
+        while not subscription_responses.empty():
+            response = subscription_responses.get()
+            if response.settled is True:
+                settled = True
+
+        assert settled is True
 
 
 class TestLoop:
