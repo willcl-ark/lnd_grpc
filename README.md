@@ -1,12 +1,14 @@
 # lnd-grpc
 
-version 0.3.0
+Version 0.3.1
+
+Requires python >=3.6
 
 [![Build Status](https://travis-ci.org/willcl-ark/lnd_grpc.svg?branch=master)](https://travis-ci.org/willcl-ark/lnd_grpc)  [![CodeFactor](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc/badge)](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-This version of the library has been compiled with rpc.proto from the v0.6.1-beta tag on github
+This version of the library has been compiled with lnd proto files from the v0.6.1-beta tag on github.
 This version has been tested using Bitcoin Core v0.18.0 as a backend
 
 ## Install requires:
@@ -106,7 +108,7 @@ Connection stubs will be generated dynamically as required to ensure channel fre
 Response-streaming RPCs now return the python iterators themselves to be operated on, e.g. with `.__next__()` or `for resp in response:`
 
 ## Threading
-The backend LND server (Golang) has asynchronous capability so any limitaions are on the client side. 
+The backend LND server (Golang) has asynchronous capability so any limitations are on the client side. 
 The Python gRPC Client is not natively async-compatible (e.g. using asyncio). There are wrappers which exist that can 'wrap' python gRPC Client methods into async methods, but using threading is the officially support technique at this moment.
 
 For Python client threading to work correctly you must use the same **channel** for each thread. This is easy with this library if you use a single Client() instance in your application, as the same channel is used for each RPC for that Client object. This makes threading relatively easy, e.g.:
