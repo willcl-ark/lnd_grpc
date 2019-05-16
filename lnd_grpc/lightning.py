@@ -6,6 +6,7 @@ import grpc
 import lnd_grpc.protos.rpc_pb2 as ln
 import lnd_grpc.protos.rpc_pb2_grpc as lnrpc
 from lnd_grpc.base_client import BaseClient
+from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -20,18 +21,12 @@ class Lightning(BaseClient):
                  lnd_dir: str = None,
                  macaroon_path: str = None,
                  tls_cert_path: str = None,
-                 network: str = 'mainnet',
-                 grpc_host: str = 'localhost',
-                 grpc_port: str = '10009'):
+                 network: str = defaultNetwork,
+                 grpc_host: str = defaultRPCHost,
+                 grpc_port: str = defaultRPCPort):
 
         self._lightning_stub: lnrpc.LightningStub = None
-
         self.version = None
-        self.grpc_options = [
-            ('grpc.max_receive_message_length', 33554432),
-            ('grpc.max_send_message_length', 33554432),
-        ]
-
         super().__init__(lnd_dir=lnd_dir,
                          macaroon_path=macaroon_path,
                          tls_cert_path=tls_cert_path,

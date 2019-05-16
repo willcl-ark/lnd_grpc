@@ -6,6 +6,7 @@ import lnd_grpc.protos.invoices_pb2 as inv
 import lnd_grpc.protos.invoices_pb2_grpc as invrpc
 import lnd_grpc.protos.rpc_pb2 as ln
 from lnd_grpc.base_client import BaseClient
+from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -21,9 +22,9 @@ class Invoices(BaseClient):
                  lnd_dir: str = None,
                  macaroon_path: str = None,
                  tls_cert_path: str = None,
-                 network: str = 'mainnet',
-                 grpc_host: str = 'localhost',
-                 grpc_port: str = '10009'):
+                 network: str = defaultNetwork,
+                 grpc_host: str = defaultRPCHost,
+                 grpc_port: str = defaultRPCPort):
         self._inv_stub: invrpc.InvoicesStub = None
 
         super().__init__(lnd_dir=lnd_dir,
@@ -36,7 +37,7 @@ class Invoices(BaseClient):
     @property
     def invoice_stub(self) -> invrpc.InvoicesStub:
         if self._inv_stub is None:
-            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
+            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert)
             _inv_channel = grpc.secure_channel(target=self.grpc_address,
                                                credentials=self.combined_credentials,
                                                options=self.grpc_options)
