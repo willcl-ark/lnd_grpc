@@ -10,12 +10,13 @@ from test_utils.utils import TailableProc
 class LoopD(TailableProc):
 
     def __init__(self, lnd, network='regtest', host='localhost', rpc_port=None):
-        super().__init__()
+        self.prefix = 'loopd'
+        super().__init__(prefix=self.prefix)
         if rpc_port is None:
             rpc_port = reserve()
         self.rpc_port = rpc_port
         self.host = host
-        self.prefix = 'loopd'
+        # self.prefix = 'loopd'
         self.lnd = lnd
         self.cmd_line = [
             f'loopd',
@@ -23,13 +24,13 @@ class LoopD(TailableProc):
             f'--network={network}',
             f'--rpclisten={self.host}:{self.rpc_port}',
             f'--lnd.host={self.lnd.grpc_host}:{self.lnd.grpc_port}',
-            f'--lnd.macaroonpath={lnd.macaroon_path}',
+            f'--lnd.macaroondir={self.lnd.daemon.lightning_dir}/chain/bitcoin/regtest/',
             f'--lnd.tlspath={self.lnd.tls_cert_path}',
         ]
 
     def start(self):
         super().start()
-        self.wait_for_log('Connected to lnd node')
+        self.wait_for_log('Connected to lnd')
         logging.info('Loop connected to LND node')
         self.wait_for_log('Starting event loop at height')
         time.sleep(3)

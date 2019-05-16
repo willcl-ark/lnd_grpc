@@ -24,6 +24,7 @@ class LndD(TailableProc):
         self.rpc_port = str(reserve())
         self.rest_port = str(reserve())
         self.prefix = f'lnd-{node_id}'
+        self.invoice_rpc_active = False
         try:
             if os.environ['TRAVIS_BUILD_DIR']:
                 self.tlscertpath = os.environ[
@@ -68,6 +69,11 @@ class LndD(TailableProc):
         super().start()
         self.wait_for_log('RPC server listening on')
         self.wait_for_log('Done catching up block hashes')
+        try:
+            self.wait_for_log('Starting sub RPC server: InvoicesRPC', timeout=10)
+            self.invoice_rpc_active = True
+        except ValueError:
+            pass
         time.sleep(3)
 
         logging.info('LND started (pid: {})'.format(self.proc.pid))
@@ -92,7 +98,6 @@ class LndNode(lndClient):
         self.node_id = node_id
         self.logger = logging.getLogger(name='lnd-node({})'.format(self.node_id))
         self.myid = None
-        self.invoice_rpc_active = False
         super().__init__(lnd_dir=lightning_dir,
                          grpc_host='localhost',
                          grpc_port=str(self.daemon.rpc_port),
@@ -115,8 +120,6 @@ class LndNode(lndClient):
 
     def start(self):
         self.daemon.start()
-        self.daemon.wait_for_log('Starting sub RPC server: InvoicesRPC', timeout=10)
-        self.invoice_rpc_active = True
 
     def add_funds(self, bitcoind, amount):
         start_amt = self.wallet_balance().total_balance

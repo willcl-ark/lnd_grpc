@@ -4,7 +4,8 @@
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-This version of the library has been compiled with rpc.proto from the v0.6-beta tag on github
+This version of the library has been compiled with rpc.proto from the v0.6.1-beta tag on github
+This version has been tested using Bitcoin Core v0.18.0 as a backend
 
 ## Install requires:
 * `grpcio`

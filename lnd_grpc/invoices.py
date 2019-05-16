@@ -60,7 +60,7 @@ class Invoices(BaseClient):
                          value: int = 0,
                          expiry: int = 3600,
                          fallback_addr: str = '',
-                         cltv_expiry: int = 7,
+                         cltv_expiry: int = 15,
                          route_hints: ln.RouteHint = [],
                          private: bool = 1) -> inv.AddHoldInvoiceResp:
         request = inv.AddHoldInvoiceRequest(
