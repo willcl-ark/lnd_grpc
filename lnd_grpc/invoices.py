@@ -12,6 +12,10 @@ environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
 
 
 class Invoices(BaseClient):
+    """
+    Provides a super-class to interface with the Invoices sub-system. Currently mainly used only
+    for hold invoice applications.
+    """
 
     def __init__(self,
                  lnd_dir: str = None,
@@ -43,26 +47,49 @@ class Invoices(BaseClient):
                                  r_hash: bytes = b'',
                                  r_hash_str: str = '') -> ln.Invoice:
         """
-        Uni-directional streaming RPC returns an iterable to be operated on
+        Returns a uni-directional stream (server -> client) for notifying the client of invoice
+        state changes.
+
+        This is particularly useful in hold invoices where invoices might be paid by the 'payer'
+        but not settled immediately by the 'receiver'; the 'payer' will want to watch for settlement
+         or cancellation
+
+        :return: an iterable of Invoice updates with 20 attributes per update
         """
         request = ln.PaymentHash(r_hash=r_hash, r_hash_str=r_hash_str)
         response = self.invoice_stub.SubscribeSingleInvoice(request)
         return response
 
     def cancel_invoice(self, payment_hash: bytes = b'') -> inv.CancelInvoiceResp:
+        """
+        Cancels a currently open invoice. If the invoice is already canceled, this call will
+        succeed. If the invoice is already settled, it will fail.
+
+        Once a hold invoice is accepted in lnd system it is held there until either a cancel or
+        settle rpc is received.
+
+        :return: CancelInvoiceResponse with no attributes
+        """
         request = inv.CancelInvoiceMsg(payment_hash=payment_hash)
         response = self.invoice_stub.CancelInvoice(request)
         return response
 
-    def add_hold_invoice(self,
-                         memo: str = '',
-                         hash: bytes = b'',
-                         value: int = 0,
-                         expiry: int = 3600,
-                         fallback_addr: str = '',
-                         cltv_expiry: int = 15,
-                         route_hints: ln.RouteHint = [],
-                         private: bool = 1) -> inv.AddHoldInvoiceResp:
+    def add_hold_invoice(self, memo: str = '', hash: bytes = b'', value: int = 0,
+                         expiry: int = 3600, fallback_addr: str = '', cltv_expiry: int = 36,
+                         route_hints: ln.RouteHint = [], private: bool = 1) \
+            -> inv.AddHoldInvoiceResp:
+        """
+        Attempts to add a new hold invoice to the invoice database. Any duplicated invoices are
+        rejected, therefore all invoices *must* have a unique payment hash.
+
+        Quick "hold" invoices:
+        Instead of immediately locking in and settling the htlc when the payment arrives,
+        the htlc for a hold invoice is only locked in and not yet settled. At that point,
+        it is not possible anymore for the sender to revoke the payment, but the receiver still
+        can choose whether to settle or cancel the htlc and invoice.
+
+        :return: AddHoldInvoiceResponse with 1 attribute: 'payment_request'
+        """
         request = inv.AddHoldInvoiceRequest(
                 memo=memo, hash=hash, value=value, expiry=expiry,
                 fallback_addr=fallback_addr, cltv_expiry=cltv_expiry,
@@ -71,6 +98,14 @@ class Invoices(BaseClient):
         return response
 
     def settle_invoice(self, preimage: bytes = b'') -> inv.SettleInvoiceResp:
+        """
+        Settles an accepted invoice. If the invoice is already settled, this call will succeed.
+
+        Once a hold invoice is accepted in lnd system it is held there until either a cancel or
+        settle rpc is received.
+
+        :return: SettleInvoiceResponse with no attributes
+        """
         request = inv.SettleInvoiceMsg(preimage=preimage)
         response = self.invoice_stub.SettleInvoice(request)
         return response

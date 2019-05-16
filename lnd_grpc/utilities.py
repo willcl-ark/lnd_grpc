@@ -6,7 +6,7 @@ from os import environ, path
 
 def get_lnd_dir():
     """
-    Set default LND directory based on detected OS platform
+    :return: default LND directory based on detected OS platform
     """
     lnd_dir = None
     _platform = platform.system()

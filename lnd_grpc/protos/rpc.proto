@@ -10,19 +10,19 @@ option go_package = "github.com/lightningnetwork/lnd/lnrpc";
  * Comments in this file will be directly parsed into the API
  * Documentation as descriptions of the associated method, message, or field.
  * These descriptions should go right above the definition of the object, and
- * can be in either block or /// comment format. 
- * 
+ * can be in either block or /// comment format.
+ *
  * One edge case exists where a // comment followed by a /// comment in the
  * next line will cause the description not to show up in the documentation. In
  * that instance, simply separate the two comments with a blank line.
- * 
+ *
  * An RPC method can be matched to an lncli command by placing a line in the
  * beginning of the description in exactly the following format:
  * lncli: `methodname`
- * 
+ *
  * Failure to specify the exact name of the command will cause documentation
  * generation to fail.
- * 
+ *
  * More information on how exactly the gRPC documentation is generated from
  * this proto file can be found here:
  * https://github.com/lightninglabs/lightning-api
@@ -41,13 +41,13 @@ service WalletUnlocker {
     method should be used to commit the newly generated seed, and create the
     wallet.
     */
-    rpc GenSeed (GenSeedRequest) returns (GenSeedResponse) {
+    rpc GenSeed(GenSeedRequest) returns (GenSeedResponse) {
         option (google.api.http) = {
             get: "/v1/genseed"
         };
     }
 
-    /** 
+    /**
     InitWallet is used when lnd is starting up for the first time to fully
     initialize the daemon and its internal wallet. At the very least a wallet
     password must be provided. This will be used to encrypt sensitive material
@@ -212,7 +212,7 @@ service Lightning {
     /** lncli: `walletbalance`
     WalletBalance returns total unspent outputs(confirmed and unconfirmed), all
     confirmed unspent outputs and all unconfirmed unspent outputs under control
-    of the wallet. 
+    of the wallet.
     */
     rpc WalletBalance (WalletBalanceRequest) returns (WalletBalanceResponse) {
         option (google.api.http) = {
@@ -398,7 +398,7 @@ service Lightning {
     rpc SubscribeChannelEvents (ChannelEventSubscription) returns (stream ChannelEventUpdate);
 
     /** lncli: `closedchannels`
-    ClosedChannels returns a description of all the closed channels that 
+    ClosedChannels returns a description of all the closed channels that
     this node was a participant in.
     */
     rpc ClosedChannels (ClosedChannelsRequest) returns (ClosedChannelsResponse) {
@@ -669,7 +669,7 @@ service Lightning {
     FeeReport allows the caller to obtain a report detailing the current fee
     schedule enforced by the node globally for each channel.
     */
-    rpc FeeReport (FeeReportRequest) returns (FeeReportResponse) {
+    rpc FeeReport(FeeReportRequest) returns (FeeReportResponse) {
         option (google.api.http) = {
             get: "/v1/fees"
         };
@@ -679,7 +679,7 @@ service Lightning {
     UpdateChannelPolicy allows the caller to update the fee schedule and
     channel policies for all channels globally, or a particular channel.
     */
-    rpc UpdateChannelPolicy (PolicyUpdateRequest) returns (PolicyUpdateResponse) {
+    rpc UpdateChannelPolicy(PolicyUpdateRequest) returns (PolicyUpdateResponse) {
         option (google.api.http) = {
             post: "/v1/chanpolicy"
             body: "*"
@@ -698,7 +698,7 @@ service Lightning {
     the index offset of the last entry. The index offset can be provided to the
     request to allow the caller to skip a series of records.
     */
-    rpc ForwardingHistory (ForwardingHistoryRequest) returns (ForwardingHistoryResponse) {
+    rpc ForwardingHistory(ForwardingHistoryRequest) returns (ForwardingHistoryResponse) {
         option (google.api.http) = {
             post: "/v1/switch"
             body: "*"
@@ -713,7 +713,7 @@ service Lightning {
     method once lnd is running, or via the InitWallet and UnlockWallet methods
     from the WalletUnlocker service.
     */
-    rpc ExportChannelBackup (ExportChannelBackupRequest) returns (ChannelBackup) {
+    rpc ExportChannelBackup(ExportChannelBackupRequest) returns (ChannelBackup) {
         option (google.api.http) = {
             get: "/v1/channels/backup/{chan_point.funding_txid_str}/{chan_point.output_index}"
         };
@@ -726,7 +726,7 @@ service Lightning {
     as well, which contains a single encrypted blob containing the backups of
     each channel.
     */
-    rpc ExportAllChannelBackups (ChanBackupExportRequest) returns (ChanBackupSnapshot) {
+    rpc ExportAllChannelBackups(ChanBackupExportRequest) returns (ChanBackupSnapshot) {
         option (google.api.http) = {
             get: "/v1/channels/backup"
         };
@@ -737,7 +737,7 @@ service Lightning {
     snapshot. This method will accept either a packed Single or a packed Multi.
     Specifying both will result in an error.
     */
-    rpc VerifyChanBackup (ChanBackupSnapshot) returns (VerifyChanBackupResponse) {
+    rpc VerifyChanBackup(ChanBackupSnapshot) returns (VerifyChanBackupResponse) {
         option (google.api.http) = {
             post: "/v1/channels/backup/verify"
             body: "*"
@@ -750,7 +750,7 @@ service Lightning {
     remaining within the channel. If we are able to unpack the backup, then the
     new channel will be shown under listchannels, as well as pending channels.
     */
-    rpc RestoreChannelBackups (RestoreChanBackupRequest) returns (RestoreBackupResponse) {
+    rpc RestoreChannelBackups(RestoreChanBackupRequest) returns (RestoreBackupResponse)  {
         option (google.api.http) = {
             post: "/v1/channels/backup/restore"
             body: "*"
@@ -766,7 +766,7 @@ service Lightning {
     ups, but the updated set of encrypted multi-chan backups with the closed
     channel(s) removed.
     */
-    rpc SubscribeChannelBackups (ChannelBackupSubscription) returns (stream ChanBackupSnapshot) {
+    rpc SubscribeChannelBackups(ChannelBackupSubscription) returns (stream ChanBackupSnapshot) {
     };
 }
 
@@ -806,7 +806,7 @@ message Transaction {
     /// The height of the block this transaction was included in
     int32 block_height = 5 [ json_name = "block_height" ];
 
-    /// Timestamp of this transaction 
+    /// Timestamp of this transaction
     int64 time_stamp = 6 [ json_name = "time_stamp" ];
 
     /// Fees paid for this transaction
@@ -875,7 +875,7 @@ message SendRequest {
     */
     uint64 outgoing_chan_id = 9;
 
-    /** 
+    /**
     An optional maximum total time lock for the route. If zero, there is no
     maximum enforced.
     */
@@ -898,8 +898,8 @@ message SendToRouteRequest {
 
     /**
     Deprecated. The set of routes that should be used to attempt to complete the
-    payment. The possibility to pass in multiple routes is deprecated and 
-    instead the single route field below should be used in combination with the 
+    payment. The possibility to pass in multiple routes is deprecated and
+    instead the single route field below should be used in combination with the
     streaming variant of SendToRoute.
     */
     repeated Route routes = 3 [deprecated = true];
@@ -972,7 +972,7 @@ message SendManyResponse {
 }
 
 message SendCoinsRequest {
-    /// The address to send coins to 
+    /// The address to send coins to
     string addr = 1;
 
     /// The amount in satoshis to send
@@ -1008,7 +1008,7 @@ message ListUnspentResponse {
     repeated Utxo utxos = 1 [json_name = "utxos"];
 }
 
-/** 
+/**
 `AddressType` has to be one of:
 
 - `p2wkh`: Pay to witness key hash (`WITNESS_PUBKEY_HASH` = 0)
@@ -1179,10 +1179,10 @@ message ListChannelsResponse {
 }
 
 message ChannelCloseSummary {
-    /// The outpoint (txid:index) of the funding transaction. 
+    /// The outpoint (txid:index) of the funding transaction.
     string channel_point = 1 [json_name = "channel_point"];
 
-    ///  The unique channel ID for the channel. 
+    ///  The unique channel ID for the channel.
     uint64 chan_id = 2 [json_name = "chan_id"];
 
     /// The hash of the genesis block that this channel resides within.
@@ -1313,9 +1313,9 @@ message GetInfoResponse {
     /// Whether the wallet's view is synced to the main chain
     bool synced_to_chain = 9 [json_name = "synced_to_chain"];
 
-    /** 
-    Whether the current node is connected to testnet. This field is 
-    deprecated and the network field should be used instead 
+    /**
+    Whether the current node is connected to testnet. This field is
+    deprecated and the network field should be used instead
     **/
     bool testnet = 10 [json_name = "testnet", deprecated = true];
 
@@ -1728,7 +1728,7 @@ message Route {
 }
 
 message NodeInfoRequest {
-    /// The 33-byte hex-encoded compressed public of the target node 
+    /// The 33-byte hex-encoded compressed public of the target node
     string pub_key = 1;
 }
 
@@ -1850,10 +1850,8 @@ message NetworkInfo {
     //  * also additional RPC for tracking fee info once in
 }
 
-message StopRequest {
-}
-message StopResponse {
-}
+message StopRequest{}
+message StopResponse{}
 
 message GraphTopologySubscription {}
 message GraphTopologyUpdate {
@@ -2308,65 +2306,62 @@ message ChannelBackup {
     /**
     Identifies the channel that this backup belongs to.
     */
-    ChannelPoint chan_point = 1 [json_name = "chan_point"];
+    ChannelPoint chan_point = 1 [ json_name = "chan_point" ];
 
     /**
     Is an encrypted single-chan backup. this can be passed to
     RestoreChannelBackups, or the WalletUnlocker Innit and Unlock methods in
     order to trigger the recovery protocol.
     */
-    bytes chan_backup = 2 [json_name = "chan_backup"];
+    bytes chan_backup = 2 [ json_name = "chan_backup" ];
 }
 
 message MultiChanBackup {
     /**
     Is the set of all channels that are included in this multi-channel backup.
     */
-    repeated ChannelPoint chan_points = 1 [json_name = "chan_points"];
+    repeated ChannelPoint chan_points = 1 [ json_name = "chan_points" ];
 
     /**
     A single encrypted blob containing all the static channel backups of the
     channel listed above. This can be stored as a single file or blob, and
     safely be replaced with any prior/future versions.
     */
-    bytes multi_chan_backup = 2 [json_name = "multi_chan_backup"];
+    bytes multi_chan_backup = 2 [ json_name = "multi_chan_backup" ];
 }
 
-message ChanBackupExportRequest {
-}
-message ChanBackupSnapshot {
+message ChanBackupExportRequest {}
+message ChanBackupSnapshot  {
     /**
     The set of new channels that have been added since the last channel backup
     snapshot was requested.
     */
-    ChannelBackups single_chan_backups = 1 [json_name = "single_chan_backups"];
+    ChannelBackups single_chan_backups = 1 [ json_name = "single_chan_backups" ];
 
     /**
     A multi-channel backup that covers all open channels currently known to
     lnd.
     */
-    MultiChanBackup multi_chan_backup = 2 [json_name = "multi_chan_backup"];
+    MultiChanBackup multi_chan_backup  = 2 [ json_name = "multi_chan_backup" ];
 }
 
 message ChannelBackups {
     /**
     A set of single-chan static channel backups.
     */
-    repeated ChannelBackup chan_backups = 1 [json_name = "chan_backups"];
+    repeated ChannelBackup chan_backups = 1 [ json_name = "chan_backups" ];
 }
 
 message RestoreChanBackupRequest {
     oneof backup {
-        ChannelBackups chan_backups = 1 [json_name = "chan_backups"];
+        ChannelBackups chan_backups = 1 [ json_name = "chan_backups" ];
 
-        bytes multi_chan_backup = 2 [json_name = "multi_chan_backup"];
+        bytes multi_chan_backup = 2 [ json_name = "multi_chan_backup" ];
     }
 }
-message RestoreBackupResponse {
-}
+message RestoreBackupResponse {}
 
-message ChannelBackupSubscription {
-}
+message ChannelBackupSubscription {}
 
 message VerifyChanBackupResponse {
 }

@@ -100,7 +100,31 @@ Valid gRPC commands and their keyword arguments can be found [here](https://api.
  
 Connection stubs will be generated dynamically as required to ensure channel freshness. 
 
-Response-streaming RPCs now return the python iterators to be operated on directly (e.g. with `.__next__()`)
+## Iterables 
+Response-streaming RPCs now return the python iterators themselves to be operated on, e.g. with `.__next__()` or `for resp in response:`
+
+## Threading
+The backend LND server (Golang) has asynchronous capability so any limitaions are on the client side. 
+The Python gRPC Client is not natively async-compatible (e.g. using asyncio). There are wrappers which exist that can 'wrap' python gRPC Client methods into async methods, but using threading is the officially support technique at this moment.
+
+For Python client threading to work correctly you must use the same **channel** for each thread. This is easy with this library if you use a single Client() instance in your application, as the same channel is used for each RPC for that Client object. This makes threading relatively easy, e.g.:
+
+```
+# get a queue to add responses to
+queue = queue.Queue()
+
+# create a function to perform the work you want the thread to target:
+def inv_sub_worker(_hash):
+    for _response in lnd_rpc.subscribe_single_invoice(_hash):
+        queue.put(_response)
+
+# create the thread
+# useful to use daemon mode for subscriptions
+inv_sub = threading.Thread(target=inv_sub_worker, args=[_hash, ], daemon=True)
+
+# start the thread
+inv_sub.start()
+```
 
 # Loop 
 LND must be re-built and installed as per the loop instructions found at the [Loop Readme](https://github.com/lightninglabs/loop/blob/master/README.md).

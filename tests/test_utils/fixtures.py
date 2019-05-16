@@ -3,7 +3,7 @@
 Code Modified from Christian Decker's original work, subject to the following license:
 ###
 
-	Copyright Christian Decker (Blockstream) 2017-2019.
+    Copyright Christian Decker (Blockstream) 2017-2019.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,8 @@ from test_utils.loop import LoopNode
 
 TEST_DIR = tempfile.mkdtemp(prefix='lightning-')
 TEST_DEBUG = os.getenv("TEST_DEBUG", "0") == "1"
+TRAVIS = os.getenv("TRAVIS", "false") == "true"
+
 
 # A dict in which we count how often a particular test has run so far. Used to
 # give each attempt its own numbered directory, and avoid clashes.
@@ -46,7 +48,8 @@ __attempts = {}
 
 
 class NodeFactory(object):
-    """A factory to setup and start `lightning` daemons.
+    """
+    A factory to setup and start `lightning` daemons.
     """
 
     def __init__(self, testname, executor, bitcoind):

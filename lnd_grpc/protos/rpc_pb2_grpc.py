@@ -37,24 +37,24 @@ class WalletUnlockerStub(object):
       channel: A grpc.Channel.
     """
     self.GenSeed = channel.unary_unary(
-            '/lnrpc.WalletUnlocker/GenSeed',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedResponse.FromString,
+        '/lnrpc.WalletUnlocker/GenSeed',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedResponse.FromString,
         )
     self.InitWallet = channel.unary_unary(
-            '/lnrpc.WalletUnlocker/InitWallet',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletResponse.FromString,
+        '/lnrpc.WalletUnlocker/InitWallet',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletResponse.FromString,
         )
     self.UnlockWallet = channel.unary_unary(
-            '/lnrpc.WalletUnlocker/UnlockWallet',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletResponse.FromString,
+        '/lnrpc.WalletUnlocker/UnlockWallet',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletResponse.FromString,
         )
     self.ChangePassword = channel.unary_unary(
-            '/lnrpc.WalletUnlocker/ChangePassword',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordResponse.FromString,
+        '/lnrpc.WalletUnlocker/ChangePassword',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordResponse.FromString,
         )
 
 
@@ -139,29 +139,29 @@ class WalletUnlockerServicer(object):
 
 def add_WalletUnlockerServicer_to_server(servicer, server):
   rpc_method_handlers = {
-    'GenSeed': grpc.unary_unary_rpc_method_handler(
-            servicer.GenSeed,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedResponse.SerializeToString,
-    ),
-    'InitWallet': grpc.unary_unary_rpc_method_handler(
-            servicer.InitWallet,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletResponse.SerializeToString,
-    ),
-    'UnlockWallet': grpc.unary_unary_rpc_method_handler(
-            servicer.UnlockWallet,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletResponse.SerializeToString,
-    ),
-    'ChangePassword': grpc.unary_unary_rpc_method_handler(
-            servicer.ChangePassword,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordResponse.SerializeToString,
-    ),
+      'GenSeed': grpc.unary_unary_rpc_method_handler(
+          servicer.GenSeed,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GenSeedResponse.SerializeToString,
+      ),
+      'InitWallet': grpc.unary_unary_rpc_method_handler(
+          servicer.InitWallet,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InitWalletResponse.SerializeToString,
+      ),
+      'UnlockWallet': grpc.unary_unary_rpc_method_handler(
+          servicer.UnlockWallet,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.UnlockWalletResponse.SerializeToString,
+      ),
+      'ChangePassword': grpc.unary_unary_rpc_method_handler(
+          servicer.ChangePassword,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChangePasswordResponse.SerializeToString,
+      ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-          'lnrpc.WalletUnlocker', rpc_method_handlers)
+      'lnrpc.WalletUnlocker', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -176,254 +176,254 @@ class LightningStub(object):
       channel: A grpc.Channel.
     """
     self.WalletBalance = channel.unary_unary(
-            '/lnrpc.Lightning/WalletBalance',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceResponse.FromString,
+        '/lnrpc.Lightning/WalletBalance',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceResponse.FromString,
         )
     self.ChannelBalance = channel.unary_unary(
-            '/lnrpc.Lightning/ChannelBalance',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceResponse.FromString,
+        '/lnrpc.Lightning/ChannelBalance',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceResponse.FromString,
         )
     self.GetTransactions = channel.unary_unary(
-            '/lnrpc.Lightning/GetTransactions',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.TransactionDetails.FromString,
+        '/lnrpc.Lightning/GetTransactions',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.TransactionDetails.FromString,
         )
     self.EstimateFee = channel.unary_unary(
-            '/lnrpc.Lightning/EstimateFee',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeResponse.FromString,
+        '/lnrpc.Lightning/EstimateFee',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeResponse.FromString,
         )
     self.SendCoins = channel.unary_unary(
-            '/lnrpc.Lightning/SendCoins',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.FromString,
+        '/lnrpc.Lightning/SendCoins',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.FromString,
         )
     self.ListUnspent = channel.unary_unary(
-            '/lnrpc.Lightning/ListUnspent',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.FromString,
+        '/lnrpc.Lightning/ListUnspent',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.FromString,
         )
     self.SubscribeTransactions = channel.unary_stream(
-            '/lnrpc.Lightning/SubscribeTransactions',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Transaction.FromString,
+        '/lnrpc.Lightning/SubscribeTransactions',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Transaction.FromString,
         )
     self.SendMany = channel.unary_unary(
-            '/lnrpc.Lightning/SendMany',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyResponse.FromString,
+        '/lnrpc.Lightning/SendMany',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyResponse.FromString,
         )
     self.NewAddress = channel.unary_unary(
-            '/lnrpc.Lightning/NewAddress',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressResponse.FromString,
+        '/lnrpc.Lightning/NewAddress',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressResponse.FromString,
         )
     self.SignMessage = channel.unary_unary(
-            '/lnrpc.Lightning/SignMessage',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageResponse.FromString,
+        '/lnrpc.Lightning/SignMessage',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageResponse.FromString,
         )
     self.VerifyMessage = channel.unary_unary(
-            '/lnrpc.Lightning/VerifyMessage',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageResponse.FromString,
+        '/lnrpc.Lightning/VerifyMessage',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageResponse.FromString,
         )
     self.ConnectPeer = channel.unary_unary(
-            '/lnrpc.Lightning/ConnectPeer',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerResponse.FromString,
+        '/lnrpc.Lightning/ConnectPeer',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerResponse.FromString,
         )
     self.DisconnectPeer = channel.unary_unary(
-            '/lnrpc.Lightning/DisconnectPeer',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerResponse.FromString,
+        '/lnrpc.Lightning/DisconnectPeer',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerResponse.FromString,
         )
     self.ListPeers = channel.unary_unary(
-            '/lnrpc.Lightning/ListPeers',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersResponse.FromString,
+        '/lnrpc.Lightning/ListPeers',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersResponse.FromString,
         )
     self.GetInfo = channel.unary_unary(
-            '/lnrpc.Lightning/GetInfo',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoResponse.FromString,
+        '/lnrpc.Lightning/GetInfo',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoResponse.FromString,
         )
     self.PendingChannels = channel.unary_unary(
-            '/lnrpc.Lightning/PendingChannels',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsResponse.FromString,
+        '/lnrpc.Lightning/PendingChannels',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsResponse.FromString,
         )
     self.ListChannels = channel.unary_unary(
-            '/lnrpc.Lightning/ListChannels',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.FromString,
+        '/lnrpc.Lightning/ListChannels',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.FromString,
         )
     self.SubscribeChannelEvents = channel.unary_stream(
-            '/lnrpc.Lightning/SubscribeChannelEvents',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.FromString,
+        '/lnrpc.Lightning/SubscribeChannelEvents',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.FromString,
         )
     self.ClosedChannels = channel.unary_unary(
-            '/lnrpc.Lightning/ClosedChannels',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsResponse.FromString,
+        '/lnrpc.Lightning/ClosedChannels',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsResponse.FromString,
         )
     self.OpenChannelSync = channel.unary_unary(
-            '/lnrpc.Lightning/OpenChannelSync',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelPoint.FromString,
+        '/lnrpc.Lightning/OpenChannelSync',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelPoint.FromString,
         )
     self.OpenChannel = channel.unary_stream(
-            '/lnrpc.Lightning/OpenChannel',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenStatusUpdate.FromString,
+        '/lnrpc.Lightning/OpenChannel',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenStatusUpdate.FromString,
         )
     self.CloseChannel = channel.unary_stream(
-            '/lnrpc.Lightning/CloseChannel',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseChannelRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseStatusUpdate.FromString,
+        '/lnrpc.Lightning/CloseChannel',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseChannelRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseStatusUpdate.FromString,
         )
     self.AbandonChannel = channel.unary_unary(
-            '/lnrpc.Lightning/AbandonChannel',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelResponse.FromString,
+        '/lnrpc.Lightning/AbandonChannel',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelResponse.FromString,
         )
     self.SendPayment = channel.stream_stream(
-            '/lnrpc.Lightning/SendPayment',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
+        '/lnrpc.Lightning/SendPayment',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
         )
     self.SendPaymentSync = channel.unary_unary(
-            '/lnrpc.Lightning/SendPaymentSync',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
+        '/lnrpc.Lightning/SendPaymentSync',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
         )
     self.SendToRoute = channel.stream_stream(
-            '/lnrpc.Lightning/SendToRoute',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
+        '/lnrpc.Lightning/SendToRoute',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
         )
     self.SendToRouteSync = channel.unary_unary(
-            '/lnrpc.Lightning/SendToRouteSync',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
+        '/lnrpc.Lightning/SendToRouteSync',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.FromString,
         )
     self.AddInvoice = channel.unary_unary(
-            '/lnrpc.Lightning/AddInvoice',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AddInvoiceResponse.FromString,
+        '/lnrpc.Lightning/AddInvoice',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AddInvoiceResponse.FromString,
         )
     self.ListInvoices = channel.unary_unary(
-            '/lnrpc.Lightning/ListInvoices',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceResponse.FromString,
+        '/lnrpc.Lightning/ListInvoices',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceResponse.FromString,
         )
     self.LookupInvoice = channel.unary_unary(
-            '/lnrpc.Lightning/LookupInvoice',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
+        '/lnrpc.Lightning/LookupInvoice',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
         )
     self.SubscribeInvoices = channel.unary_stream(
-            '/lnrpc.Lightning/SubscribeInvoices',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InvoiceSubscription.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
+        '/lnrpc.Lightning/SubscribeInvoices',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.InvoiceSubscription.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
         )
     self.DecodePayReq = channel.unary_unary(
-            '/lnrpc.Lightning/DecodePayReq',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReqString.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReq.FromString,
+        '/lnrpc.Lightning/DecodePayReq',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReqString.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReq.FromString,
         )
     self.ListPayments = channel.unary_unary(
-            '/lnrpc.Lightning/ListPayments',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsResponse.FromString,
+        '/lnrpc.Lightning/ListPayments',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsResponse.FromString,
         )
     self.DeleteAllPayments = channel.unary_unary(
-            '/lnrpc.Lightning/DeleteAllPayments',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsResponse.FromString,
+        '/lnrpc.Lightning/DeleteAllPayments',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsResponse.FromString,
         )
     self.DescribeGraph = channel.unary_unary(
-            '/lnrpc.Lightning/DescribeGraph',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraphRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraph.FromString,
+        '/lnrpc.Lightning/DescribeGraph',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraphRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraph.FromString,
         )
     self.GetChanInfo = channel.unary_unary(
-            '/lnrpc.Lightning/GetChanInfo',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanInfoRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEdge.FromString,
+        '/lnrpc.Lightning/GetChanInfo',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanInfoRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEdge.FromString,
         )
     self.GetNodeInfo = channel.unary_unary(
-            '/lnrpc.Lightning/GetNodeInfo',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfoRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfo.FromString,
+        '/lnrpc.Lightning/GetNodeInfo',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfoRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfo.FromString,
         )
     self.QueryRoutes = channel.unary_unary(
-            '/lnrpc.Lightning/QueryRoutes',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesResponse.FromString,
+        '/lnrpc.Lightning/QueryRoutes',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesResponse.FromString,
         )
     self.GetNetworkInfo = channel.unary_unary(
-            '/lnrpc.Lightning/GetNetworkInfo',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfoRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfo.FromString,
+        '/lnrpc.Lightning/GetNetworkInfo',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfoRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfo.FromString,
         )
     self.StopDaemon = channel.unary_unary(
-            '/lnrpc.Lightning/StopDaemon',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopResponse.FromString,
+        '/lnrpc.Lightning/StopDaemon',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopResponse.FromString,
         )
     self.SubscribeChannelGraph = channel.unary_stream(
-            '/lnrpc.Lightning/SubscribeChannelGraph',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologySubscription.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologyUpdate.FromString,
+        '/lnrpc.Lightning/SubscribeChannelGraph',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologySubscription.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologyUpdate.FromString,
         )
     self.DebugLevel = channel.unary_unary(
-            '/lnrpc.Lightning/DebugLevel',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelResponse.FromString,
+        '/lnrpc.Lightning/DebugLevel',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelResponse.FromString,
         )
     self.FeeReport = channel.unary_unary(
-            '/lnrpc.Lightning/FeeReport',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportResponse.FromString,
+        '/lnrpc.Lightning/FeeReport',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportResponse.FromString,
         )
     self.UpdateChannelPolicy = channel.unary_unary(
-            '/lnrpc.Lightning/UpdateChannelPolicy',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateResponse.FromString,
+        '/lnrpc.Lightning/UpdateChannelPolicy',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateResponse.FromString,
         )
     self.ForwardingHistory = channel.unary_unary(
-            '/lnrpc.Lightning/ForwardingHistory',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryResponse.FromString,
+        '/lnrpc.Lightning/ForwardingHistory',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryResponse.FromString,
         )
     self.ExportChannelBackup = channel.unary_unary(
-            '/lnrpc.Lightning/ExportChannelBackup',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ExportChannelBackupRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackup.FromString,
+        '/lnrpc.Lightning/ExportChannelBackup',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ExportChannelBackupRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackup.FromString,
         )
     self.ExportAllChannelBackups = channel.unary_unary(
-            '/lnrpc.Lightning/ExportAllChannelBackups',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupExportRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
+        '/lnrpc.Lightning/ExportAllChannelBackups',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupExportRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
         )
     self.VerifyChanBackup = channel.unary_unary(
-            '/lnrpc.Lightning/VerifyChanBackup',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyChanBackupResponse.FromString,
+        '/lnrpc.Lightning/VerifyChanBackup',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyChanBackupResponse.FromString,
         )
     self.RestoreChannelBackups = channel.unary_unary(
-            '/lnrpc.Lightning/RestoreChannelBackups',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreChanBackupRequest.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreBackupResponse.FromString,
+        '/lnrpc.Lightning/RestoreChannelBackups',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreChanBackupRequest.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreBackupResponse.FromString,
         )
     self.SubscribeChannelBackups = channel.unary_stream(
-            '/lnrpc.Lightning/SubscribeChannelBackups',
-            request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackupSubscription.SerializeToString,
-            response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
+        '/lnrpc.Lightning/SubscribeChannelBackups',
+        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackupSubscription.SerializeToString,
+        response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
         )
 
 
@@ -970,257 +970,257 @@ class LightningServicer(object):
 
 def add_LightningServicer_to_server(servicer, server):
   rpc_method_handlers = {
-    'WalletBalance': grpc.unary_unary_rpc_method_handler(
-            servicer.WalletBalance,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceResponse.SerializeToString,
-    ),
-    'ChannelBalance': grpc.unary_unary_rpc_method_handler(
-            servicer.ChannelBalance,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceResponse.SerializeToString,
-    ),
-    'GetTransactions': grpc.unary_unary_rpc_method_handler(
-            servicer.GetTransactions,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.TransactionDetails.SerializeToString,
-    ),
-    'EstimateFee': grpc.unary_unary_rpc_method_handler(
-            servicer.EstimateFee,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeResponse.SerializeToString,
-    ),
-    'SendCoins': grpc.unary_unary_rpc_method_handler(
-            servicer.SendCoins,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.SerializeToString,
-    ),
-    'ListUnspent': grpc.unary_unary_rpc_method_handler(
-            servicer.ListUnspent,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.SerializeToString,
-    ),
-    'SubscribeTransactions': grpc.unary_stream_rpc_method_handler(
-            servicer.SubscribeTransactions,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Transaction.SerializeToString,
-    ),
-    'SendMany': grpc.unary_unary_rpc_method_handler(
-            servicer.SendMany,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyResponse.SerializeToString,
-    ),
-    'NewAddress': grpc.unary_unary_rpc_method_handler(
-            servicer.NewAddress,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressResponse.SerializeToString,
-    ),
-    'SignMessage': grpc.unary_unary_rpc_method_handler(
-            servicer.SignMessage,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageResponse.SerializeToString,
-    ),
-    'VerifyMessage': grpc.unary_unary_rpc_method_handler(
-            servicer.VerifyMessage,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageResponse.SerializeToString,
-    ),
-    'ConnectPeer': grpc.unary_unary_rpc_method_handler(
-            servicer.ConnectPeer,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerResponse.SerializeToString,
-    ),
-    'DisconnectPeer': grpc.unary_unary_rpc_method_handler(
-            servicer.DisconnectPeer,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerResponse.SerializeToString,
-    ),
-    'ListPeers': grpc.unary_unary_rpc_method_handler(
-            servicer.ListPeers,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersResponse.SerializeToString,
-    ),
-    'GetInfo': grpc.unary_unary_rpc_method_handler(
-            servicer.GetInfo,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoResponse.SerializeToString,
-    ),
-    'PendingChannels': grpc.unary_unary_rpc_method_handler(
-            servicer.PendingChannels,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsResponse.SerializeToString,
-    ),
-    'ListChannels': grpc.unary_unary_rpc_method_handler(
-            servicer.ListChannels,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.SerializeToString,
-    ),
-    'SubscribeChannelEvents': grpc.unary_stream_rpc_method_handler(
-            servicer.SubscribeChannelEvents,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.SerializeToString,
-    ),
-    'ClosedChannels': grpc.unary_unary_rpc_method_handler(
-            servicer.ClosedChannels,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsResponse.SerializeToString,
-    ),
-    'OpenChannelSync': grpc.unary_unary_rpc_method_handler(
-            servicer.OpenChannelSync,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelPoint.SerializeToString,
-    ),
-    'OpenChannel': grpc.unary_stream_rpc_method_handler(
-            servicer.OpenChannel,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenStatusUpdate.SerializeToString,
-    ),
-    'CloseChannel': grpc.unary_stream_rpc_method_handler(
-            servicer.CloseChannel,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseChannelRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseStatusUpdate.SerializeToString,
-    ),
-    'AbandonChannel': grpc.unary_unary_rpc_method_handler(
-            servicer.AbandonChannel,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelResponse.SerializeToString,
-    ),
-    'SendPayment': grpc.stream_stream_rpc_method_handler(
-            servicer.SendPayment,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
-    ),
-    'SendPaymentSync': grpc.unary_unary_rpc_method_handler(
-            servicer.SendPaymentSync,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
-    ),
-    'SendToRoute': grpc.stream_stream_rpc_method_handler(
-            servicer.SendToRoute,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
-    ),
-    'SendToRouteSync': grpc.unary_unary_rpc_method_handler(
-            servicer.SendToRouteSync,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
-    ),
-    'AddInvoice': grpc.unary_unary_rpc_method_handler(
-            servicer.AddInvoice,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AddInvoiceResponse.SerializeToString,
-    ),
-    'ListInvoices': grpc.unary_unary_rpc_method_handler(
-            servicer.ListInvoices,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceResponse.SerializeToString,
-    ),
-    'LookupInvoice': grpc.unary_unary_rpc_method_handler(
-            servicer.LookupInvoice,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
-    ),
-    'SubscribeInvoices': grpc.unary_stream_rpc_method_handler(
-            servicer.SubscribeInvoices,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InvoiceSubscription.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
-    ),
-    'DecodePayReq': grpc.unary_unary_rpc_method_handler(
-            servicer.DecodePayReq,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReqString.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReq.SerializeToString,
-    ),
-    'ListPayments': grpc.unary_unary_rpc_method_handler(
-            servicer.ListPayments,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsResponse.SerializeToString,
-    ),
-    'DeleteAllPayments': grpc.unary_unary_rpc_method_handler(
-            servicer.DeleteAllPayments,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsResponse.SerializeToString,
-    ),
-    'DescribeGraph': grpc.unary_unary_rpc_method_handler(
-            servicer.DescribeGraph,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraphRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraph.SerializeToString,
-    ),
-    'GetChanInfo': grpc.unary_unary_rpc_method_handler(
-            servicer.GetChanInfo,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanInfoRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEdge.SerializeToString,
-    ),
-    'GetNodeInfo': grpc.unary_unary_rpc_method_handler(
-            servicer.GetNodeInfo,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfoRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfo.SerializeToString,
-    ),
-    'QueryRoutes': grpc.unary_unary_rpc_method_handler(
-            servicer.QueryRoutes,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesResponse.SerializeToString,
-    ),
-    'GetNetworkInfo': grpc.unary_unary_rpc_method_handler(
-            servicer.GetNetworkInfo,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfoRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfo.SerializeToString,
-    ),
-    'StopDaemon': grpc.unary_unary_rpc_method_handler(
-            servicer.StopDaemon,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopResponse.SerializeToString,
-    ),
-    'SubscribeChannelGraph': grpc.unary_stream_rpc_method_handler(
-            servicer.SubscribeChannelGraph,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologySubscription.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologyUpdate.SerializeToString,
-    ),
-    'DebugLevel': grpc.unary_unary_rpc_method_handler(
-            servicer.DebugLevel,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelResponse.SerializeToString,
-    ),
-    'FeeReport': grpc.unary_unary_rpc_method_handler(
-            servicer.FeeReport,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportResponse.SerializeToString,
-    ),
-    'UpdateChannelPolicy': grpc.unary_unary_rpc_method_handler(
-            servicer.UpdateChannelPolicy,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateResponse.SerializeToString,
-    ),
-    'ForwardingHistory': grpc.unary_unary_rpc_method_handler(
-            servicer.ForwardingHistory,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryResponse.SerializeToString,
-    ),
-    'ExportChannelBackup': grpc.unary_unary_rpc_method_handler(
-            servicer.ExportChannelBackup,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ExportChannelBackupRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackup.SerializeToString,
-    ),
-    'ExportAllChannelBackups': grpc.unary_unary_rpc_method_handler(
-            servicer.ExportAllChannelBackups,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupExportRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
-    ),
-    'VerifyChanBackup': grpc.unary_unary_rpc_method_handler(
-            servicer.VerifyChanBackup,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyChanBackupResponse.SerializeToString,
-    ),
-    'RestoreChannelBackups': grpc.unary_unary_rpc_method_handler(
-            servicer.RestoreChannelBackups,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreChanBackupRequest.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreBackupResponse.SerializeToString,
-    ),
-    'SubscribeChannelBackups': grpc.unary_stream_rpc_method_handler(
-            servicer.SubscribeChannelBackups,
-            request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackupSubscription.FromString,
-            response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
-    ),
+      'WalletBalance': grpc.unary_unary_rpc_method_handler(
+          servicer.WalletBalance,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.WalletBalanceResponse.SerializeToString,
+      ),
+      'ChannelBalance': grpc.unary_unary_rpc_method_handler(
+          servicer.ChannelBalance,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBalanceResponse.SerializeToString,
+      ),
+      'GetTransactions': grpc.unary_unary_rpc_method_handler(
+          servicer.GetTransactions,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.TransactionDetails.SerializeToString,
+      ),
+      'EstimateFee': grpc.unary_unary_rpc_method_handler(
+          servicer.EstimateFee,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.EstimateFeeResponse.SerializeToString,
+      ),
+      'SendCoins': grpc.unary_unary_rpc_method_handler(
+          servicer.SendCoins,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendCoinsResponse.SerializeToString,
+      ),
+      'ListUnspent': grpc.unary_unary_rpc_method_handler(
+          servicer.ListUnspent,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListUnspentResponse.SerializeToString,
+      ),
+      'SubscribeTransactions': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeTransactions,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetTransactionsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Transaction.SerializeToString,
+      ),
+      'SendMany': grpc.unary_unary_rpc_method_handler(
+          servicer.SendMany,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendManyResponse.SerializeToString,
+      ),
+      'NewAddress': grpc.unary_unary_rpc_method_handler(
+          servicer.NewAddress,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NewAddressResponse.SerializeToString,
+      ),
+      'SignMessage': grpc.unary_unary_rpc_method_handler(
+          servicer.SignMessage,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SignMessageResponse.SerializeToString,
+      ),
+      'VerifyMessage': grpc.unary_unary_rpc_method_handler(
+          servicer.VerifyMessage,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyMessageResponse.SerializeToString,
+      ),
+      'ConnectPeer': grpc.unary_unary_rpc_method_handler(
+          servicer.ConnectPeer,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ConnectPeerResponse.SerializeToString,
+      ),
+      'DisconnectPeer': grpc.unary_unary_rpc_method_handler(
+          servicer.DisconnectPeer,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DisconnectPeerResponse.SerializeToString,
+      ),
+      'ListPeers': grpc.unary_unary_rpc_method_handler(
+          servicer.ListPeers,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPeersResponse.SerializeToString,
+      ),
+      'GetInfo': grpc.unary_unary_rpc_method_handler(
+          servicer.GetInfo,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GetInfoResponse.SerializeToString,
+      ),
+      'PendingChannels': grpc.unary_unary_rpc_method_handler(
+          servicer.PendingChannels,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PendingChannelsResponse.SerializeToString,
+      ),
+      'ListChannels': grpc.unary_unary_rpc_method_handler(
+          servicer.ListChannels,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListChannelsResponse.SerializeToString,
+      ),
+      'SubscribeChannelEvents': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeChannelEvents,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventSubscription.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEventUpdate.SerializeToString,
+      ),
+      'ClosedChannels': grpc.unary_unary_rpc_method_handler(
+          servicer.ClosedChannels,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ClosedChannelsResponse.SerializeToString,
+      ),
+      'OpenChannelSync': grpc.unary_unary_rpc_method_handler(
+          servicer.OpenChannelSync,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelPoint.SerializeToString,
+      ),
+      'OpenChannel': grpc.unary_stream_rpc_method_handler(
+          servicer.OpenChannel,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenChannelRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.OpenStatusUpdate.SerializeToString,
+      ),
+      'CloseChannel': grpc.unary_stream_rpc_method_handler(
+          servicer.CloseChannel,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseChannelRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.CloseStatusUpdate.SerializeToString,
+      ),
+      'AbandonChannel': grpc.unary_unary_rpc_method_handler(
+          servicer.AbandonChannel,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AbandonChannelResponse.SerializeToString,
+      ),
+      'SendPayment': grpc.stream_stream_rpc_method_handler(
+          servicer.SendPayment,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
+      ),
+      'SendPaymentSync': grpc.unary_unary_rpc_method_handler(
+          servicer.SendPaymentSync,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
+      ),
+      'SendToRoute': grpc.stream_stream_rpc_method_handler(
+          servicer.SendToRoute,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
+      ),
+      'SendToRouteSync': grpc.unary_unary_rpc_method_handler(
+          servicer.SendToRouteSync,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendToRouteRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.SendResponse.SerializeToString,
+      ),
+      'AddInvoice': grpc.unary_unary_rpc_method_handler(
+          servicer.AddInvoice,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.AddInvoiceResponse.SerializeToString,
+      ),
+      'ListInvoices': grpc.unary_unary_rpc_method_handler(
+          servicer.ListInvoices,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListInvoiceResponse.SerializeToString,
+      ),
+      'LookupInvoice': grpc.unary_unary_rpc_method_handler(
+          servicer.LookupInvoice,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
+      ),
+      'SubscribeInvoices': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeInvoices,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.InvoiceSubscription.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
+      ),
+      'DecodePayReq': grpc.unary_unary_rpc_method_handler(
+          servicer.DecodePayReq,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReqString.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PayReq.SerializeToString,
+      ),
+      'ListPayments': grpc.unary_unary_rpc_method_handler(
+          servicer.ListPayments,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ListPaymentsResponse.SerializeToString,
+      ),
+      'DeleteAllPayments': grpc.unary_unary_rpc_method_handler(
+          servicer.DeleteAllPayments,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DeleteAllPaymentsResponse.SerializeToString,
+      ),
+      'DescribeGraph': grpc.unary_unary_rpc_method_handler(
+          servicer.DescribeGraph,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraphRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelGraph.SerializeToString,
+      ),
+      'GetChanInfo': grpc.unary_unary_rpc_method_handler(
+          servicer.GetChanInfo,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanInfoRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelEdge.SerializeToString,
+      ),
+      'GetNodeInfo': grpc.unary_unary_rpc_method_handler(
+          servicer.GetNodeInfo,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfoRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NodeInfo.SerializeToString,
+      ),
+      'QueryRoutes': grpc.unary_unary_rpc_method_handler(
+          servicer.QueryRoutes,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.QueryRoutesResponse.SerializeToString,
+      ),
+      'GetNetworkInfo': grpc.unary_unary_rpc_method_handler(
+          servicer.GetNetworkInfo,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfoRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.NetworkInfo.SerializeToString,
+      ),
+      'StopDaemon': grpc.unary_unary_rpc_method_handler(
+          servicer.StopDaemon,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.StopResponse.SerializeToString,
+      ),
+      'SubscribeChannelGraph': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeChannelGraph,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologySubscription.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.GraphTopologyUpdate.SerializeToString,
+      ),
+      'DebugLevel': grpc.unary_unary_rpc_method_handler(
+          servicer.DebugLevel,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.DebugLevelResponse.SerializeToString,
+      ),
+      'FeeReport': grpc.unary_unary_rpc_method_handler(
+          servicer.FeeReport,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.FeeReportResponse.SerializeToString,
+      ),
+      'UpdateChannelPolicy': grpc.unary_unary_rpc_method_handler(
+          servicer.UpdateChannelPolicy,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PolicyUpdateResponse.SerializeToString,
+      ),
+      'ForwardingHistory': grpc.unary_unary_rpc_method_handler(
+          servicer.ForwardingHistory,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ForwardingHistoryResponse.SerializeToString,
+      ),
+      'ExportChannelBackup': grpc.unary_unary_rpc_method_handler(
+          servicer.ExportChannelBackup,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ExportChannelBackupRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackup.SerializeToString,
+      ),
+      'ExportAllChannelBackups': grpc.unary_unary_rpc_method_handler(
+          servicer.ExportAllChannelBackups,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupExportRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
+      ),
+      'VerifyChanBackup': grpc.unary_unary_rpc_method_handler(
+          servicer.VerifyChanBackup,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.VerifyChanBackupResponse.SerializeToString,
+      ),
+      'RestoreChannelBackups': grpc.unary_unary_rpc_method_handler(
+          servicer.RestoreChannelBackups,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreChanBackupRequest.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.RestoreBackupResponse.SerializeToString,
+      ),
+      'SubscribeChannelBackups': grpc.unary_stream_rpc_method_handler(
+          servicer.SubscribeChannelBackups,
+          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChannelBackupSubscription.FromString,
+          response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.ChanBackupSnapshot.SerializeToString,
+      ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-          'lnrpc.Lightning', rpc_method_handlers)
+      'lnrpc.Lightning', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))
