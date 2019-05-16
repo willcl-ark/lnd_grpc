@@ -105,7 +105,7 @@ def close_all_channels(bitcoind, nodes):
             channel_point = channel.channel_point
             node.close_channel(channel_point=channel_point).__next__()
         gen_and_sync_lnd(bitcoind, nodes)
-        assert len(node.list_channels()) == 0
+        assert not node.list_channels()
     gen_and_sync_lnd(bitcoind, nodes)
 
 
@@ -128,13 +128,12 @@ def get_addresses(node, response='str'):
     np2wkh_address = node.new_address(address_type='np2wkh')
     if response == 'str':
         return p2wkh_address.address, np2wkh_address.address
-    else:
-        return p2wkh_address, np2wkh_address
+    return p2wkh_address, np2wkh_address
 
 
 def setup_nodes(bitcoind, nodes):
     """
-    Break down all nodes, open fresh channels between themwith half the balance pushed remotely
+    Break down all nodes, open fresh channels between them with half the balance pushed remotely
     and assert
     :return: the setup nodes
     """
@@ -239,17 +238,17 @@ class TestNonInteractiveLightning:
 
     def test_wallet_balance(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.get_info()) == rpc_pb2.GetInfoResponse
+        assert isinstance(alice.get_info(), rpc_pb2.GetInfoResponse)
         pytest.raises(TypeError, alice.wallet_balance(), 'please')
 
     def test_channel_balance(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.channel_balance()) == rpc_pb2.ChannelBalanceResponse
+        assert isinstance(alice.channel_balance(), rpc_pb2.ChannelBalanceResponse)
         pytest.raises(TypeError, alice.channel_balance(), 'please')
 
     def test_get_transactions(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.get_transactions()) == rpc_pb2.TransactionDetails
+        assert isinstance(alice.get_transactions(), rpc_pb2.TransactionDetails)
         pytest.raises(TypeError, alice.get_transactions(), 'please')
 
     def test_send_coins(self, alice):
@@ -263,8 +262,8 @@ class TestNonInteractiveLightning:
         time.sleep(0.5)
         send2 = alice.send_coins(addr=np2wkh_address, amount=100000)
 
-        assert type(send1) == rpc_pb2.SendCoinsResponse
-        assert type(send2) == rpc_pb2.SendCoinsResponse
+        assert isinstance(send1, rpc_pb2.SendCoinsResponse)
+        assert isinstance(send2, rpc_pb2.SendCoinsResponse)
 
         # test failures
         pytest.raises(grpc.RpcError, lambda: alice.send_coins(alice.new_address(
@@ -282,19 +281,19 @@ class TestNonInteractiveLightning:
         send = alice.send_many(addr_to_amount=send_dict)
         alice.bitcoin.rpc.generate(1)
         time.sleep(0.5)
-        assert type(send) == rpc_pb2.SendManyResponse
+        assert isinstance(send, rpc_pb2.SendManyResponse)
 
     def test_list_unspent(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         alice.add_funds(alice.bitcoin, 1)
-        assert type(alice.list_unspent(0, 1000)) == rpc_pb2.ListUnspentResponse
+        assert isinstance(alice.list_unspent(0, 1000), rpc_pb2.ListUnspentResponse)
 
     def test_subscribe_transactions(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         subscription = alice.subscribe_transactions()
         alice.add_funds(alice.bitcoin, 1)
-        assert type(subscription) == grpc._channel._Rendezvous
-        assert type(subscription.__next__()) == rpc_pb2.Transaction
+        assert isinstance(subscription, grpc._channel._Rendezvous)
+        assert isinstance(subscription.__next__(), rpc_pb2.Transaction)
 
         # gen_and_sync_lnd(alice.bitcoin, [alice])
         # transaction_updates = queue.LifoQueue()
@@ -313,45 +312,45 @@ class TestNonInteractiveLightning:
         #     time.sleep(0.1)
         # alice.add_funds(alice.bitcoin, 1)
         #
-        # assert any(type(update) == rpc_pb2.Transaction for update in get_updates(transaction_updates))
+        # assert any(isinstance(update) == rpc_pb2.Transaction for update in get_updates(transaction_updates))
 
     def test_new_address(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         p2wkh_address, np2wkh_address = get_addresses(alice, 'response')
-        assert type(p2wkh_address) == rpc_pb2.NewAddressResponse
-        assert type(np2wkh_address) == rpc_pb2.NewAddressResponse
+        assert isinstance(p2wkh_address, rpc_pb2.NewAddressResponse)
+        assert isinstance(np2wkh_address, rpc_pb2.NewAddressResponse)
 
     def test_sign_verify_message(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         message = 'Test message to sign and verify.'
         signature = alice.sign_message(message)
-        assert type(signature) == rpc_pb2.SignMessageResponse
+        assert isinstance(signature, rpc_pb2.SignMessageResponse)
         verified_message = alice.verify_message(message, signature.signature)
-        assert type(verified_message) == rpc_pb2.VerifyMessageResponse
+        assert isinstance(verified_message, rpc_pb2.VerifyMessageResponse)
 
     def test_get_info(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.get_info()) == rpc_pb2.GetInfoResponse
+        assert isinstance(alice.get_info(), rpc_pb2.GetInfoResponse)
 
     def test_pending_channels(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.pending_channels()) == rpc_pb2.PendingChannelsResponse
+        assert isinstance(alice.pending_channels(), rpc_pb2.PendingChannelsResponse)
 
     # Skipping list_channels and closed_channels as we don't return their responses directly
 
     def test_add_invoice(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         invoice = alice.add_invoice(value=SEND_AMT)
-        assert type(invoice) == rpc_pb2.AddInvoiceResponse
+        assert isinstance(invoice, rpc_pb2.AddInvoiceResponse)
 
     def test_list_invoices(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.list_invoices()) == rpc_pb2.ListInvoiceResponse
+        assert isinstance(alice.list_invoices(), rpc_pb2.ListInvoiceResponse)
 
     def test_lookup_invoice(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         payment_hash = alice.add_invoice(value=SEND_AMT).r_hash
-        assert type(alice.lookup_invoice(r_hash=payment_hash)) == rpc_pb2.Invoice
+        assert isinstance(alice.lookup_invoice(r_hash=payment_hash), rpc_pb2.Invoice)
 
     def test_subscribe_invoices(self, alice):
         """
@@ -376,31 +375,31 @@ class TestNonInteractiveLightning:
         alice.daemon.wait_for_log('AddIndex')
         time.sleep(0.1)
 
-        assert any(type(update) == rpc_pb2.Invoice for update in get_updates(invoice_updates))
+        assert any(isinstance(update, rpc_pb2.Invoice) for update in get_updates(invoice_updates))
 
     def test_decode_payment_request(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         pay_req = alice.add_invoice(value=SEND_AMT).payment_request
         decoded_req = alice.decode_pay_req(pay_req=pay_req)
-        assert type(decoded_req) == rpc_pb2.PayReq
+        assert isinstance(decoded_req, rpc_pb2.PayReq)
 
     def test_list_payments(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.list_payments()) == rpc_pb2.ListPaymentsResponse
+        assert isinstance(alice.list_payments(), rpc_pb2.ListPaymentsResponse)
 
     def test_delete_all_payments(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.delete_all_payments()) == rpc_pb2.DeleteAllPaymentsResponse
+        assert isinstance(alice.delete_all_payments(), rpc_pb2.DeleteAllPaymentsResponse)
 
     def test_describe_graph(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.describe_graph()) == rpc_pb2.ChannelGraph
+        assert isinstance(alice.describe_graph(), rpc_pb2.ChannelGraph)
 
     # Skipping get_chan_info, subscribe_chan_events, get_alice_info, query_routes
 
     def test_get_network_info(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.get_network_info()) == rpc_pb2.NetworkInfo
+        assert isinstance(alice.get_network_info(), rpc_pb2.NetworkInfo)
 
     @pytest.mark.skipif(TRAVIS is True, reason="Travis doesn't like this one. Possibly a race"
                                                "condition not worth debugging")
@@ -415,15 +414,15 @@ class TestNonInteractiveLightning:
 
     def test_debug_level(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.debug_level(level_spec='warn')) == rpc_pb2.DebugLevelResponse
+        assert isinstance(alice.debug_level(level_spec='warn'), rpc_pb2.DebugLevelResponse)
 
     def test_fee_report(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.fee_report()) == rpc_pb2.FeeReportResponse
+        assert isinstance(alice.fee_report(), rpc_pb2.FeeReportResponse)
 
     def test_forwarding_history(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
-        assert type(alice.forwarding_history()) == rpc_pb2.ForwardingHistoryResponse
+        assert isinstance(alice.forwarding_history(), rpc_pb2.ForwardingHistoryResponse)
 
     def test_lightning_stub(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
@@ -450,7 +449,7 @@ class TestInteractiveLightning:
         wait_for(lambda: carol.list_peers(), timeout=5)
 
         # check bob connected to carol using connect() and list_peers()
-        assert type(connection1) == rpc_pb2.ConnectPeerResponse
+        assert isinstance(connection1, rpc_pb2.ConnectPeerResponse)
         assert bob.id() in [p.pub_key for p in carol.list_peers()]
         assert carol.id() in [p.pub_key for p in bob.list_peers()]
 
@@ -741,7 +740,7 @@ class TestInteractiveLightning:
                                            fee_rate=0.5555,
                                            time_lock_delta=9,
                                            is_global=True)
-        assert type(update) == rpc_pb2.PolicyUpdateResponse
+        assert isinstance(update, rpc_pb2.PolicyUpdateResponse)
 
 
 class TestChannelBackup:
@@ -753,7 +752,7 @@ class TestChannelBackup:
                                                     output_index=output_index)
 
         all_backup = bob.export_all_channel_backups()
-        assert type(all_backup) == rpc_pb2.ChanBackupSnapshot
+        assert isinstance(all_backup, rpc_pb2.ChanBackupSnapshot)
         # assert the multi_chan backup
         assert bob.verify_chan_backup(multi_chan_backup=all_backup.multi_chan_backup)
 
@@ -761,7 +760,7 @@ class TestChannelBackup:
         wipe_channels_from_disk(bob)
         bob.start()
 
-        assert len(bob.list_channels()) == 0
+        assert not bob.list_channels()
         assert bob.restore_chan_backup(
                 multi_chan_backup=all_backup.multi_chan_backup.multi_chan_backup)
 
@@ -779,7 +778,7 @@ class TestChannelBackup:
                                                     output_index=output_index)
 
         single_backup = bob.export_chan_backup(chan_point=channel_point)
-        assert type(single_backup) == rpc_pb2.ChannelBackup
+        assert isinstance(single_backup, rpc_pb2.ChannelBackup)
         packed_backup = bob.pack_into_channelbackups(single_backup=single_backup)
         # assert the single_chan_backup
         assert bob.verify_chan_backup(single_chan_backups=packed_backup)
@@ -788,7 +787,7 @@ class TestChannelBackup:
         wipe_channels_from_disk(bob)
         bob.start()
 
-        assert len(bob.list_channels()) == 0
+        assert not bob.list_channels()
         assert bob.restore_chan_backup(chan_backups=packed_backup)
 
         bob.daemon.wait_for_log('Inserting 1 SCB channel shells into DB')
@@ -808,7 +807,7 @@ class TestInvoices:
         invoice = carol.add_hold_invoice(memo='pytest hold invoice',
                                          hash=_hash,
                                          value=SEND_AMT)
-        assert type(invoice) == invoices_pb2.AddHoldInvoiceResp
+        assert isinstance(invoice, invoices_pb2.AddHoldInvoiceResp)
 
         # thread functions
         def inv_sub_worker(_hash):
@@ -865,7 +864,7 @@ class TestLoop:
             quote = loopd.loop_out_quote(amt=loop_amount)
             print(quote)
             assert quote is not None
-            assert type(quote) == loop_client_pb2.QuoteResponse
+            assert isinstance(quote, loop_client_pb2.QuoteResponse)
         else:
             logging.info("test_loop_out() skipped as invoice RPC not detected")
 
@@ -875,6 +874,6 @@ class TestLoop:
         if alice.daemon.invoice_rpc_active:
             terms = loopd.loop_out_terms()
             assert terms is not None
-            assert type(terms) == loop_client_pb2.TermsResponse
+            assert isinstance(terms, loop_client_pb2.TermsResponse)
         else:
             logging.info("test_loop_out() skipped as invoice RPC not detected")
