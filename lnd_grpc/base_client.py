@@ -4,6 +4,7 @@ from os import environ
 
 import grpc
 
+from lnd_grpc.config import *
 import lnd_grpc.protos.rpc_pb2 as ln
 from lnd_grpc.utilities import get_lnd_dir
 
@@ -22,9 +23,9 @@ class BaseClient:
                  lnd_dir: str = None,
                  macaroon_path: str = None,
                  tls_cert_path: str = None,
-                 network: str = 'mainnet',
-                 grpc_host: str = 'localhost',
-                 grpc_port: str = '10009'):
+                 network: str = defaultNetwork,
+                 grpc_host: str = defaultRPCHost,
+                 grpc_port: str = defaultRPCPort):
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
@@ -35,10 +36,7 @@ class BaseClient:
         self.channel = None
         self.connection_status = None
         self.connection_status_change = False
-        self.grpc_options = [
-            ('grpc.max_receive_message_length', 33554432),
-            ('grpc.max_send_message_length', 33554432),
-        ]
+        self.grpc_options = GRPC_OPTIONS
 
     @property
     def lnd_dir(self):
@@ -62,7 +60,7 @@ class BaseClient:
         :return: tls_cert_path
         """
         if self._tls_cert_path is None:
-            self._tls_cert_path = self.lnd_dir + 'tls.cert'
+            self._tls_cert_path = self.lnd_dir + defaultTLSCertFilename
         return self._tls_cert_path
 
     @tls_cert_path.setter
@@ -70,19 +68,19 @@ class BaseClient:
         self._tls_cert_path = path
 
     @property
-    def tls_cert_key(self) -> bytes:
+    def tls_cert(self) -> bytes:
         """
-        :return: tls.key as bytes
+        :return: tls.cert as bytestring
         """
         try:
             with open(self.tls_cert_path, 'rb') as r:
-                tls_cert_key = r.read()
+                _tls_cert = r.read()
         except FileNotFoundError:
             sys.stderr.write("TLS cert not found at %s" % self.tls_cert_path)
             raise
         try:
-            assert tls_cert_key.startswith(b'-----BEGIN CERTIFICATE-----')
-            return tls_cert_key
+            assert _tls_cert.startswith(b'-----BEGIN CERTIFICATE-----')
+            return _tls_cert
         except (AssertionError, AttributeError):
             sys.stderr.write("TLS cert at %s did not start with b'-----BEGIN CERTIFICATE-----')"
                              % self.tls_cert_path)
@@ -94,7 +92,9 @@ class BaseClient:
         :return: macaroon path
         """
         if not self._macaroon_path:
-            self._macaroon_path = self.lnd_dir + f'data/chain/bitcoin/{self.network}/admin.macaroon'
+            self._macaroon_path = \
+                self.lnd_dir + f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
+                    f'{self.network}/{defaultAdminMacFilename}'
             return self._macaroon_path
         else:
             return self._macaroon_path
@@ -140,7 +140,7 @@ class BaseClient:
         Combine ssl and macaroon credentials
         :return: grpc.composite_channel_credentials
         """
-        cert_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
+        cert_creds = grpc.ssl_channel_credentials(self.tls_cert)
         auth_creds = grpc.metadata_call_credentials(self.metadata_callback)
         return grpc.composite_channel_credentials(cert_creds, auth_creds)
 

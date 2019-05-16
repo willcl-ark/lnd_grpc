@@ -5,6 +5,7 @@ import grpc
 import lnd_grpc.protos.rpc_pb2 as ln
 import lnd_grpc.protos.rpc_pb2_grpc as lnrpc
 from lnd_grpc.base_client import BaseClient
+from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
 environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
@@ -18,9 +19,9 @@ class WalletUnlocker(BaseClient):
                  lnd_dir: str = None,
                  macaroon_path: str = None,
                  tls_cert_path: str = None,
-                 network: str = 'mainnet',
-                 grpc_host: str = 'localhost',
-                 grpc_port: str = '10009'):
+                 network: str = defaultNetwork,
+                 grpc_host: str = defaultRPCHost,
+                 grpc_port: str = defaultRPCPort):
         self._w_stub: lnrpc.WalletUnlockerStub = None
 
         super().__init__(lnd_dir=lnd_dir,
@@ -33,7 +34,7 @@ class WalletUnlocker(BaseClient):
     @property
     def wallet_unlocker_stub(self) -> lnrpc.WalletUnlockerStub:
         if self._w_stub is None:
-            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert_key)
+            ssl_creds = grpc.ssl_channel_credentials(self.tls_cert)
             _w_channel = grpc.secure_channel(target=self.grpc_address,
                                              credentials=ssl_creds,
                                              options=self.grpc_options)
