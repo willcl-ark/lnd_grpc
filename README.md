@@ -1,6 +1,8 @@
 # lnd-grpc
 
-version 0.3.0
+Version 0.3.1
+
+Requires python >=3.6
 
 [![Build Status](https://travis-ci.org/willcl-ark/lnd_grpc.svg?branch=master)](https://travis-ci.org/willcl-ark/lnd_grpc)  [![CodeFactor](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc/badge)](https://www.codefactor.io/repository/github/willcl-ark/lnd_grpc)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
