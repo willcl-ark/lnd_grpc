@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lnd_grpc",
-        version="0.2.6",
+        version="0.3.0",
     author="Will Clark",
     author_email="will8clark@gmail.com",
         description="An LND gRPC client for Python 3.7",
