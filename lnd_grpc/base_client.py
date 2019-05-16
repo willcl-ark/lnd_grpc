@@ -19,6 +19,7 @@ class BaseClient:
 
     Has some static helper methods for various applications.
     """
+
     def __init__(self,
                  lnd_dir: str = None,
                  macaroon_path: str = None,
@@ -171,5 +172,3 @@ class BaseClient:
     @staticmethod
     def bytes_to_hex(bytestring: bytes):
         return bytestring.hex()
-
-
