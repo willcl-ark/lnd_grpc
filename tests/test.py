@@ -706,15 +706,16 @@ class TestInteractiveLightning:
                                     daemon=True)
         dave_sub.start()
         while not dave_sub.is_alive():
-            time.sleep(0.001)
+            time.sleep(0.1)
         channel_point = bob.list_channels()[0].channel_point
 
         # test a channel close between two unrelated peers
         bob.close_channel(channel_point=channel_point).__next__()
-        # give dave_sub a chance to write to the queue
-        dave_sub.join(timeout=1)
+        # give dave_sub a chance to receive update and write to the queue
+        # dave.daemon.wait_for_log('Received ChannelUpdate')
+        dave.daemon.wait_for_log('New channel update applied')
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        time.sleep(0)
+        dave_sub.join(timeout=0.1)
         assert any(update.closed_chans is not None for update in get_updates(chan_updates))
 
         # test a peer updating their fees
@@ -725,7 +726,7 @@ class TestInteractiveLightning:
                                     is_global=True)
         dave.daemon.wait_for_log('New channel update applied')
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        time.sleep(1)
+        dave_sub.join(timeout=0.1)
         assert any(update.channel_updates[0].routing_policy.fee_base_msat == new_fee
                    for update in get_updates(chan_updates))
 
