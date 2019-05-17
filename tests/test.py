@@ -582,7 +582,6 @@ class TestInteractiveLightning:
 
     def test_send_payment(self, bitcoind, bob, carol):
         # TODO: remove try/except hack for curve generation
-        # TODO: remove wait_for_log hack for curve generation
         bob, carol = setup_nodes(bitcoind, [bob, carol])
 
         # test payment request method
@@ -691,8 +690,6 @@ class TestInteractiveLightning:
         gen_and_sync_lnd(bitcoind, [bob, carol])
         assert any(update.closed_channel is not None for update in get_updates(chan_updates))
 
-    @pytest.mark.skip(reason="waiting for LND PR 3075")
-    # TODO: undo this when PR merged
     def test_subscribe_channel_graph(self, bitcoind, bob, carol, dave):
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
         new_fee = 5555
@@ -708,15 +705,14 @@ class TestInteractiveLightning:
         dave_sub = threading.Thread(target=sub_channel_graph, name='dave_channel_graph_sub',
                                     daemon=True)
         dave_sub.start()
-        time.sleep(5)
         while not dave_sub.is_alive():
             time.sleep(0.001)
         channel_point = bob.list_channels()[0].channel_point
 
         # test a channel close between two unrelated peers
         bob.close_channel(channel_point=channel_point).__next__()
-        # dave.daemon.wait_for_log('New channel update applied')
-        time.sleep(0)
+        # give dave_sub a chance to write to the queue
+        dave_sub.join(timeout=1)
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         time.sleep(0)
         assert any(update.closed_chans is not None for update in get_updates(chan_updates))
@@ -841,12 +837,11 @@ class TestInvoices:
         while not inv_sub.is_alive():
             time.sleep(0.1)
         pay_inv.start()
-        # TODO: Must wait for fix in https://github.com/lightningnetwork/lnd/pull/3075
-        #   which is causing tests to fail, wait_for_log hack to bypass below
         carol.daemon.wait_for_log('htlc accepted')
         settle_inv.start()
         while settle_inv.is_alive():
             time.sleep(0.1)
+        inv_sub.join(timeout=1)
 
         assert any(invoice.settled is True for invoice in get_updates(invoice_queue))
 
