@@ -6,4 +6,5 @@ install:
   - pip install -r test-requirements.txt
   - pip install -e .
 script:
-  - py.test -v -s tests/test.py
+  - export TEST_DEBUG=1
+  - py.test -v -s tests/test.py::TestInteractiveLightning::test_subscribe_channel_graph
