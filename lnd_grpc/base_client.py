@@ -26,7 +26,7 @@ class BaseClient:
                  tls_cert_path: str = None,
                  network: str = defaultNetwork,
                  grpc_host: str = defaultRPCHost,
-                 grpc_port: str = defaultRPCPort):
+                 grpc_port: str = str(defaultRPCPort)):
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
@@ -107,7 +107,7 @@ class BaseClient:
     @property
     def macaroon(self):
         """
-        try to generate the macaroon and perform basic sanity check
+        try to open the macaroon and return it as a byte string
         """
         try:
             with open(self.macaroon_path, 'rb') as f:
