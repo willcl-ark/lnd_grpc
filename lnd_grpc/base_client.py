@@ -26,14 +26,14 @@ class BaseClient:
                  tls_cert_path: str = None,
                  network: str = defaultNetwork,
                  grpc_host: str = defaultRPCHost,
-                 grpc_port: str = str(defaultRPCPort)):
+                 grpc_port: str = defaultRPCPort):
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
         self.tls_cert_path = tls_cert_path
         self.network = network
         self.grpc_host = grpc_host
-        self.grpc_port = grpc_port
+        self.grpc_port = str(grpc_port)
         self.channel = None
         self.connection_status = None
         self.connection_status_change = False
