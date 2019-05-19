@@ -94,8 +94,7 @@ class BaseClient:
         :return: macaroon path
         """
         if not self._macaroon_path:
-            self._macaroon_path =
-                Path(self.lnd_dir) / f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
+            self._macaroon_path = Path(self.lnd_dir) / f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
                     f'{self.network}/{defaultAdminMacFilename}'
             return str(self._macaroon_path)
         else:
