@@ -1,4 +1,5 @@
 import codecs
+from pathlib import Path
 import sys
 from os import environ
 
@@ -61,8 +62,8 @@ class BaseClient:
         :return: tls_cert_path
         """
         if self._tls_cert_path is None:
-            self._tls_cert_path = self.lnd_dir + defaultTLSCertFilename
-        return self._tls_cert_path
+            self._tls_cert_path = Path(self.lnd_dir) / defaultTLSCertFilename
+        return str(self._tls_cert_path)
 
     @tls_cert_path.setter
     def tls_cert_path(self, path):
@@ -93,10 +94,10 @@ class BaseClient:
         :return: macaroon path
         """
         if not self._macaroon_path:
-            self._macaroon_path = \
-                self.lnd_dir + f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
+            self._macaroon_path =
+                Path(self.lnd_dir) / f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
                     f'{self.network}/{defaultAdminMacFilename}'
-            return self._macaroon_path
+            return str(self._macaroon_path)
         else:
             return self._macaroon_path
 
