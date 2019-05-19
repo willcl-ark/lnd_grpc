@@ -54,6 +54,13 @@ def wait_for(success, timeout=30, interval=0.25):
         raise ValueError("Error waiting for {}", success)
 
 
+def wait_for_bool(success, timeout=30, interval=0.25):
+    start_time = time.time()
+    while not success and time.time() < start_time + timeout:
+        time.sleep(interval)
+    if time.time() > start_time + timeout:
+        raise ValueError("Error waiting for {}", success)
+
 def sync_blockheight(btc, nodes):
     """
     Sync blockheight of nodes by checking logs until timeout
