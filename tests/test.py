@@ -181,13 +181,11 @@ def confirm_channel(bitcoind, n1, n2):
     """
     Confirm that a channel is open between two nodes
     """
-    # print("Waiting for channel {} -> {} to confirm".format(n1.id(), n2.id()))
     assert n1.id() in [p.pub_key for p in n2.list_peers()]
     assert n2.id() in [p.pub_key for p in n1.list_peers()]
     for i in range(10):
         time.sleep(0.5)
         if n1.check_channel(n2) and n2.check_channel(n1):
-            # print("Channel {} -> {} confirmed".format(n1.id(), n2.id()))
             return True
         bhash = bitcoind.rpc.generate(1)[0]
         n1.block_sync(bhash)
@@ -411,11 +409,12 @@ class TestNonInteractiveLightning:
     @pytest.mark.skipif(TRAVIS is True, reason="Travis doesn't like this one. Possibly a race"
                                                "condition not worth debugging")
     def test_stop_daemon(self, node_factory):
-        print(os.getenv("TRAVIS"))
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
         node.daemon.wait_for_log('Server listening on')
         node.stop_daemon()
+        # use is_in_log instead of wait_for_log as node daemon should be shutdown
         node.daemon.is_in_log('Shutdown complete')
+        time.sleep(1)
         with pytest.raises(grpc.RpcError):
             node.get_info()
 
@@ -524,9 +523,8 @@ class TestInteractiveLightning:
 
         bob.add_funds(bitcoind, 1)
         gen_and_sync_lnd(bitcoind, [bob, carol])
-        channel = bob.open_channel(node_pubkey_string=carol.id(),
-                                   local_funding_amount=FUND_AMT)
-        print(channel.__next__())
+        bob.open_channel(node_pubkey_string=carol.id(),
+                         local_funding_amount=FUND_AMT).__next__()
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -539,7 +537,7 @@ class TestInteractiveLightning:
         bob, carol = setup_nodes(bitcoind, [bob, carol])
 
         channel_point = bob.list_channels()[0].channel_point
-        print(bob.close_channel(channel_point=channel_point).__next__())
+        bob.close_channel(channel_point=channel_point).__next__()
         bitcoind.rpc.generate(6)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -551,7 +549,7 @@ class TestInteractiveLightning:
 
         # test payment request method
         invoice = carol.add_invoice(value=SEND_AMT)
-        print(bob.send_payment_sync(payment_request=invoice.payment_request))
+        bob.send_payment_sync(payment_request=invoice.payment_request)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -561,10 +559,8 @@ class TestInteractiveLightning:
 
         # test manually specified request
         invoice2 = carol.add_invoice(value=SEND_AMT)
-        print(bob.send_payment_sync(dest_string=carol.id(),
-                                    amt=SEND_AMT,
-                                    payment_hash=invoice2.r_hash,
-                                    final_cltv_delta=144))
+        bob.send_payment_sync(dest_string=carol.id(), amt=SEND_AMT, payment_hash=invoice2.r_hash,
+                              final_cltv_delta=144)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -574,8 +570,7 @@ class TestInteractiveLightning:
 
         # test sending any amount to an invoice which requested 0
         invoice3 = carol.add_invoice(value=0)
-        print(bob.send_payment_sync(payment_request=invoice3.payment_request,
-                                    amt=SEND_AMT))
+        bob.send_payment_sync(payment_request=invoice3.payment_request, amt=SEND_AMT)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -862,7 +857,6 @@ class TestLoop:
         alice, bob = setup_nodes(bitcoind, [alice, bob])
         if alice.daemon.invoice_rpc_active:
             quote = loopd.loop_out_quote(amt=loop_amount)
-            print(quote)
             assert quote is not None
             assert isinstance(quote, loop_client_pb2.QuoteResponse)
         else:
