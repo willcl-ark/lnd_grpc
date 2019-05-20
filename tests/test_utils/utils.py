@@ -226,6 +226,8 @@ class BitcoinD(TailableProc):
             '-rpcpassword=rpcpass',
             '-zmqpubrawblock=tcp://127.0.0.1:{}'.format(self.zmqpubrawblock_port),
             '-zmqpubrawtx=tcp://127.0.0.1:{}'.format(self.zmqpubrawtx_port),
+            '-zmqpubrawblockhwm=0',
+            '-zmqpubrawtxhwm=0',
         ]
         BITCOIND_CONFIG['rpcport'] = rpcport
         write_config(

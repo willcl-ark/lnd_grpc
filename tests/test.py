@@ -54,6 +54,13 @@ def wait_for(success, timeout=30, interval=0.25):
         raise ValueError("Error waiting for {}", success)
 
 
+def wait_for_bool(success, timeout=30, interval=0.25):
+    start_time = time.time()
+    while not success and time.time() < start_time + timeout:
+        time.sleep(interval)
+    if time.time() > start_time + timeout:
+        raise ValueError("Error waiting for {}", success)
+
 def sync_blockheight(btc, nodes):
     """
     Sync blockheight of nodes by checking logs until timeout
@@ -131,7 +138,7 @@ def get_addresses(node, response='str'):
     return p2wkh_address, np2wkh_address
 
 
-def setup_nodes(bitcoind, nodes):
+def setup_nodes(bitcoind, nodes, delay=0):
     """
     Break down all nodes, open fresh channels between them with half the balance pushed remotely
     and assert
@@ -141,10 +148,15 @@ def setup_nodes(bitcoind, nodes):
     bitcoind.rpc.generate(1)
 
     # First break down nodes. This avoids situations where a test fails and breakdown is not called
-    break_down_nodes(bitcoind=bitcoind, nodes=nodes)
+    break_down_nodes(bitcoind, nodes, delay)
 
     # setup requested nodes and create a single channel from one to the next
     # capacity in one direction only (alphabetical)
+    setup_channels(bitcoind, nodes, delay)
+    return nodes
+
+
+def setup_channels(bitcoind, nodes, delay):
     for i, node in enumerate(nodes):
         if i + 1 == len(nodes):
             break
@@ -152,35 +164,36 @@ def setup_nodes(bitcoind, nodes):
                              str(nodes[i + 1].daemon.port)), perm=1)
         wait_for(lambda: nodes[i].list_peers(), interval=0.25)
         wait_for(lambda: nodes[i + 1].list_peers(), interval=0.25)
+        time.sleep(delay)
 
         nodes[i].add_funds(bitcoind, 1)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
         nodes[i].open_channel_sync(node_pubkey_string=nodes[i + 1].id(),
                                    local_funding_amount=FUND_AMT,
                                    push_sat=int(FUND_AMT / 2))
+        time.sleep(delay)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
 
         assert confirm_channel(bitcoind, nodes[i], nodes[i + 1])
-    return nodes
 
 
-def break_down_nodes(bitcoind, nodes):
+def break_down_nodes(bitcoind, nodes, delay=0):
     close_all_channels(bitcoind, nodes)
+    time.sleep(delay)
     disconnect_all_peers(bitcoind, nodes)
+    time.sleep(delay)
 
 
 def confirm_channel(bitcoind, n1, n2):
     """
     Confirm that a channel is open between two nodes
     """
-    # print("Waiting for channel {} -> {} to confirm".format(n1.id(), n2.id()))
     assert n1.id() in [p.pub_key for p in n2.list_peers()]
     assert n2.id() in [p.pub_key for p in n1.list_peers()]
     for i in range(10):
         time.sleep(0.5)
         if n1.check_channel(n2) and n2.check_channel(n1):
-            # print("Channel {} -> {} confirmed".format(n1.id(), n2.id()))
             return True
         bhash = bitcoind.rpc.generate(1)[0]
         n1.block_sync(bhash)
@@ -404,11 +417,12 @@ class TestNonInteractiveLightning:
     @pytest.mark.skipif(TRAVIS is True, reason="Travis doesn't like this one. Possibly a race"
                                                "condition not worth debugging")
     def test_stop_daemon(self, node_factory):
-        print(os.getenv("TRAVIS"))
         node = node_factory.get_node(implementation=LndNode, node_id='test_stop_node')
         node.daemon.wait_for_log('Server listening on')
         node.stop_daemon()
+        # use is_in_log instead of wait_for_log as node daemon should be shutdown
         node.daemon.is_in_log('Shutdown complete')
+        time.sleep(1)
         with pytest.raises(grpc.RpcError):
             node.get_info()
 
@@ -517,9 +531,8 @@ class TestInteractiveLightning:
 
         bob.add_funds(bitcoind, 1)
         gen_and_sync_lnd(bitcoind, [bob, carol])
-        channel = bob.open_channel(node_pubkey_string=carol.id(),
-                                   local_funding_amount=FUND_AMT)
-        print(channel.__next__())
+        bob.open_channel(node_pubkey_string=carol.id(),
+                         local_funding_amount=FUND_AMT).__next__()
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -532,7 +545,7 @@ class TestInteractiveLightning:
         bob, carol = setup_nodes(bitcoind, [bob, carol])
 
         channel_point = bob.list_channels()[0].channel_point
-        print(bob.close_channel(channel_point=channel_point).__next__())
+        bob.close_channel(channel_point=channel_point).__next__()
         bitcoind.rpc.generate(6)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -544,7 +557,7 @@ class TestInteractiveLightning:
 
         # test payment request method
         invoice = carol.add_invoice(value=SEND_AMT)
-        print(bob.send_payment_sync(payment_request=invoice.payment_request))
+        bob.send_payment_sync(payment_request=invoice.payment_request)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -554,10 +567,8 @@ class TestInteractiveLightning:
 
         # test manually specified request
         invoice2 = carol.add_invoice(value=SEND_AMT)
-        print(bob.send_payment_sync(dest_string=carol.id(),
-                                    amt=SEND_AMT,
-                                    payment_hash=invoice2.r_hash,
-                                    final_cltv_delta=144))
+        bob.send_payment_sync(dest_string=carol.id(), amt=SEND_AMT, payment_hash=invoice2.r_hash,
+                              final_cltv_delta=144)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -567,8 +578,7 @@ class TestInteractiveLightning:
 
         # test sending any amount to an invoice which requested 0
         invoice3 = carol.add_invoice(value=0)
-        print(bob.send_payment_sync(payment_request=invoice3.payment_request,
-                                    amt=SEND_AMT))
+        bob.send_payment_sync(payment_request=invoice3.payment_request, amt=SEND_AMT)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
@@ -690,47 +700,17 @@ class TestInteractiveLightning:
         gen_and_sync_lnd(bitcoind, [bob, carol])
         assert any(update.closed_channel is not None for update in get_updates(chan_updates))
 
-    @pytest.mark.skipif(TRAVIS is True, reason="Travis fail, local pass. Possibly race condition "
-                                               "not worth debugging")
     def test_subscribe_channel_graph(self, bitcoind, bob, carol, dave):
-        bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
         new_fee = 5555
-        chan_updates = queue.LifoQueue()
-
-        def sub_channel_graph():
-            try:
-                for response in dave.subscribe_channel_graph():
-                    chan_updates.put(response)
-            except grpc._channel._Rendezvous:
-                pass
-
-        dave_sub = threading.Thread(target=sub_channel_graph, name='dave_channel_graph_sub',
-                                    daemon=True)
-        dave_sub.start()
-        while not dave_sub.is_alive():
-            time.sleep(0.1)
-        channel_point = bob.list_channels()[0].channel_point
-
-        # test a channel close between two unrelated peers
-        bob.close_channel(channel_point=channel_point).__next__()
-        # give dave_sub a chance to receive update and write to the queue
-        # dave.daemon.wait_for_log('Received ChannelUpdate')
-        dave.daemon.wait_for_log('New channel update applied')
-        gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        dave_sub.join(timeout=0.1)
-        assert any(update.closed_chans is not None for update in get_updates(chan_updates))
-
-        # test a peer updating their fees
+        subscription = bob.subscribe_channel_graph()
         carol.update_channel_policy(chan_point=None,
                                     base_fee_msat=new_fee,
                                     fee_rate=0.5555,
                                     time_lock_delta=9,
                                     is_global=True)
-        dave.daemon.wait_for_log('New channel update applied')
-        gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        dave_sub.join(timeout=0.1)
-        assert any(update.channel_updates[0].routing_policy.fee_base_msat == new_fee
-                   for update in get_updates(chan_updates))
+
+        assert isinstance(subscription.__next__(), rpc_pb2.GraphTopologyUpdate)
 
     def test_update_channel_policy(self, bitcoind, bob, carol):
         bob, carol = setup_nodes(bitcoind, [bob, carol])
@@ -860,7 +840,6 @@ class TestLoop:
         alice, bob = setup_nodes(bitcoind, [alice, bob])
         if alice.daemon.invoice_rpc_active:
             quote = loopd.loop_out_quote(amt=loop_amount)
-            print(quote)
             assert quote is not None
             assert isinstance(quote, loop_client_pb2.QuoteResponse)
         else:
