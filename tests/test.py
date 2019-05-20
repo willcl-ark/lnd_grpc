@@ -701,41 +701,16 @@ class TestInteractiveLightning:
         assert any(update.closed_channel is not None for update in get_updates(chan_updates))
 
     def test_subscribe_channel_graph(self, bitcoind, bob, carol, dave):
-        bob, carol, dave = setup_nodes(bitcoind, [bob, dave, carol])
+        bob, carol = setup_nodes(bitcoind, [bob, carol])
         new_fee = 5555
-        chan_updates = queue.LifoQueue()
-
-        # make sure dave knows about all edges before the subscription is setup
-        wait_for_bool(len(dave.describe_graph().edges) > 1)
-
-        def sub_channel_graph():
-            try:
-                for response in dave.subscribe_channel_graph():
-                    chan_updates.put(response)
-            except grpc._channel._Rendezvous:
-                pass
-
-        dave_sub = threading.Thread(target=sub_channel_graph, name='dave_channel_graph_sub',
-                                    daemon=True)
-        dave_sub.start()
-        while not dave_sub.is_alive():
-            time.sleep(0.1)
-        channel_point = bob.list_channels()[0].channel_point
-
-        # test a channel close between two unrelated peers
-        bob.close_channel(channel_point=channel_point).__next__()
-        gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        assert any(update.closed_chans is not None for update in get_updates(chan_updates))
-
-        # test a peer updating their fees
+        subscription = bob.subscribe_channel_graph()
         carol.update_channel_policy(chan_point=None,
                                     base_fee_msat=new_fee,
                                     fee_rate=0.5555,
                                     time_lock_delta=9,
                                     is_global=True)
-        gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-        assert any(update.channel_updates[0].routing_policy.fee_base_msat == new_fee
-                   for update in get_updates(chan_updates))
+
+        assert isinstance(subscription.__next__(), rpc_pb2.GraphTopologyUpdate)
 
     def test_update_channel_policy(self, bitcoind, bob, carol):
         bob, carol = setup_nodes(bitcoind, [bob, carol])
