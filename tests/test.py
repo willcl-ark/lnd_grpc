@@ -138,7 +138,7 @@ def get_addresses(node, response='str'):
     return p2wkh_address, np2wkh_address
 
 
-def setup_nodes(bitcoind, nodes):
+def setup_nodes(bitcoind, nodes, delay=0):
     """
     Break down all nodes, open fresh channels between them with half the balance pushed remotely
     and assert
@@ -148,10 +148,15 @@ def setup_nodes(bitcoind, nodes):
     bitcoind.rpc.generate(1)
 
     # First break down nodes. This avoids situations where a test fails and breakdown is not called
-    break_down_nodes(bitcoind=bitcoind, nodes=nodes)
+    break_down_nodes(bitcoind, nodes, delay)
 
     # setup requested nodes and create a single channel from one to the next
     # capacity in one direction only (alphabetical)
+    setup_channels(bitcoind, nodes, delay)
+    return nodes
+
+
+def setup_channels(bitcoind, nodes, delay):
     for i, node in enumerate(nodes):
         if i + 1 == len(nodes):
             break
@@ -159,22 +164,25 @@ def setup_nodes(bitcoind, nodes):
                              str(nodes[i + 1].daemon.port)), perm=1)
         wait_for(lambda: nodes[i].list_peers(), interval=0.25)
         wait_for(lambda: nodes[i + 1].list_peers(), interval=0.25)
+        time.sleep(delay)
 
         nodes[i].add_funds(bitcoind, 1)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
         nodes[i].open_channel_sync(node_pubkey_string=nodes[i + 1].id(),
                                    local_funding_amount=FUND_AMT,
                                    push_sat=int(FUND_AMT / 2))
+        time.sleep(delay)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
 
         assert confirm_channel(bitcoind, nodes[i], nodes[i + 1])
-    return nodes
 
 
-def break_down_nodes(bitcoind, nodes):
+def break_down_nodes(bitcoind, nodes, delay=0):
     close_all_channels(bitcoind, nodes)
+    time.sleep(delay)
     disconnect_all_peers(bitcoind, nodes)
+    time.sleep(delay)
 
 
 def confirm_channel(bitcoind, n1, n2):
