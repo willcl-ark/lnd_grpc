@@ -417,7 +417,7 @@ class Lightning(BaseClient):
         If no generator is provided a minimal implementation will be used which will allow sending
         of single, non-sphinx payments
 
-        :arg: request_generator: the generator passed should yield an iterable of ln.SendRequest 's
+        :param: request_generator: the generator passed should yield an iterable of ln.SendRequest's
         :return: an iterable of SendResponses with 4 attributes per response. See the notes on
         threading and iterables in README.md
         """
@@ -437,27 +437,19 @@ class Lightning(BaseClient):
         :return: SendResponse with up to 4 attributes: 'payment_error' (conditional),
         'payment_preimage', 'payment_route' and 'payment_hash'
         """
-        # Use payment request as first choice
-        if 'payment_request' in kwargs:
-            params = {'payment_request': kwargs['payment_request']}
-            if 'amt' in kwargs:
-                params['amt'] = kwargs['amt']
-            request = ln.SendRequest(**params)
-        else:
-            request = ln.SendRequest(**kwargs)
-        response = self.lightning_stub.SendPaymentSync(request)
-        return response
+        request = ln.SendRequest(**kwargs)
+        return self.lightning_stub.SendPaymentSync(request)
 
     def pay_invoice(self, payment_request: str):
         """
         Custom function which only takes a payment request and pays the invoice using the
         asynchronous send_payment_sync()
 
+        :param: payment_request: a BOLT11 encoded payment request
         :return: SendResponse with up to 4 attributes: 'payment_error' (conditional),
         'payment_preimage', 'payment_route' and 'payment_hash'
         """
-        response = self.send_payment_sync(payment_request=payment_request)
-        return response
+        return self.send_payment_sync(payment_request=payment_request)
 
     @staticmethod
     def send_to_route_generator(invoice, routes):
