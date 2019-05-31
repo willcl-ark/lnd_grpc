@@ -7,6 +7,7 @@ from secrets import token_bytes
 
 import grpc
 
+import lnd_grpc.protos.rpc_pb2 as ln
 from lnd_grpc.protos import invoices_pb2 as invoices_pb2, rpc_pb2
 from loop_rpc.protos import loop_client_pb2
 from test_utils.fixtures import *
@@ -641,15 +642,14 @@ class TestInteractiveLightning:
         assert inv_paid.settled is True
         assert inv_paid.amt_paid_sat == SEND_AMT
 
-        # test sphinx send if enabled
-        import lnd_grpc.protos.rpc_pb2 as ln
+        # test a stream of sphinx payments if enabled
         if ln.SendRequest(key_send=1):
 
             import codecs
-            dest_hex = carol.get_info().identity_pubkey
+            dest_hex = dave.get_info().identity_pubkey
             dest_bytes = codecs.decode(dest_hex, 'hex')
 
-            def sphinx_generator(cycles, delay, dest, amt, key_send=False, final_cltv_delta=144):
+            def request_generator(cycles, delay, dest, amt, key_send=False, final_cltv_delta=144):
                 count = 0
                 while count < cycles:
                     request = ln.SendRequest(dest=dest, amt=amt, key_send=key_send,
@@ -658,30 +658,19 @@ class TestInteractiveLightning:
                     count += 1
                     time.sleep(delay)
 
-            sphinx_queue = queue.LifoQueue()
-            invoices = []
+            len_payments_start = len(bob.list_payments().payments)
             cycles = 5
+            delay = 2
+            payments = []
 
-            def sphinx_send():
-                for response in bob.send_payment(request_generator=sphinx_generator, cycles=cycles,
-                                                 delay=4,
-                                                 dest=dest_bytes, amt=SEND_AMT, key_send=True):
-                    sphinx_queue.put(response)
-                    print(f'Queue length {sphinx_queue.qsize()}')
-                return
+            for response in bob.send_payment(request_generator=request_generator, cycles=cycles,
+                                             delay=delay,
+                                             dest=dest_bytes, amt=50, key_send=True):
+                print(response)
 
-            sphinx_worker = threading.Thread(target=sphinx_send)
-            sphinx_worker.start()
-            while sphinx_worker.is_alive():
-                time.sleep(0.5)
-
-            while not sphinx_queue.empty():
-                invoices.append(sphinx_queue.get())
-
-            bitcoind.rpc.generate(3)
-            gen_and_sync_lnd(bitcoind, [bob, carol, dave])
-            print(len(invoices))
-            assert (len(invoices) == cycles)
+            time.sleep(2)
+            len_payments_after = len(bob.list_payments().payments)
+            assert ((len_payments_start + cycles) == len_payments_after)
 
     def test_send_to_route_sync(self, bitcoind, bob, carol, dave):
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
