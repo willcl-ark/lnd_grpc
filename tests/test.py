@@ -594,7 +594,7 @@ class TestInteractiveLightning:
         # TODO: remove try/except hack for curve generation
         bob, carol = setup_nodes(bitcoind, [bob, carol])
 
-        # test payment request method
+        # test payment request method using default generator
         invoice = carol.add_invoice(value=SEND_AMT)
         try:
             bob.send_payment(payment_request=invoice.payment_request).__next__()
