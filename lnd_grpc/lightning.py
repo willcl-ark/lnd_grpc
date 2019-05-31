@@ -638,7 +638,7 @@ class Lightning(BaseClient):
         response = self.lightning_stub.GetNodeInfo(request)
         return response
 
-    def query_routes(self, pub_key: str, amt: int, **kwargs):
+    def query_routes(self, pub_key: str, amt: int, final_cltv_delta=144, **kwargs):
         """
         attempts to query the daemon’s Channel Router for a possible route to a target
         destination capable of carrying a specific amount of satoshis. The returned route contains
@@ -647,7 +647,8 @@ class Lightning(BaseClient):
 
         :return: QueryRoutesResponse object with 1 attribute: 'routes' which contains a single route
         """
-        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt, **kwargs)
+        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt,
+                                        final_cltv_delta=final_cltv_delta, **kwargs)
         response = self.lightning_stub.QueryRoutes(request)
         return response.routes[0]
 
