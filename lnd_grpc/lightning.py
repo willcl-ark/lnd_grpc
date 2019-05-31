@@ -397,46 +397,34 @@ class Lightning(BaseClient):
         return response
 
     @staticmethod
-    def send_request_generator(**kwargs):
-        """
-        Creates the SendRequest object for the synchronous streaming send_payment() as a generator
-
-        :return: generator object for the request
-        """
-        # Commented out to complement the magic sleep below...
-        # while True:
+    def sendreq_gen(**kwargs):
+        # this example generator is only good for single payments, not of sphinx type
         request = ln.SendRequest(**kwargs)
         yield request
-        # Magic sleep which tricks the response to the send_payment() method to actually
-        # contain data...
+        # magic sleep, otherwise fails :(
         time.sleep(5)
 
     # Bi-directional streaming RPC
-    def send_payment(self, **kwargs):
+    def send_payment(self, request_generator=None, **kwargs):
         """
         dispatches a bi-directional streaming RPC for sending payments through the Lightning
         Network. A single RPC invocation creates a persistent bi-directional stream allowing clients
         to rapidly send payments through the Lightning Network with a single persistent connection.
 
+        This function will simply pass all arguments in **kwargs to the provided generator function
+        and attempt to operate SendPayment on the generator's returned iterable.
+
+        If no generator is provided a minimal implementation will be used which will allow sending
+        of single, non-sphinx payments
+
+        :arg: request_generator: the generator passed should yield an iterable of ln.SendRequest 's
         :return: an iterable of SendResponses with 4 attributes per response. See the notes on
         threading and iterables in README.md
         """
-        # Use payment request as first choice
-        if 'payment_request' in kwargs:
-            params = {'payment_request': kwargs['payment_request']}
-            if 'amt' in kwargs:
-                params['amt'] = kwargs['amt']
-            request_iterable = self.send_request_generator(**params)
-        else:
-            # Helper to convert hex to bytes automatically
-            try:
-                if 'payment_hash' not in kwargs:
-                    kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
-                if 'dest' not in kwargs:
-                    kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
-            except ValueError as e:
-                raise e
-            request_iterable = self.send_request_generator(**kwargs)
+        # if no custom generator is passed, use example one
+        if not request_generator:
+            request_generator = self.sendreq_gen
+        request_iterable = request_generator(**kwargs)
         return self.lightning_stub.SendPayment(request_iterable)
 
     # Synchronous non-streaming RPC
