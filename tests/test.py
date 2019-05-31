@@ -1,7 +1,7 @@
-import sys
-import time
-import threading
 import queue
+import sys
+import threading
+import time
 from hashlib import sha256
 from secrets import token_bytes
 
@@ -61,6 +61,7 @@ def wait_for_bool(success, timeout=30, interval=0.25):
         time.sleep(interval)
     if time.time() > start_time + timeout:
         raise ValueError("Error waiting for {}", success)
+
 
 def sync_blockheight(btc, nodes):
     """
@@ -584,7 +585,7 @@ class TestInteractiveLightning:
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash = carol.decode_pay_req(
-            invoice3.payment_request).payment_hash
+                invoice3.payment_request).payment_hash
         assert payment_hash in [p.payment_hash for p in
                                 bob.list_payments().payments]
         inv_paid = carol.lookup_invoice(r_hash_str=payment_hash)
@@ -644,12 +645,11 @@ class TestInteractiveLightning:
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         invoice = dave.add_invoice(value=SEND_AMT)
-        routes = bob.query_routes(pub_key=dave.id(),
-                                  amt=SEND_AMT,
-                                  num_routes=1,
-                                  final_cltv_delta=144)
+        route = bob.query_routes(pub_key=dave.id(),
+                                 amt=SEND_AMT,
+                                 final_cltv_delta=144)
         bob.send_to_route_sync(payment_hash=invoice.r_hash,
-                               routes=routes)
+                               route=route)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         payment_hash = dave.decode_pay_req(invoice.payment_request).payment_hash
@@ -661,12 +661,11 @@ class TestInteractiveLightning:
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         invoice = dave.add_invoice(value=SEND_AMT)
-        routes = bob.query_routes(pub_key=dave.id(),
-                                  amt=SEND_AMT,
-                                  num_routes=1,
-                                  final_cltv_delta=144)
+        route = bob.query_routes(pub_key=dave.id(),
+                                 amt=SEND_AMT,
+                                 final_cltv_delta=144)
         try:
-            bob.send_to_route(invoice=invoice, routes=routes).__next__()
+            bob.send_to_route(payment_hash=invoice.r_hash, route=route).__next__()
         except StopIteration:
             pass
         bob.daemon.wait_for_log('Closed completed SETTLE circuit', timeout=60)
