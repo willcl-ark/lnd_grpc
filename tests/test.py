@@ -17,6 +17,7 @@ impls = [LndNode]
 if TEST_DEBUG:
     logging.basicConfig(level=logging.DEBUG,
                         format='%(name)-12s %(message)s',
+                        # filename="/Users/will/Documents/src/lnd_grpc/log.txt")
                         stream=sys.stdout)
 logging.info("Tests running in '%s'", TEST_DIR)
 
