@@ -784,6 +784,7 @@ class TestInvoices:
         invoice = carol.add_hold_invoice(memo='pytest hold invoice',
                                          hash=_hash,
                                          value=SEND_AMT)
+        decoded_invoice = carol.decode_pay_req(pay_req=invoice.payment_request)
         assert isinstance(invoice, invoices_pb2.AddHoldInvoiceResp)
 
         # thread functions
@@ -818,7 +819,8 @@ class TestInvoices:
         while not inv_sub.is_alive():
             time.sleep(0.1)
         pay_inv.start()
-        carol.daemon.wait_for_log('htlc accepted')
+        time.sleep(2)
+        # carol.daemon.wait_for_log(regex=f'Invoice({decoded_invoice.payment_hash}): accepted,')
         settle_inv.start()
         while settle_inv.is_alive():
             time.sleep(0.1)
