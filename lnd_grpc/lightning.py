@@ -472,7 +472,7 @@ class Lightning(BaseClient):
         return response
 
     @staticmethod
-    def send_to_route_generator(invoice, routes):
+    def send_to_route_generator(invoice, route):
         """
         create SendToRouteRequest generator
 
@@ -480,14 +480,14 @@ class Lightning(BaseClient):
         """
         # Commented out to complement the magic sleep below...
         # while True:
-        request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=routes)
+        request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, route=route)
         yield request
         # Magic sleep which tricks the response to the send_to_route() method to actually
         # contain data...
         time.sleep(5)
 
     # Bi-directional streaming RPC
-    def send_to_route(self, invoice, routes):
+    def send_to_route(self, invoice, route):
         """
         bi-directional streaming RPC for sending payment through the Lightning Network. This method
         differs from SendPayment in that it allows users to specify a full route manually. This can
@@ -496,11 +496,11 @@ class Lightning(BaseClient):
         :return: an iterable of SendResponses with 4 attributes per response. See the notes on
         threading and iterables in README.md
         """
-        request_iterable = self.send_to_route_generator(invoice=invoice, routes=routes)
+        request_iterable = self.send_to_route_generator(invoice=invoice, route=route)
         return self.lightning_stub.SendToRoute(request_iterable)
 
     # Synchronous non-streaming RPC
-    def send_to_route_sync(self, routes, **kwargs):
+    def send_to_route_sync(self, route, **kwargs):
         """
         a synchronous version of SendToRoute. It Will block until the payment either fails or
         succeeds.
@@ -508,7 +508,7 @@ class Lightning(BaseClient):
         :return: SendResponse with up to 4 attributes: 'payment_error' (conditional),
         'payment_preimage', 'payment_route' and 'payment_hash'
         """
-        request = ln.SendToRouteRequest(routes=routes, **kwargs)
+        request = ln.SendToRouteRequest(route=route, **kwargs)
         response = self.lightning_stub.SendToRouteSync(request)
         return response
 
@@ -654,7 +654,7 @@ class Lightning(BaseClient):
         response = self.lightning_stub.GetNodeInfo(request)
         return response
 
-    def query_routes(self, pub_key: str, amt: int, num_routes: int, **kwargs):
+    def query_routes(self, pub_key: str, amt: int, **kwargs):
         """
         attempts to query the daemon’s Channel Router for a possible route to a target
         destination capable of carrying a specific amount of satoshis. The returned route contains
@@ -663,7 +663,7 @@ class Lightning(BaseClient):
 
         :return: QueryRoutesResponse object with 1 attribute: 'routes' which contains a single route
         """
-        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt, num_routes=num_routes, **kwargs)
+        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt, **kwargs)
         response = self.lightning_stub.QueryRoutes(request)
         return response.routes
 
