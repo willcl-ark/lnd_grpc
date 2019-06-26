@@ -643,12 +643,11 @@ class TestInteractiveLightning:
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         invoice = dave.add_invoice(value=SEND_AMT)
-        routes = bob.query_routes(pub_key=dave.id(),
+        route = bob.query_routes(pub_key=dave.id(),
                                   amt=SEND_AMT,
-                                  num_routes=1,
                                   final_cltv_delta=144)
         bob.send_to_route_sync(payment_hash=invoice.r_hash,
-                               routes=routes)
+                               route=route[0])
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         payment_hash = dave.decode_pay_req(invoice.payment_request).payment_hash
@@ -660,12 +659,11 @@ class TestInteractiveLightning:
         bob, carol, dave = setup_nodes(bitcoind, [bob, carol, dave])
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         invoice = dave.add_invoice(value=SEND_AMT)
-        routes = bob.query_routes(pub_key=dave.id(),
+        route = bob.query_routes(pub_key=dave.id(),
                                   amt=SEND_AMT,
-                                  num_routes=1,
                                   final_cltv_delta=144)
         try:
-            bob.send_to_route(invoice=invoice, routes=routes).__next__()
+            bob.send_to_route(invoice=invoice, route=route[0]).__next__()
         except StopIteration:
             pass
         bob.daemon.wait_for_log('Closed completed SETTLE circuit', timeout=60)
