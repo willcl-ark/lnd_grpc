@@ -131,7 +131,7 @@ message LoopOutRequest {
 
 message LoopInRequest {
     /**
-    Requested swap amount in sat. This does not include the swap and miner
+    Requested swap amount in sat. This does not include the swap and miner 
     fee.
     */
     int64 amt = 1;
@@ -147,7 +147,7 @@ message LoopInRequest {
     /**
     Maximum in on-chain fees that we are willing to spent. If we want to
     publish the on-chain htlc and the fee estimate turns out higher than this
-    value, we cancel the swap.
+    value, we cancel the swap. 
 
     max_miner_fee is typically taken from the response of the GetQuote call.
     */
@@ -221,6 +221,15 @@ message SwapStatus {
     Htlc address.
     */
     string htlc_address = 7;
+
+    /// Swap server cost
+    int64 cost_server = 8;
+
+    // On-chain transaction cost
+    int64 cost_onchain = 9;
+
+    // Off-chain routing fees
+    int64 cost_offchain = 10;
 }
 
 enum SwapType {
