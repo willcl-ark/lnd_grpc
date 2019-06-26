@@ -170,7 +170,8 @@ def setup_channels(bitcoind, nodes, delay):
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
         nodes[i].open_channel_sync(node_pubkey_string=nodes[i + 1].id(),
                                    local_funding_amount=FUND_AMT,
-                                   push_sat=int(FUND_AMT / 2))
+                                   push_sat=int(FUND_AMT / 2),
+                                   spend_unconfirmed=True)
         time.sleep(delay)
         bitcoind.rpc.generate(3)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
