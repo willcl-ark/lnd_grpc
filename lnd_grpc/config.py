@@ -17,7 +17,7 @@ defaultRPCPort = 10009
 defaultRESTPort = 8080
 defaultPeerPort = 9735
 defaultRPCHost = "localhost"
-defaultNetwork = 'mainnet'
+defaultNetwork = "mainnet"
 defaultNoSeedBackup = False
 defaultTorSOCKSPort = 9050
 defaultTorDNSHost = "soa.nodes.lightning.directory"
@@ -27,5 +27,7 @@ defaultTorV2PrivateKeyFilename = "v2_onion_private_key"
 defaultTorV3PrivateKeyFilename = "v3_onion_private_key"
 
 # lnd_grpc default params
-GRPC_OPTIONS = [('grpc.max_receive_message_length', 33554432),
-                ('grpc.max_send_message_length', 33554432)]
+GRPC_OPTIONS = [
+    ("grpc.max_receive_message_length", 33554432),
+    ("grpc.max_send_message_length", 33554432),
+]

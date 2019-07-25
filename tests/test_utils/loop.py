@@ -8,9 +8,8 @@ from test_utils.utils import TailableProc
 
 
 class LoopD(TailableProc):
-
-    def __init__(self, lnd, network='regtest', host='localhost', rpc_port=None):
-        self.prefix = 'loopd'
+    def __init__(self, lnd, network="regtest", host="localhost", rpc_port=None):
+        self.prefix = "loopd"
         super().__init__(prefix=self.prefix)
         if rpc_port is None:
             rpc_port = reserve()
@@ -19,22 +18,22 @@ class LoopD(TailableProc):
         # self.prefix = 'loopd'
         self.lnd = lnd
         self.cmd_line = [
-            f'loopd',
+            f"loopd",
             # f'--insecure',
-            f'--network={network}',
-            f'--rpclisten={self.host}:{self.rpc_port}',
-            f'--lnd.host={self.lnd.grpc_host}:{self.lnd.grpc_port}',
-            f'--lnd.macaroondir={self.lnd.daemon.lightning_dir}/chain/bitcoin/regtest/',
-            f'--lnd.tlspath={self.lnd.tls_cert_path}',
+            f"--network={network}",
+            f"--rpclisten={self.host}:{self.rpc_port}",
+            f"--lnd.host={self.lnd.grpc_host}:{self.lnd.grpc_port}",
+            f"--lnd.macaroondir={self.lnd.daemon.lightning_dir}/chain/bitcoin/regtest/",
+            f"--lnd.tlspath={self.lnd.tls_cert_path}",
         ]
 
     def start(self):
         super().start()
-        self.wait_for_log('Connected to lnd')
-        logging.info('Loop connected to LND node')
-        self.wait_for_log('Starting event loop at height')
+        self.wait_for_log("Connected to lnd")
+        logging.info("Loop connected to LND node")
+        self.wait_for_log("Starting event loop at height")
         time.sleep(3)
-        logging.info('Event Loop started')
+        logging.info("Event Loop started")
 
     def stop(self):
         self.proc.terminate()
@@ -46,13 +45,13 @@ class LoopD(TailableProc):
 
 
 class LoopNode(LoopClient):
-    displayname = 'loop'
+    displayname = "loop"
 
     def __init__(self, host, rpc_port, lnd, executor=None, node_id=0):
         self.executor = executor
         self.daemon = LoopD(lnd, host=host, rpc_port=rpc_port)
         self.node_id = node_id
-        self.logger = logging.getLogger(name='loop')
+        self.logger = logging.getLogger(name="loop")
         self.myid = None
         super().__init__(loop_host=host, loop_port=rpc_port)
 

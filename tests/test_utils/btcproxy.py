@@ -18,6 +18,7 @@ from cheroot.wsgi import PathInfoDispatcher
 class DecimalEncoder(json.JSONEncoder):
     """By default json.dumps does not handle Decimals correctly, so we override it's handling
     """
+
     def default(self, o):
         if isinstance(o, decimal.Decimal):
             return float(o)
@@ -28,14 +29,14 @@ class ProxiedBitcoinD(BitcoinD):
     def __init__(self, bitcoin_dir, proxyport=0):
         BitcoinD.__init__(self, bitcoin_dir, rpcport=None)
         self.app = Flask("BitcoindProxy")
-        self.app.add_url_rule("/", "API entrypoint", self.proxy, methods=['POST'])
+        self.app.add_url_rule("/", "API entrypoint", self.proxy, methods=["POST"])
         self.proxyport = proxyport
         self.mocks = {}
 
     def _handle_request(self, r):
-        conf_file = os.path.join(self.bitcoin_dir, 'bitcoin.conf')
+        conf_file = os.path.join(self.bitcoin_dir, "bitcoin.conf")
         brpc = BitcoinProxy(btc_conf_file=conf_file)
-        method = r['method']
+        method = r["method"]
 
         # If we have set a mock for this method reply with that instead of
         # forwarding the request.
@@ -46,19 +47,16 @@ class ProxiedBitcoinD(BitcoinD):
 
         try:
             reply = {
-                "result": brpc._call(r['method'], *r['params']),
+                "result": brpc._call(r["method"], *r["params"]),
                 "error": None,
-                "id": r['id']
+                "id": r["id"],
             }
         except JSONRPCError as e:
-            reply = {
-                "error": e.error,
-                "id": r['id']
-            }
+            reply = {"error": e.error, "id": r["id"]}
         return reply
 
     def proxy(self):
-        r = json.loads(request.data.decode('ASCII'))
+        r = json.loads(request.data.decode("ASCII"))
 
         if isinstance(r, list):
             reply = [self._handle_request(subreq) for subreq in r]
@@ -69,12 +67,12 @@ class ProxiedBitcoinD(BitcoinD):
         logging.debug("Replying to %r with %r", r, reply)
 
         response = flask.Response(reply)
-        response.headers['Content-Type'] = 'application/json'
+        response.headers["Content-Type"] = "application/json"
         return response
 
     def start(self):
-        d = PathInfoDispatcher({'/': self.app})
-        self.server = Server(('0.0.0.0', self.proxyport), d)
+        d = PathInfoDispatcher({"/": self.app})
+        self.server = Server(("0.0.0.0", self.proxyport), d)
         self.proxy_thread = threading.Thread(target=self.server.start)
         self.proxy_thread.daemon = True
         self.proxy_thread.start()
@@ -87,9 +85,11 @@ class ProxiedBitcoinD(BitcoinD):
             pass
         self.proxiedport = self.rpcport
         self.rpcport = self.server.bind_addr[1]
-        logging.debug("bitcoind reverse proxy listening on {}, forwarding to {}".format(
-            self.rpcport, self.proxiedport
-        ))
+        logging.debug(
+            "bitcoind reverse proxy listening on {}, forwarding to {}".format(
+                self.rpcport, self.proxiedport
+            )
+        )
 
     def stop(self):
         BitcoinD.stop(self)
@@ -113,6 +113,6 @@ class ProxiedBitcoinD(BitcoinD):
 # The main entrypoint is mainly used to test the proxy. It is not used during
 # lightningd testing.
 if __name__ == "__main__":
-    p = ProxiedBitcoinD(bitcoin_dir='/tmp/bitcoind-test/', proxyport=5000)
+    p = ProxiedBitcoinD(bitcoin_dir="/tmp/bitcoind-test/", proxyport=5000)
     p.start()
     p.proxy_thread.join()

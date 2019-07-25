@@ -15,7 +15,7 @@ service SwapClient {
     point onwards, progress can be tracked via the SwapStatus stream that is
     returned from Monitor().
     */
-    rpc LoopOut (LoopOutRequest) returns (SwapResponse) {
+    rpc LoopOut(LoopOutRequest) returns (SwapResponse) {
         option (google.api.http) = {
             post: "/v1/loop/out"
             body: "*"
@@ -28,18 +28,18 @@ service SwapClient {
     point onwards, progress can be tracked via the SwapStatus stream
     that is returned from Monitor().
     */
-    rpc LoopIn (LoopInRequest) returns (SwapResponse);
+    rpc LoopIn(LoopInRequest) returns (SwapResponse);
 
     /** loop: `monitor`
     Monitor will return a stream of swap updates for currently active swaps.
     TODO: add MonitorSync version for REST clients.
     */
-    rpc Monitor (MonitorRequest) returns (stream SwapStatus);
+    rpc Monitor(MonitorRequest) returns(stream SwapStatus);
 
     /** loop: `terms`
     LoopOutTerms returns the terms that the server enforces for a loop out swap.
     */
-    rpc LoopOutTerms (TermsRequest) returns (TermsResponse) {
+    rpc LoopOutTerms(TermsRequest) returns(TermsResponse) {
         option (google.api.http) = {
             get: "/v1/loop/out/terms"
         };
@@ -49,7 +49,7 @@ service SwapClient {
     LoopOutQuote returns a quote for a loop out swap with the provided
     parameters.
     */
-    rpc LoopOutQuote (QuoteRequest) returns (QuoteResponse) {
+    rpc LoopOutQuote(QuoteRequest) returns(QuoteResponse) {
         option (google.api.http) = {
             get: "/v1/loop/out/quote/{amt}"
         };
@@ -58,12 +58,12 @@ service SwapClient {
     /**
     GetTerms returns the terms that the server enforces for swaps.
     */
-    rpc GetLoopInTerms (TermsRequest) returns (TermsResponse);
+    rpc GetLoopInTerms(TermsRequest) returns(TermsResponse);
 
     /**
     GetQuote returns a quote for a swap with the provided parameters.
     */
-    rpc GetLoopInQuote (QuoteRequest) returns (QuoteResponse);
+    rpc GetLoopInQuote(QuoteRequest) returns(QuoteResponse);
 }
 
 message LoopOutRequest {
@@ -127,6 +127,12 @@ message LoopOutRequest {
     lowest routing fee for the swap payment to the server.
     */
     uint64 loop_out_channel = 8;
+
+    /**
+    The number of blocks from the on-chain HTLC's confirmation height that it
+    should be swept within.
+    */
+    int32 sweep_conf_target = 9;
 }
 
 message LoopInRequest {
@@ -181,7 +187,7 @@ message SwapResponse {
     string htlc_address = 2;
 }
 
-message MonitorRequest {
+message MonitorRequest{
 }
 
 message SwapStatus {
@@ -221,6 +227,15 @@ message SwapStatus {
     Htlc address.
     */
     string htlc_address = 7;
+
+    /// Swap server cost
+    int64 cost_server = 8;
+
+    // On-chain transaction cost
+    int64 cost_onchain = 9;
+
+    // Off-chain routing fees
+    int64 cost_offchain = 10;
 }
 
 enum SwapType {
@@ -266,10 +281,10 @@ enum SwapState {
     */
     FAILED = 4;
 
-    /**
-   INVOICE_SETTLED is reached when the swap invoice in a loop in swap has been
-   paid, but we are still waiting for the htlc spend to confirm.
-   */
+     /**
+    INVOICE_SETTLED is reached when the swap invoice in a loop in swap has been
+    paid, but we are still waiting for the htlc spend to confirm.
+    */
     INVOICE_SETTLED = 5;
 }
 
@@ -319,6 +334,14 @@ message QuoteRequest {
     The amount to swap in satoshis.
     */
     int64 amt = 1;
+
+    /**
+    The confirmation target that should be used either for the sweep of the
+    on-chain HTLC broadcast by the swap server in the case of a Loop Out, or for
+    the confirmation of the on-chain HTLC broadcast by the swap client in the
+    case of a Loop In.
+    */
+    int32 conf_target = 2;
 }
 
 message QuoteResponse {

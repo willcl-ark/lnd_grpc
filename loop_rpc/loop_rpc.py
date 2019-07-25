@@ -11,9 +11,7 @@ class LoopClient:
     constructors from default (loop_host='localhost', loop_port='11010').
     """
 
-    def __init__(self,
-                 loop_host: str = 'localhost',
-                 loop_port: str = '11010'):
+    def __init__(self, loop_host: str = "localhost", loop_port: str = "11010"):
         self._loop_stub: looprpc.SwapClientStub = None
         self.loop_host = loop_host
         self.loop_port = loop_port
@@ -21,7 +19,7 @@ class LoopClient:
     @property
     def loop_stub(self) -> looprpc.SwapClientStub:
         if self._loop_stub is None:
-            loop_channel = insecure_channel(self.loop_host + ':' + self.loop_port)
+            loop_channel = insecure_channel(self.loop_host + ":" + self.loop_port)
             self._loop_stub = looprpc.SwapClientStub(loop_channel)
         return self._loop_stub
 
@@ -48,4 +46,4 @@ class LoopClient:
         return response
 
 
-__all__ = ['LoopClient', ]
+__all__ = ["LoopClient"]

@@ -18,7 +18,7 @@ class InvoicesStub(object):
     """
     self.SubscribeSingleInvoice = channel.unary_stream(
         '/invoicesrpc.Invoices/SubscribeSingleInvoice',
-        request_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.SerializeToString,
+        request_serializer=lnd__grpc_dot_protos_dot_invoices__pb2.SubscribeSingleInvoiceRequest.SerializeToString,
         response_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.FromString,
         )
     self.CancelInvoice = channel.unary_unary(
@@ -86,7 +86,7 @@ def add_InvoicesServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'SubscribeSingleInvoice': grpc.unary_stream_rpc_method_handler(
           servicer.SubscribeSingleInvoice,
-          request_deserializer=lnd__grpc_dot_protos_dot_rpc__pb2.PaymentHash.FromString,
+          request_deserializer=lnd__grpc_dot_protos_dot_invoices__pb2.SubscribeSingleInvoiceRequest.FromString,
           response_serializer=lnd__grpc_dot_protos_dot_rpc__pb2.Invoice.SerializeToString,
       ),
       'CancelInvoice': grpc.unary_unary_rpc_method_handler(
