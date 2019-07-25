@@ -9,7 +9,7 @@ from lnd_grpc.base_client import BaseClient
 from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
-environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
+environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
 
 
 class Lightning(BaseClient):
@@ -17,22 +17,26 @@ class Lightning(BaseClient):
     A class which interacts with the LND Lightning sub-system
     """
 
-    def __init__(self,
-                 lnd_dir: str = None,
-                 macaroon_path: str = None,
-                 tls_cert_path: str = None,
-                 network: str = defaultNetwork,
-                 grpc_host: str = defaultRPCHost,
-                 grpc_port: str = defaultRPCPort):
+    def __init__(
+        self,
+        lnd_dir: str = None,
+        macaroon_path: str = None,
+        tls_cert_path: str = None,
+        network: str = defaultNetwork,
+        grpc_host: str = defaultRPCHost,
+        grpc_port: str = defaultRPCPort,
+    ):
 
         self._lightning_stub: lnrpc.LightningStub = None
         self.version = None
-        super().__init__(lnd_dir=lnd_dir,
-                         macaroon_path=macaroon_path,
-                         tls_cert_path=tls_cert_path,
-                         network=network,
-                         grpc_host=grpc_host,
-                         grpc_port=grpc_port)
+        super().__init__(
+            lnd_dir=lnd_dir,
+            macaroon_path=macaroon_path,
+            tls_cert_path=tls_cert_path,
+            network=network,
+            grpc_host=grpc_host,
+            grpc_port=grpc_port,
+        )
 
     @property
     def version(self):
@@ -75,14 +79,15 @@ class Lightning(BaseClient):
         """
 
         # if the stub is already created and channel might recover, return current stub
-        if self._lightning_stub is not None \
-                and self.connection_status_change is False:
+        if self._lightning_stub is not None and self.connection_status_change is False:
             return self._lightning_stub
 
         # otherwise, start by creating a fresh channel
-        self.channel = grpc.secure_channel(target=self.grpc_address,
-                                           credentials=self.combined_credentials,
-                                           options=self.grpc_options)
+        self.channel = grpc.secure_channel(
+            target=self.grpc_address,
+            credentials=self.combined_credentials,
+            options=self.grpc_options,
+        )
 
         # subscribe to channel connectivity updates with callback
         self.channel.subscribe(self.connectivity_event_logger)
@@ -185,13 +190,15 @@ class Lightning(BaseClient):
 
         :return: NewAddressResponse with 1 attribute: 'address'
         """
-        if address_type == 'p2wkh':
-            request = ln.NewAddressRequest(type='WITNESS_PUBKEY_HASH')
-        elif address_type == 'np2wkh':
-            request = ln.NewAddressRequest(type='NESTED_PUBKEY_HASH')
+        if address_type == "p2wkh":
+            request = ln.NewAddressRequest(type="WITNESS_PUBKEY_HASH")
+        elif address_type == "np2wkh":
+            request = ln.NewAddressRequest(type="NESTED_PUBKEY_HASH")
         else:
-            return TypeError("invalid address type %s, supported address type are: p2wkh and np2wkh"
-                             % address_type)
+            return TypeError(
+                "invalid address type %s, supported address type are: p2wkh and np2wkh"
+                % address_type
+            )
         response = self.lightning_stub.NewAddress(request)
         return response
 
@@ -203,7 +210,7 @@ class Lightning(BaseClient):
 
         :return: SignMessageResponse with 1 attribute: 'signature'
         """
-        _msg_bytes = msg.encode('utf-8')
+        _msg_bytes = msg.encode("utf-8")
         request = ln.SignMessageRequest(msg=_msg_bytes)
         response = self.lightning_stub.SignMessage(request)
         return response
@@ -216,13 +223,14 @@ class Lightning(BaseClient):
 
         :return: VerifyMessageResponse with 2 attributes: 'valid' and 'pubkey'
         """
-        _msg_bytes = msg.encode('utf-8')
+        _msg_bytes = msg.encode("utf-8")
         request = ln.VerifyMessageRequest(msg=_msg_bytes, signature=signature)
         response = self.lightning_stub.VerifyMessage(request)
         return response
 
-    def connect_peer(self, addr: ln.LightningAddress, perm: bool = 0,
-                     timeout: int = None):
+    def connect_peer(
+        self, addr: ln.LightningAddress, perm: bool = 0, timeout: int = None
+    ):
         """
         Attempts to establish a connection to a remote peer. This is at the networking level, and
         is used for communication between nodes. This is distinct from establishing a channel with
@@ -241,7 +249,7 @@ class Lightning(BaseClient):
 
         :return: ConnectPeerResponse with no attributes
         """
-        pubkey, host = address.split('@')
+        pubkey, host = address.split("@")
         _address = self.lightning_address(pubkey=pubkey, host=host)
         response = self.connect_peer(addr=_address, perm=perm, timeout=timeout)
         return response
@@ -325,13 +333,14 @@ class Lightning(BaseClient):
         :return: ChannelPoint with 3 attributes: 'funding_txid_bytes', 'funding_tx_str' and
         'output_index'
         """
-        request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
+        request = ln.OpenChannelRequest(
+            local_funding_amount=local_funding_amount, **kwargs
+        )
         response = self.lightning_stub.OpenChannelSync(request)
         return response
 
     # Response-streaming RPC
-    def open_channel(self, local_funding_amount: int, timeout: int = None,
-                     **kwargs):
+    def open_channel(self, local_funding_amount: int, timeout: int = None, **kwargs):
         """
         attempts to open a singly funded channel specified in the request to a remote peer. Users
         are able to specify a target number of blocks that the funding transaction should be
@@ -342,8 +351,10 @@ class Lightning(BaseClient):
         in README.md
         """
         # TODO: implement `lncli openchannel --connect` function
-        request = ln.OpenChannelRequest(local_funding_amount=local_funding_amount, **kwargs)
-        if request.node_pubkey == b'':
+        request = ln.OpenChannelRequest(
+            local_funding_amount=local_funding_amount, **kwargs
+        )
+        if request.node_pubkey == b"":
             request.node_pubkey = bytes.fromhex(request.node_pubkey_string)
         return self.lightning_stub.OpenChannel(request, timeout=timeout)
 
@@ -360,9 +371,10 @@ class Lightning(BaseClient):
         :return: an iterable of CloseChannelStatusUpdates with 2 attributes per response. See the
         notes on threading and iterables in README.md
         """
-        funding_txid, output_index = channel_point.split(':')
-        _channel_point = self.channel_point_generator(funding_txid=funding_txid,
-                                                      output_index=output_index)
+        funding_txid, output_index = channel_point.split(":")
+        _channel_point = self.channel_point_generator(
+            funding_txid=funding_txid, output_index=output_index
+        )
         request = ln.CloseChannelRequest(channel_point=_channel_point, **kwargs)
         return self.lightning_stub.CloseChannel(request)
 
@@ -389,9 +401,10 @@ class Lightning(BaseClient):
 
         :return: AbandonChannelResponse with no attributes
         """
-        funding_txid, output_index = channel_point.split(':')
-        _channel_point = self.channel_point_generator(funding_txid=funding_txid,
-                                                      output_index=output_index)
+        funding_txid, output_index = channel_point.split(":")
+        _channel_point = self.channel_point_generator(
+            funding_txid=funding_txid, output_index=output_index
+        )
         request = ln.AbandonChannelRequest(channel_point=_channel_point)
         response = self.lightning_stub.AbandonChannel(request)
         return response
@@ -422,18 +435,20 @@ class Lightning(BaseClient):
         threading and iterables in README.md
         """
         # Use payment request as first choice
-        if 'payment_request' in kwargs:
-            params = {'payment_request': kwargs['payment_request']}
-            if 'amt' in kwargs:
-                params['amt'] = kwargs['amt']
+        if "payment_request" in kwargs:
+            params = {"payment_request": kwargs["payment_request"]}
+            if "amt" in kwargs:
+                params["amt"] = kwargs["amt"]
             request_iterable = self.send_request_generator(**params)
         else:
             # Helper to convert hex to bytes automatically
             try:
-                if 'payment_hash' not in kwargs:
-                    kwargs['payment_hash'] = bytes.fromhex(kwargs['payment_hash_string'])
-                if 'dest' not in kwargs:
-                    kwargs['dest'] = bytes.fromhex(kwargs['dest_string'])
+                if "payment_hash" not in kwargs:
+                    kwargs["payment_hash"] = bytes.fromhex(
+                        kwargs["payment_hash_string"]
+                    )
+                if "dest" not in kwargs:
+                    kwargs["dest"] = bytes.fromhex(kwargs["dest_string"])
             except ValueError as e:
                 raise e
             request_iterable = self.send_request_generator(**kwargs)
@@ -450,10 +465,10 @@ class Lightning(BaseClient):
         'payment_preimage', 'payment_route' and 'payment_hash'
         """
         # Use payment request as first choice
-        if 'payment_request' in kwargs:
-            params = {'payment_request': kwargs['payment_request']}
-            if 'amt' in kwargs:
-                params['amt'] = kwargs['amt']
+        if "payment_request" in kwargs:
+            params = {"payment_request": kwargs["payment_request"]}
+            if "amt" in kwargs:
+                params["amt"] = kwargs["amt"]
             request = ln.SendRequest(**params)
         else:
             request = ln.SendRequest(**kwargs)
@@ -472,7 +487,7 @@ class Lightning(BaseClient):
         return response
 
     @staticmethod
-    def send_to_route_generator(invoice, routes):
+    def send_to_route_generator(invoice, route):
         """
         create SendToRouteRequest generator
 
@@ -480,14 +495,14 @@ class Lightning(BaseClient):
         """
         # Commented out to complement the magic sleep below...
         # while True:
-        request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, routes=routes)
+        request = ln.SendToRouteRequest(payment_hash=invoice.r_hash, route=route)
         yield request
         # Magic sleep which tricks the response to the send_to_route() method to actually
         # contain data...
         time.sleep(5)
 
     # Bi-directional streaming RPC
-    def send_to_route(self, invoice, routes):
+    def send_to_route(self, invoice, route):
         """
         bi-directional streaming RPC for sending payment through the Lightning Network. This method
         differs from SendPayment in that it allows users to specify a full route manually. This can
@@ -496,11 +511,11 @@ class Lightning(BaseClient):
         :return: an iterable of SendResponses with 4 attributes per response. See the notes on
         threading and iterables in README.md
         """
-        request_iterable = self.send_to_route_generator(invoice=invoice, routes=routes)
+        request_iterable = self.send_to_route_generator(invoice=invoice, route=route)
         return self.lightning_stub.SendToRoute(request_iterable)
 
     # Synchronous non-streaming RPC
-    def send_to_route_sync(self, routes, **kwargs):
+    def send_to_route_sync(self, route, **kwargs):
         """
         a synchronous version of SendToRoute. It Will block until the payment either fails or
         succeeds.
@@ -508,24 +523,27 @@ class Lightning(BaseClient):
         :return: SendResponse with up to 4 attributes: 'payment_error' (conditional),
         'payment_preimage', 'payment_route' and 'payment_hash'
         """
-        request = ln.SendToRouteRequest(routes=routes, **kwargs)
+        request = ln.SendToRouteRequest(route=route, **kwargs)
         response = self.lightning_stub.SendToRouteSync(request)
         return response
 
-    def add_invoice(self,
-                    memo: str = '',
-                    value: int = 0,
-                    expiry: int = 3600,
-                    creation_date: int = int(time.time()),
-                    **kwargs):
+    def add_invoice(
+        self,
+        memo: str = "",
+        value: int = 0,
+        expiry: int = 3600,
+        creation_date: int = int(time.time()),
+        **kwargs
+    ):
         """
         attempts to add a new invoice to the invoice database. Any duplicated invoices are rejected,
          therefore all invoices must have a unique payment preimage.
 
         :return: AddInvoiceResponse with 3 attributes: 'r_hash', 'payment_request' and 'add_index'
         """
-        request = ln.Invoice(memo=memo, value=value, expiry=expiry,
-                             creation_date=creation_date, **kwargs)
+        request = ln.Invoice(
+            memo=memo, value=value, expiry=expiry, creation_date=creation_date, **kwargs
+        )
         response = self.lightning_stub.AddInvoice(request)
         return response
 
@@ -654,7 +672,7 @@ class Lightning(BaseClient):
         response = self.lightning_stub.GetNodeInfo(request)
         return response
 
-    def query_routes(self, pub_key: str, amt: int, num_routes: int, **kwargs):
+    def query_routes(self, pub_key: str, amt: int, **kwargs):
         """
         attempts to query the daemon’s Channel Router for a possible route to a target
         destination capable of carrying a specific amount of satoshis. The returned route contains
@@ -663,7 +681,7 @@ class Lightning(BaseClient):
 
         :return: QueryRoutesResponse object with 1 attribute: 'routes' which contains a single route
         """
-        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt, num_routes=num_routes, **kwargs)
+        request = ln.QueryRoutesRequest(pub_key=pub_key, amt=amt, **kwargs)
         response = self.lightning_stub.QueryRoutes(request)
         return response.routes
 
@@ -729,9 +747,14 @@ class Lightning(BaseClient):
         response = self.lightning_stub.FeeReport(request)
         return response
 
-    def update_channel_policy(self, chan_point: str, is_global: bool = False,
-                              base_fee_msat: int = 1000, fee_rate: float = 0.000001,
-                              time_lock_delta: int = 144):
+    def update_channel_policy(
+        self,
+        chan_point: str,
+        is_global: bool = False,
+        base_fee_msat: int = 1000,
+        fee_rate: float = 0.000001,
+        time_lock_delta: int = 144,
+    ):
         """
         allows the caller to update the fee schedule and channel policies for all channels globally,
         or a particular channel.
@@ -739,20 +762,21 @@ class Lightning(BaseClient):
         :return: PolicyUpdateResponse with no attributes
         """
         if chan_point:
-            funding_txid, output_index = chan_point.split(':')
-            channel_point = self.channel_point_generator(funding_txid=funding_txid,
-                                                         output_index=output_index)
+            funding_txid, output_index = chan_point.split(":")
+            channel_point = self.channel_point_generator(
+                funding_txid=funding_txid, output_index=output_index
+            )
         else:
             channel_point = None
 
         request = ln.PolicyUpdateRequest(
-                chan_point=channel_point,
-                base_fee_msat=base_fee_msat,
-                fee_rate=fee_rate,
-                time_lock_delta=time_lock_delta
+            chan_point=channel_point,
+            base_fee_msat=base_fee_msat,
+            fee_rate=fee_rate,
+            time_lock_delta=time_lock_delta,
         )
         if is_global:
-            setattr(request, 'global', is_global)
+            setattr(request, "global", is_global)
         response = self.lightning_stub.UpdateChannelPolicy(request)
         return response
 
@@ -857,4 +881,3 @@ class Lightning(BaseClient):
         request = ln.ChannelBackupSubscription(**kwargs)
         response = self.lightning_stub.SubscribeChannelBackups(request)
         return response
-

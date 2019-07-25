@@ -6,19 +6,23 @@ from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 
 class Client(Lightning, WalletUnlocker, Invoices):
-    def __init__(self,
-                 lnd_dir: str = None,
-                 macaroon_path: str = None,
-                 tls_cert_path: str = None,
-                 network: str = defaultNetwork,
-                 grpc_host: str = defaultRPCHost,
-                 grpc_port: str = defaultRPCPort):
-        super().__init__(lnd_dir=lnd_dir,
-                         macaroon_path=macaroon_path,
-                         tls_cert_path=tls_cert_path,
-                         network=network,
-                         grpc_host=grpc_host,
-                         grpc_port=grpc_port)
+    def __init__(
+        self,
+        lnd_dir: str = None,
+        macaroon_path: str = None,
+        tls_cert_path: str = None,
+        network: str = defaultNetwork,
+        grpc_host: str = defaultRPCHost,
+        grpc_port: str = defaultRPCPort,
+    ):
+        super().__init__(
+            lnd_dir=lnd_dir,
+            macaroon_path=macaroon_path,
+            tls_cert_path=tls_cert_path,
+            network=network,
+            grpc_host=grpc_host,
+            grpc_port=grpc_port,
+        )
 
 
-__all__ = ['BaseClient', 'WalletUnlocker', 'Lightning', 'Invoices', 'Client']
+__all__ = ["BaseClient", "WalletUnlocker", "Lightning", "Invoices", "Client"]

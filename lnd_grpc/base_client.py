@@ -10,7 +10,7 @@ import lnd_grpc.protos.rpc_pb2 as ln
 from lnd_grpc.utilities import get_lnd_dir
 
 # tell gRPC which cypher suite to use
-environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
+environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
 
 
 class BaseClient:
@@ -21,13 +21,15 @@ class BaseClient:
     Has some static helper methods for various applications.
     """
 
-    def __init__(self,
-                 lnd_dir: str = None,
-                 macaroon_path: str = None,
-                 tls_cert_path: str = None,
-                 network: str = defaultNetwork,
-                 grpc_host: str = defaultRPCHost,
-                 grpc_port: str = defaultRPCPort):
+    def __init__(
+        self,
+        lnd_dir: str = None,
+        macaroon_path: str = None,
+        tls_cert_path: str = None,
+        network: str = defaultNetwork,
+        grpc_host: str = defaultRPCHost,
+        grpc_port: str = defaultRPCPort,
+    ):
 
         self.lnd_dir = lnd_dir
         self.macaroon_path = macaroon_path
@@ -75,17 +77,19 @@ class BaseClient:
         :return: tls.cert as bytestring
         """
         try:
-            with open(self.tls_cert_path, 'rb') as r:
+            with open(self.tls_cert_path, "rb") as r:
                 _tls_cert = r.read()
         except FileNotFoundError:
             sys.stderr.write("TLS cert not found at %s" % self.tls_cert_path)
             raise
         try:
-            assert _tls_cert.startswith(b'-----BEGIN CERTIFICATE-----')
+            assert _tls_cert.startswith(b"-----BEGIN CERTIFICATE-----")
             return _tls_cert
         except (AssertionError, AttributeError):
-            sys.stderr.write("TLS cert at %s did not start with b'-----BEGIN CERTIFICATE-----')"
-                             % self.tls_cert_path)
+            sys.stderr.write(
+                "TLS cert at %s did not start with b'-----BEGIN CERTIFICATE-----')"
+                % self.tls_cert_path
+            )
             raise
 
     @property
@@ -94,8 +98,11 @@ class BaseClient:
         :return: macaroon path
         """
         if not self._macaroon_path:
-            self._macaroon_path = Path(self.lnd_dir) / f'{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/' \
-                    f'{self.network}/{defaultAdminMacFilename}'
+            self._macaroon_path = (
+                Path(self.lnd_dir)
+                / f"{defaultDataDirname}/{defaultChainSubDirname}/bitcoin/"
+                f"{self.network}/{defaultAdminMacFilename}"
+            )
             return str(self._macaroon_path)
         else:
             return self._macaroon_path
@@ -110,29 +117,34 @@ class BaseClient:
         try to open the macaroon and return it as a byte string
         """
         try:
-            with open(self.macaroon_path, 'rb') as f:
+            with open(self.macaroon_path, "rb") as f:
                 macaroon_bytes = f.read()
-                macaroon = codecs.encode(macaroon_bytes, 'hex')
+                macaroon = codecs.encode(macaroon_bytes, "hex")
                 return macaroon
         except FileNotFoundError:
-            sys.stderr.write(f"Could not find macaroon in {self.macaroon_path}. This might happen"
-                             f"in versions of lnd < v0.5-beta or those not using default"
-                             f"installation path. Set client object's macaroon_path attribute"
-                             f"manually.")
+            sys.stderr.write(
+                f"Could not find macaroon in {self.macaroon_path}. This might happen"
+                f"in versions of lnd < v0.5-beta or those not using default"
+                f"installation path. Set client object's macaroon_path attribute"
+                f"manually."
+            )
 
     def metadata_callback(self, context, callback):
         """
         automatically incorporate the macaroon into all requests
         :return: macaroon callback
         """
-        callback([('macaroon', self.macaroon)], None)
+        callback([("macaroon", self.macaroon)], None)
 
     def connectivity_event_logger(self, channel_connectivity):
         """
         Channel connectivity callback logger
         """
         self.connection_status = channel_connectivity._name_
-        if self.connection_status == 'SHUTDOWN' or self.connection_status == 'TRANSIENT_FAILURE':
+        if (
+            self.connection_status == "SHUTDOWN"
+            or self.connection_status == "TRANSIENT_FAILURE"
+        ):
             self.connection_status_change = True
 
     @property
@@ -147,7 +159,7 @@ class BaseClient:
 
     @property
     def grpc_address(self) -> str:
-        return str(self.grpc_host + ':' + self.grpc_port)
+        return str(self.grpc_host + ":" + self.grpc_port)
 
     @staticmethod
     def channel_point_generator(funding_txid, output_index):
@@ -155,7 +167,9 @@ class BaseClient:
         Generate a ln.ChannelPoint object from a funding_txid and output_index
         :return: ln.ChannelPoint
         """
-        return ln.ChannelPoint(funding_txid_str=funding_txid, output_index=int(output_index))
+        return ln.ChannelPoint(
+            funding_txid_str=funding_txid, output_index=int(output_index)
+        )
 
     @staticmethod
     def lightning_address(pubkey, host):

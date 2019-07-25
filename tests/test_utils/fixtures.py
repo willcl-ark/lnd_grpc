@@ -37,7 +37,7 @@ from test_utils.btcproxy import ProxiedBitcoinD
 from test_utils.lnd import LndNode
 from test_utils.loop import LoopNode
 
-TEST_DIR = tempfile.mkdtemp(prefix='lightning-')
+TEST_DIR = tempfile.mkdtemp(prefix="lightning-")
 TEST_DEBUG = os.getenv("TEST_DEBUG", "0") == "1"
 TRAVIS = os.getenv("TRAVIS", "false") == "true"
 
@@ -64,11 +64,13 @@ class NodeFactory(object):
         # self.next_id += 1
 
         lightning_dir = os.path.join(
-                TEST_DIR, self.testname, "node-{}/".format(node_id))
+            TEST_DIR, self.testname, "node-{}/".format(node_id)
+        )
         port = reserve()
 
-        node = implementation(lightning_dir, port, self.bitcoind,
-                              executor=self.executor, node_id=node_id)
+        node = implementation(
+            lightning_dir, port, self.bitcoind, executor=self.executor, node_id=node_id
+        )
         self.nodes.append(node)
 
         node.daemon.start()
@@ -79,7 +81,7 @@ class NodeFactory(object):
             n.daemon.stop()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def directory(request, test_base_dir):
     """Return a per-test-session specific directory.
 
@@ -101,12 +103,15 @@ def directory(request, test_base_dir):
         shutil.rmtree(directory)
     else:
         logging.debug(
-                "Test execution failed, leaving the test directory {} intact.".format(directory))
+            "Test execution failed, leaving the test directory {} intact.".format(
+                directory
+            )
+        )
 
 
 @pytest.fixture(scope="session")
 def test_base_dir():
-    directory = tempfile.mkdtemp(prefix='ltests-')
+    directory = tempfile.mkdtemp(prefix="ltests-")
     print("Running tests in {}".format(directory))
 
     yield directory
@@ -120,18 +125,20 @@ def test_name(request):
     yield request.function.__name__
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def bitcoind(directory):
     proxyport = reserve()
-    btc = ProxiedBitcoinD(bitcoin_dir=os.path.join(directory, "bitcoind"), proxyport=proxyport)
+    btc = ProxiedBitcoinD(
+        bitcoin_dir=os.path.join(directory, "bitcoind"), proxyport=proxyport
+    )
     btc.start()
     bch_info = btc.rpc.getblockchaininfo()
     w_info = btc.rpc.getwalletinfo()
     # Make sure we have segwit and some funds
-    if bch_info['blocks'] < 120:
+    if bch_info["blocks"] < 120:
         logging.debug("SegWit not active, generating some more blocks")
-        btc.rpc.generate(120 - bch_info['blocks'])
-    elif w_info['balance'] < 1:
+        btc.rpc.generate(120 - bch_info["blocks"])
+    elif w_info["balance"] < 1:
         logging.debug("Insufficient balance, generating 1 block")
         btc.rpc.generate(1)
 
@@ -144,9 +151,9 @@ def bitcoind(directory):
     btc.proc.wait()
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope="class")
 def loopd(alice):
-    loop = LoopNode(host='localhost', rpc_port='11010', lnd=alice)
+    loop = LoopNode(host="localhost", rpc_port="11010", lnd=alice)
     loop.start()
 
     yield loop
@@ -168,7 +175,7 @@ def node_factory(request, bitcoind):
 
 @pytest.fixture(scope="class")
 def alice(node_factory):
-    alice = node_factory.get_node(implementation=LndNode, node_id='alice')
+    alice = node_factory.get_node(implementation=LndNode, node_id="alice")
     yield alice
 
     try:
@@ -179,7 +186,7 @@ def alice(node_factory):
 
 @pytest.fixture(scope="class")
 def bob(node_factory):
-    bob = node_factory.get_node(implementation=LndNode, node_id='bob')
+    bob = node_factory.get_node(implementation=LndNode, node_id="bob")
     yield bob
 
     try:
@@ -190,7 +197,7 @@ def bob(node_factory):
 
 @pytest.fixture(scope="class")
 def carol(node_factory):
-    carol = node_factory.get_node(implementation=LndNode, node_id='carol')
+    carol = node_factory.get_node(implementation=LndNode, node_id="carol")
     yield carol
 
     try:
@@ -201,7 +208,7 @@ def carol(node_factory):
 
 @pytest.fixture(scope="class")
 def dave(node_factory):
-    dave = node_factory.get_node(implementation=LndNode, node_id='dave')
+    dave = node_factory.get_node(implementation=LndNode, node_id="dave")
     yield dave
 
     try:
