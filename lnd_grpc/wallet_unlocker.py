@@ -8,36 +8,43 @@ from lnd_grpc.base_client import BaseClient
 from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
-environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
+environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
 
 
 class WalletUnlocker(BaseClient):
     """
     A superclass of BaseClient to interact with the WalletUnlocker sub-service
     """
-    def __init__(self,
-                 lnd_dir: str = None,
-                 macaroon_path: str = None,
-                 tls_cert_path: str = None,
-                 network: str = defaultNetwork,
-                 grpc_host: str = defaultRPCHost,
-                 grpc_port: str = defaultRPCPort):
+
+    def __init__(
+        self,
+        lnd_dir: str = None,
+        macaroon_path: str = None,
+        tls_cert_path: str = None,
+        network: str = defaultNetwork,
+        grpc_host: str = defaultRPCHost,
+        grpc_port: str = defaultRPCPort,
+    ):
         self._w_stub: lnrpc.WalletUnlockerStub = None
 
-        super().__init__(lnd_dir=lnd_dir,
-                         macaroon_path=macaroon_path,
-                         tls_cert_path=tls_cert_path,
-                         network=network,
-                         grpc_host=grpc_host,
-                         grpc_port=grpc_port)
+        super().__init__(
+            lnd_dir=lnd_dir,
+            macaroon_path=macaroon_path,
+            tls_cert_path=tls_cert_path,
+            network=network,
+            grpc_host=grpc_host,
+            grpc_port=grpc_port,
+        )
 
     @property
     def wallet_unlocker_stub(self) -> lnrpc.WalletUnlockerStub:
         if self._w_stub is None:
             ssl_creds = grpc.ssl_channel_credentials(self.tls_cert)
-            _w_channel = grpc.secure_channel(target=self.grpc_address,
-                                             credentials=ssl_creds,
-                                             options=self.grpc_options)
+            _w_channel = grpc.secure_channel(
+                target=self.grpc_address,
+                credentials=ssl_creds,
+                options=self.grpc_options,
+            )
             self._w_stub = lnrpc.WalletUnlockerStub(_w_channel)
 
         # simulate connection status change after wallet stub used (typically wallet unlock) which
@@ -73,7 +80,9 @@ class WalletUnlocker(BaseClient):
 
         :return: InitWalletResponse with no attributes
         """
-        request = ln.InitWalletRequest(wallet_password=wallet_password.encode('utf-8'), **kwargs)
+        request = ln.InitWalletRequest(
+            wallet_password=wallet_password.encode("utf-8"), **kwargs
+        )
         response = self.wallet_unlocker_stub.InitWallet(request)
         return response
 
@@ -83,8 +92,10 @@ class WalletUnlocker(BaseClient):
 
         :return: UnlockWalletResponse with no attributes
         """
-        request = ln.UnlockWalletRequest(wallet_password=wallet_password.encode('utf-8'),
-                                         recovery_window=recovery_window)
+        request = ln.UnlockWalletRequest(
+            wallet_password=wallet_password.encode("utf-8"),
+            recovery_window=recovery_window,
+        )
         response = self.wallet_unlocker_stub.UnlockWallet(request)
         return response
 
@@ -95,7 +106,9 @@ class WalletUnlocker(BaseClient):
 
         :return: ChangePasswordResponse with no attributes
         """
-        request = ln.ChangePasswordRequest(current_password=current_password.encode('utf-8'),
-                                           new_password=new_password.encode('utf-8'))
+        request = ln.ChangePasswordRequest(
+            current_password=current_password.encode("utf-8"),
+            new_password=new_password.encode("utf-8"),
+        )
         response = self.wallet_unlocker_stub.ChangePassword(request)
         return response

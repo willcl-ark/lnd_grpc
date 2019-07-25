@@ -15,6 +15,7 @@ The script will currently only detect and download lnd and invoice proto files, 
 
 # TODO: add invoice and loop support
 
+
 def capture_info():
     lnd_dir = input("LND dir [default: searched by Client()]:")
     network = input("network [default: mainnet]:") or "mainnet"
@@ -23,16 +24,20 @@ def capture_info():
     return lnd_dir, network, grpc_host, grpc_port
 
 
-def create_lnd_client(lnd_dir: str = None,
-                      macaroon_path: str = None,
-                      network: str = 'mainnet',
-                      grpc_host: str = 'localhost',
-                      grpc_port: str = '10009'):
-    lncli = lnd_grpc.Client(lnd_dir=lnd_dir,
-                            network=network,
-                            grpc_host=grpc_host,
-                            grpc_port=grpc_port,
-                            macaroon_path=macaroon_path)
+def create_lnd_client(
+    lnd_dir: str = None,
+    macaroon_path: str = None,
+    network: str = "mainnet",
+    grpc_host: str = "localhost",
+    grpc_port: str = "10009",
+):
+    lncli = lnd_grpc.Client(
+        lnd_dir=lnd_dir,
+        network=network,
+        grpc_host=grpc_host,
+        grpc_port=grpc_port,
+        macaroon_path=macaroon_path,
+    )
 
     return lncli
 
@@ -64,10 +69,12 @@ def get_rpc_proto(lnd_version):
     if proto_file_first_line == test_first_line:
         print("Proto file looks good")
     else:
-        print(f"Proto file did not have expected first line\n"
-              f"Expected: {test_first_line}\n"
-              f"Read: {proto_file_first_line}\n"
-              f"Exiting...")
+        print(
+            f"Proto file did not have expected first line\n"
+            f"Expected: {test_first_line}\n"
+            f"Read: {proto_file_first_line}\n"
+            f"Exiting..."
+        )
         return
 
 
@@ -93,10 +100,12 @@ def get_invoices_proto(lnd_version):
         if proto_file_first_line == test_first_line:
             print("Proto file looks good")
         else:
-            print(f"Proto file did not have expected first line\n"
-                  f"Expected: {test_first_line}\n"
-                  f"Read: {proto_file_first_line}\n"
-                  f"Exiting...")
+            print(
+                f"Proto file did not have expected first line\n"
+                f"Expected: {test_first_line}\n"
+                f"Read: {proto_file_first_line}\n"
+                f"Exiting..."
+            )
             return
 
     # Fix Line 4 import for lnd_grpc package
@@ -113,10 +122,9 @@ def download_proto_files():
     lnd_dir, network, grpc_host, grpc_port = capture_info()
 
     # Create a gRPC client that can query the version number for us
-    lncli = create_lnd_client(lnd_dir=lnd_dir,
-                              network=network,
-                              grpc_host=grpc_host,
-                              grpc_port=grpc_port)
+    lncli = create_lnd_client(
+        lnd_dir=lnd_dir, network=network, grpc_host=grpc_host, grpc_port=grpc_port
+    )
 
     # Get the version number for the lnd instance
     lnd_version = get_version(lncli)
