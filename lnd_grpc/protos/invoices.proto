@@ -18,23 +18,23 @@ service Invoices {
     rpc SubscribeSingleInvoice (SubscribeSingleInvoiceRequest) returns (stream lnrpc.Invoice);
 
     /**
-    CancelInvoice cancels a currently open invoice. If the invoice is already 
+    CancelInvoice cancels a currently open invoice. If the invoice is already
     canceled, this call will succeed. If the invoice is already settled, it will
     fail.
     */
-    rpc CancelInvoice (CancelInvoiceMsg) returns (CancelInvoiceResp);
+    rpc CancelInvoice(CancelInvoiceMsg) returns (CancelInvoiceResp);
 
     /**
     AddHoldInvoice creates a hold invoice. It ties the invoice to the hash
     supplied in the request.
     */
-    rpc AddHoldInvoice (AddHoldInvoiceRequest) returns (AddHoldInvoiceResp);
+    rpc AddHoldInvoice(AddHoldInvoiceRequest) returns (AddHoldInvoiceResp);
 
     /**
     SettleInvoice settles an accepted invoice. If the invoice is already
     settled, this call will succeed.
     */
-    rpc SettleInvoice (SettleInvoiceMsg) returns (SettleInvoiceResp);
+    rpc SettleInvoice(SettleInvoiceMsg) returns (SettleInvoiceResp);
 }
 
 message CancelInvoiceMsg {

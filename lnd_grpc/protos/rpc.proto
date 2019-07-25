@@ -10,19 +10,19 @@ option go_package = "github.com/lightningnetwork/lnd/lnrpc";
  * Comments in this file will be directly parsed into the API
  * Documentation as descriptions of the associated method, message, or field.
  * These descriptions should go right above the definition of the object, and
- * can be in either block or /// comment format. 
- * 
+ * can be in either block or /// comment format.
+ *
  * One edge case exists where a // comment followed by a /// comment in the
  * next line will cause the description not to show up in the documentation. In
  * that instance, simply separate the two comments with a blank line.
- * 
+ *
  * An RPC method can be matched to an lncli command by placing a line in the
  * beginning of the description in exactly the following format:
  * lncli: `methodname`
- * 
+ *
  * Failure to specify the exact name of the command will cause documentation
  * generation to fail.
- * 
+ *
  * More information on how exactly the gRPC documentation is generated from
  * this proto file can be found here:
  * https://github.com/lightninglabs/lightning-api
@@ -41,13 +41,13 @@ service WalletUnlocker {
     method should be used to commit the newly generated seed, and create the
     wallet.
     */
-    rpc GenSeed (GenSeedRequest) returns (GenSeedResponse) {
+    rpc GenSeed(GenSeedRequest) returns (GenSeedResponse) {
         option (google.api.http) = {
             get: "/v1/genseed"
         };
     }
 
-    /** 
+    /**
     InitWallet is used when lnd is starting up for the first time to fully
     initialize the daemon and its internal wallet. At the very least a wallet
     password must be provided. This will be used to encrypt sensitive material
@@ -806,7 +806,7 @@ message Transaction {
     /// The height of the block this transaction was included in
     int32 block_height = 5 [ json_name = "block_height" ];
 
-    /// Timestamp of this transaction 
+    /// Timestamp of this transaction
     int64 time_stamp = 6 [ json_name = "time_stamp" ];
 
     /// Fees paid for this transaction
@@ -816,7 +816,7 @@ message Transaction {
     repeated string dest_addresses = 8 [ json_name = "dest_addresses" ];
 
     /// The raw transaction hex.
-    string raw_tx_hex = 9 [json_name = "raw_tx_hex"];
+    string raw_tx_hex = 9 [ json_name = "raw_tx_hex" ];
 }
 message GetTransactionsRequest {
 }
@@ -878,7 +878,7 @@ message SendRequest {
     */
     uint64 outgoing_chan_id = 9;
 
-    /** 
+    /**
     An optional maximum total time lock for the route. If zero, there is no
     maximum enforced.
     */
@@ -969,7 +969,7 @@ message SendManyResponse {
 }
 
 message SendCoinsRequest {
-    /// The address to send coins to 
+    /// The address to send coins to
     string addr = 1;
 
     /// The amount in satoshis to send
@@ -1005,7 +1005,7 @@ message ListUnspentResponse {
     repeated Utxo utxos = 1 [json_name = "utxos"];
 }
 
-/** 
+/**
 `AddressType` has to be one of:
 
 - `p2wkh`: Pay to witness key hash (`WITNESS_PUBKEY_HASH` = 0)
@@ -1161,6 +1161,14 @@ message Channel {
 
     /// A set of flags showing the current state of the channel.
     string chan_status_flags = 19 [json_name = "chan_status_flags"];
+
+    /// The minimum satoshis this node is required to reserve in its balance.
+    int64 local_chan_reserve_sat = 20 [json_name = "local_chan_reserve_sat"];
+
+    /**
+    The minimum satoshis the other node is required to reserve in its balance.
+    */
+    int64 remote_chan_reserve_sat = 21 [json_name = "remote_chan_reserve_sat"];
 }
 
 
@@ -1176,10 +1184,10 @@ message ListChannelsResponse {
 }
 
 message ChannelCloseSummary {
-    /// The outpoint (txid:index) of the funding transaction. 
+    /// The outpoint (txid:index) of the funding transaction.
     string channel_point = 1 [json_name = "channel_point"];
 
-    ///  The unique channel ID for the channel. 
+    ///  The unique channel ID for the channel.
     uint64 chan_id = 2 [json_name = "chan_id"];
 
     /// The hash of the genesis block that this channel resides within.
@@ -1310,9 +1318,9 @@ message GetInfoResponse {
     /// Whether the wallet's view is synced to the main chain
     bool synced_to_chain = 9 [json_name = "synced_to_chain"];
 
-    /** 
-    Whether the current node is connected to testnet. This field is 
-    deprecated and the network field should be used instead 
+    /**
+    Whether the current node is connected to testnet. This field is
+    deprecated and the network field should be used instead
     **/
     bool testnet = 10 [json_name = "testnet", deprecated = true];
 
@@ -1468,6 +1476,15 @@ message PendingChannelsResponse {
 
         int64 local_balance = 4 [ json_name = "local_balance" ];
         int64 remote_balance = 5 [ json_name = "remote_balance" ];
+
+        /// The minimum satoshis this node is required to reserve in its balance.
+        int64 local_chan_reserve_sat = 6 [json_name = "local_chan_reserve_sat"];
+
+        /**
+        The minimum satoshis the other node is required to reserve in its
+        balance.
+        */
+        int64 remote_chan_reserve_sat = 7 [json_name = "remote_chan_reserve_sat"];
     }
 
     message PendingOpenChannel {
@@ -1634,6 +1651,12 @@ message QueryRoutesRequest {
     self is assumed.
     */
     string source_pub_key = 8;
+
+    /**
+    If set to true, edge probabilities from mission control will be used to get
+    the optimal route.
+    */
+    bool use_mission_control = 9;
 }
 
 message EdgeLocator {
@@ -1724,7 +1747,7 @@ message Route {
 }
 
 message NodeInfoRequest {
-    /// The 33-byte hex-encoded compressed public of the target node 
+    /// The 33-byte hex-encoded compressed public of the target node
     string pub_key = 1;
 
     /// If true, will include all known channels associated with the node.
@@ -1777,6 +1800,7 @@ message RoutingPolicy {
     int64 fee_rate_milli_msat = 4 [json_name = "fee_rate_milli_msat"];
     bool disabled = 5 [json_name = "disabled"];
     uint64 max_htlc_msat = 6 [json_name = "max_htlc_msat"];
+    uint32 last_update = 7 [json_name = "last_update"];
 }
 
 /**
@@ -1796,7 +1820,7 @@ message ChannelEdge {
     uint64 channel_id = 1 [json_name = "channel_id"];
     string chan_point = 2 [json_name = "chan_point"];
 
-    uint32 last_update = 3 [json_name = "last_update"];
+    uint32 last_update = 3 [json_name = "last_update", deprecated = true];
 
     string node1_pub = 4 [json_name = "node1_pub"];
     string node2_pub = 5 [json_name = "node2_pub"];
@@ -1851,12 +1875,15 @@ message NetworkInfo {
     int64 max_channel_size = 9 [json_name = "max_channel_size"];
     int64 median_channel_size_sat = 10 [json_name = "median_channel_size_sat"];
 
+    // The number of edges marked as zombies.
+    uint64 num_zombie_chans = 11 [json_name = "num_zombie_chans"];
+
     // TODO(roasbeef): fee rate info, expiry
     //  * also additional RPC for tracking fee info once in
 }
 
-message StopRequest {}
-message StopResponse {}
+message StopRequest{}
+message StopResponse{}
 
 message GraphTopologySubscription {}
 message GraphTopologyUpdate {
@@ -2147,8 +2174,8 @@ message Payment {
     /// The path this payment took
     repeated string path = 4 [ json_name = "path" ];
 
-    /// The fee paid for this payment in satoshis
-    int64 fee = 5 [json_name = "fee"];
+    /// Deprecated, use fee_sat or fee_msat.
+    int64 fee = 5 [json_name = "fee", deprecated = true];
 
     /// The payment preimage
     string payment_preimage = 6 [json_name = "payment_preimage"];
@@ -2171,6 +2198,12 @@ message Payment {
 
     // The status of the payment.
     PaymentStatus status = 10 [json_name = "status"];
+
+    ///  The fee paid for this payment in satoshis
+    int64 fee_sat = 11 [json_name = "fee_sat"];
+
+    ///  The fee paid for this payment in milli-satoshis
+    int64 fee_msat = 12 [json_name = "fee_msat"];
 }
 
 message ListPaymentsRequest {
@@ -2356,7 +2389,7 @@ message MultiChanBackup {
 }
 
 message ChanBackupExportRequest {}
-message ChanBackupSnapshot {
+message ChanBackupSnapshot  {
     /**
     The set of new channels that have been added since the last channel backup
     snapshot was requested.

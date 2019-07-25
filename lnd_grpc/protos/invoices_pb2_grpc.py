@@ -55,7 +55,7 @@ class InvoicesServicer(object):
 
   def CancelInvoice(self, request, context):
     """*
-    CancelInvoice cancels a currently open invoice. If the invoice is already 
+    CancelInvoice cancels a currently open invoice. If the invoice is already
     canceled, this call will succeed. If the invoice is already settled, it will
     fail.
     """

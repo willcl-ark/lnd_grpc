@@ -9,7 +9,7 @@ class WalletUnlockerStub(object):
   Comments in this file will be directly parsed into the API
   Documentation as descriptions of the associated method, message, or field.
   These descriptions should go right above the definition of the object, and
-  can be in either block or /// comment format. 
+  can be in either block or /// comment format.
 
   One edge case exists where a // comment followed by a /// comment in the
   next line will cause the description not to show up in the documentation. In
@@ -63,7 +63,7 @@ class WalletUnlockerServicer(object):
   Comments in this file will be directly parsed into the API
   Documentation as descriptions of the associated method, message, or field.
   These descriptions should go right above the definition of the object, and
-  can be in either block or /// comment format. 
+  can be in either block or /// comment format.
 
   One edge case exists where a // comment followed by a /// comment in the
   next line will cause the description not to show up in the documentation. In
@@ -100,7 +100,7 @@ class WalletUnlockerServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def InitWallet(self, request, context):
-    """* 
+    """*
     InitWallet is used when lnd is starting up for the first time to fully
     initialize the daemon and its internal wallet. At the very least a wallet
     password must be provided. This will be used to encrypt sensitive material
