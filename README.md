@@ -1,6 +1,6 @@
 # lnd-grpc
 
-Version 0.3.3
+Version 0.3.4
 
 Requires python >=3.6
 
@@ -8,7 +8,7 @@ Requires python >=3.6
 
 A simple library to provide a Python 3 interface to the lnd lightning client gRPC.
 
-This version of the library has been compiled with lnd proto files from the v0.6.1-beta tag on github.
+This version of the library has been compiled with lnd proto files from the v0.7.1-beta tag on github.
 This version has been tested using Bitcoin Core v0.18.0 as a backend
 
 ## Install requires:
