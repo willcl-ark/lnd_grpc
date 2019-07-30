@@ -19,7 +19,7 @@ sudo cp ${TRAVIS_BUILD_DIR}/bitcoin-${CORE_VERSION}/bin/bitcoin-cli /usr/local/b
 # Install LND
 #############
 
-export LND_VERSION="v0.7.1-beta-rc2"
+export LND_VERSION="v0.7.1-beta"
 
 # Install LND
 wget https://github.com/lightningnetwork/lnd/releases/download/${LND_VERSION}/lnd-linux-amd64-${LND_VERSION}.tar.gz
