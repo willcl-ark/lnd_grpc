@@ -130,6 +130,17 @@ inv_sub = threading.Thread(target=inv_sub_worker, args=[_hash, ], daemon=True)
 inv_sub.start()
 ```
 
+# BTCPay
+BTCPay run their LND node's grpc behind an nginx proxy. In order to authenticate with this, the easiest way is to use your OS root certificate store for the tls cert path:
+
+OSX: `/etc/ssl/cert.pem`
+
+Debian-based: `/etc/ssl/certs/ca-certificates.crt`
+
+Other OS: Google it :)
+
+BTCPay server also presents the user with the admin.macaroon in hex format via the web interface, whereas lnd_grpc expects the raw binary file. The easiest way to obtain this is to SSH into the BTCPay instance and transfer the file from `/var/lib/docker/volumes/generated_lnd_bitcoin_datadir/_data/admin.macaroon` onto your local machine.
+
 # Loop 
 LND must be re-built and installed as per the loop instructions found at the [Loop Readme](https://github.com/lightninglabs/loop/blob/master/README.md).
 

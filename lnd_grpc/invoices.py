@@ -9,7 +9,11 @@ from lnd_grpc.base_client import BaseClient
 from lnd_grpc.config import defaultNetwork, defaultRPCHost, defaultRPCPort
 
 # tell gRPC which cypher suite to use
-environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
+environ["GRPC_SSL_CIPHER_SUITES"] = \
+    'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:' \
+    'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:' \
+    'ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384'
+
 
 
 class Invoices(BaseClient):
