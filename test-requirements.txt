@@ -2,7 +2,7 @@ pytest==5.0.1
 psutil==5.6.3
 requests==2.22.0
 pytest-json==0.4.0
-cheroot==6.5.5
+cheroot==6.5.6
 googleapis-common-protos>=1.5.8
 grpcio>=1.19.0
 grpcio-tools>=1.19.0
