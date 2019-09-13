@@ -46,12 +46,12 @@ class Invoices(BaseClient):
     def invoice_stub(self) -> invrpc.InvoicesStub:
         if self._inv_stub is None:
             ssl_creds = grpc.ssl_channel_credentials(self.tls_cert)
-            _inv_channel = grpc.secure_channel(
+            self._inv_channel = grpc.secure_channel(
                 target=self.grpc_address,
                 credentials=self.combined_credentials,
                 options=self.grpc_options,
             )
-            self._inv_stub = invrpc.InvoicesStub(_inv_channel)
+            self._inv_stub = invrpc.InvoicesStub(self._inv_channel)
         return self._inv_stub
 
     def subscribe_single_invoice(
