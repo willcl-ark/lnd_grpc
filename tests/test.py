@@ -265,17 +265,17 @@ class TestNonInteractiveLightning:
     def test_wallet_balance(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         assert isinstance(alice.get_info(), rpc_pb2.GetInfoResponse)
-        pytest.raises(TypeError, alice.wallet_balance(), "please")
+        pytest.raises(TypeError, alice.wallet_balance, "please")
 
     def test_channel_balance(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         assert isinstance(alice.channel_balance(), rpc_pb2.ChannelBalanceResponse)
-        pytest.raises(TypeError, alice.channel_balance(), "please")
+        pytest.raises(TypeError, alice.channel_balance, "please")
 
     def test_get_transactions(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
         assert isinstance(alice.get_transactions(), rpc_pb2.TransactionDetails)
-        pytest.raises(TypeError, alice.get_transactions(), "please")
+        pytest.raises(TypeError, alice.get_transactions, "please")
 
     def test_send_coins(self, alice):
         gen_and_sync_lnd(alice.bitcoin, [alice])
