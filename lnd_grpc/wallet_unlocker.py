@@ -44,12 +44,12 @@ class WalletUnlocker(BaseClient):
     def wallet_unlocker_stub(self) -> lnrpc.WalletUnlockerStub:
         if self._w_stub is None:
             ssl_creds = grpc.ssl_channel_credentials(self.tls_cert)
-            _w_channel = grpc.secure_channel(
+            self._w_channel = grpc.secure_channel(
                 target=self.grpc_address,
                 credentials=ssl_creds,
                 options=self.grpc_options,
             )
-            self._w_stub = lnrpc.WalletUnlockerStub(_w_channel)
+            self._w_stub = lnrpc.WalletUnlockerStub(self._w_channel)
 
         # simulate connection status change after wallet stub used (typically wallet unlock) which
         # stimulates lightning stub regeneration when necessary
