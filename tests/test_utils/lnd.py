@@ -141,7 +141,7 @@ class LndNode(lndClient):
         addr = self.new_address("p2wkh").address
         bitcoind.rpc.sendtoaddress(addr, amount)
         self.daemon.wait_for_log("Inserting unconfirmed transaction")
-        bitcoind.rpc.generate(3)
+        bitcoind.rpc.generatetoaddress(3, addr)
         self.daemon.wait_for_log("Marking unconfirmed transaction")
 
         # The above still doesn't mean the wallet balance is updated,

@@ -39,11 +39,11 @@ def transact_and_mine(btc):
     Generate some transactions and blocks.
     To make bitcoind's `estimatesmartfee` succeeded.
     """
-    addr = btc.rpc.getnewaddress()
+    addr = btc.rpc.getnewaddress("", "bech32")
     for i in range(10):
         for j in range(10):
             txid = btc.rpc.sendtoaddress(addr, 0.5)
-        btc.rpc.generate(1)
+        btc.rpc.generatetoaddress(1, addr)
 
 
 def wait_for(success, timeout=30, interval=0.25):
@@ -82,11 +82,12 @@ def generate_until(btc, success, blocks=30, interval=1):
     be delayed and we don't want to add a long waiting time to all
     tests just because some are slow.
     """
+    addr = btc.rpc.getnewaddress("", "bech32")
     for i in range(blocks):
         time.sleep(interval)
         if success():
             return
-        btc.rpc.generate(1)
+        generate(bitcoind, 1)
     time.sleep(interval)
     if not success():
         raise ValueError("Generated %d blocks, but still no success", blocks)
@@ -96,11 +97,16 @@ def gen_and_sync_lnd(bitcoind, nodes):
     """
     generate a few blocks and wait for lnd nodes to sync
     """
-    bitcoind.rpc.generate(3)
+    generate(bitcoind, 3)
     sync_blockheight(bitcoind, nodes=nodes)
     for node in nodes:
         wait_for(lambda: node.get_info().synced_to_chain, interval=0.25)
     time.sleep(0.25)
+
+
+def generate(bitcoind, blocks):
+    addr = bitcoind.rpc.getnewaddress("", "bech32")
+    bitcoind.rpc.generatetoaddress(blocks, addr)
 
 
 def close_all_channels(bitcoind, nodes):
@@ -146,7 +152,7 @@ def setup_nodes(bitcoind, nodes, delay=0):
     :return: the setup nodes
     """
     # Needed by lnd in order to have at least one block in the last 2 hours
-    bitcoind.rpc.generate(1)
+    generate(bitcoind, 1)
 
     # First break down nodes. This avoids situations where a test fails and breakdown is not called
     break_down_nodes(bitcoind, nodes, delay)
@@ -178,7 +184,7 @@ def setup_channels(bitcoind, nodes, delay):
             spend_unconfirmed=True,
         )
         time.sleep(delay)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [nodes[i], nodes[i + 1]])
 
         assert confirm_channel(bitcoind, nodes[i], nodes[i + 1])
@@ -201,7 +207,8 @@ def confirm_channel(bitcoind, n1, n2):
         time.sleep(0.5)
         if n1.check_channel(n2) and n2.check_channel(n1):
             return True
-        bhash = bitcoind.rpc.generate(1)[0]
+        addr = bitcoind.rpc.getnewaddress("", "bech32")
+        bhash = bitcoind.rpc.generatetoaddress(1, addr)[0]
         n1.block_sync(bhash)
         n2.block_sync(bhash)
 
@@ -277,7 +284,7 @@ class TestNonInteractiveLightning:
 
         # test passes
         send1 = alice.send_coins(addr=p2wkh_address, amount=100000)
-        alice.bitcoin.rpc.generate(1)
+        generate(alice.bitcoin, 1)
         time.sleep(0.5)
         send2 = alice.send_coins(addr=np2wkh_address, amount=100000)
 
@@ -305,7 +312,7 @@ class TestNonInteractiveLightning:
         send_dict = {p2wkh_address: 100000, np2wkh_address: 100000}
 
         send = alice.send_many(addr_to_amount=send_dict)
-        alice.bitcoin.rpc.generate(1)
+        alice.bitcoin.rpc.generatetoaddress(1, p2wkh_address)
         time.sleep(0.5)
         assert isinstance(send, rpc_pb2.SendManyResponse)
 
@@ -476,7 +483,7 @@ class TestNonInteractiveLightning:
 class TestInteractiveLightning:
     def test_peer_connection(self, bob, carol, dave, bitcoind):
         # Needed by lnd in order to have at least one block in the last 2 hours
-        bitcoind.rpc.generate(1)
+        generate(bitcoind, 1)
 
         # connection tests
         connection1 = bob.connect(
@@ -503,7 +510,7 @@ class TestInteractiveLightning:
         assert carol.id() in [p.pub_key for p in dave.list_peers()]
         assert dave.id() in [p.pub_key for p in carol.list_peers()]
 
-        bob.bitcoin.rpc.generate(1)
+        generate(bob.bitcoin, 1)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         # Disconnection tests
@@ -526,7 +533,8 @@ class TestInteractiveLightning:
 
     def test_open_channel_sync(self, bob, carol, bitcoind):
         # Needed by lnd in order to have at least one block in the last 2 hours
-        bitcoind.rpc.generate(1)
+        generate(bitcoind, 1)
+        disconnect_all_peers(bitcoind, [bob, carol])
 
         bob.connect(str(carol.id() + "@localhost:" + str(carol.daemon.port)), perm=1)
 
@@ -547,7 +555,7 @@ class TestInteractiveLightning:
 
     def test_open_channel(self, bob, carol, bitcoind):
         # Needed by lnd in order to have at least one block in the last 2 hours
-        bitcoind.rpc.generate(1)
+        generate(bitcoind, 1)
         break_down_nodes(bitcoind, nodes=[bob, carol])
 
         bob.connect(str(carol.id() + "@localhost:" + str(carol.daemon.port)), perm=1)
@@ -560,7 +568,7 @@ class TestInteractiveLightning:
         bob.open_channel(
             node_pubkey_string=carol.id(), local_funding_amount=FUND_AMT
         ).__next__()
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         assert confirm_channel(bitcoind, bob, carol)
@@ -573,7 +581,7 @@ class TestInteractiveLightning:
 
         channel_point = bob.list_channels()[0].channel_point
         bob.close_channel(channel_point=channel_point).__next__()
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 6)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         assert bob.check_channel(carol) is False
@@ -585,7 +593,7 @@ class TestInteractiveLightning:
         # test payment request method
         invoice = carol.add_invoice(value=SEND_AMT)
         bob.send_payment_sync(payment_request=invoice.payment_request)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash = carol.decode_pay_req(invoice.payment_request).payment_hash
@@ -600,7 +608,7 @@ class TestInteractiveLightning:
             payment_hash=invoice2.r_hash,
             final_cltv_delta=144,
         )
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash2 = carol.decode_pay_req(invoice2.payment_request).payment_hash
@@ -610,7 +618,7 @@ class TestInteractiveLightning:
         # test sending any amount to an invoice which requested 0
         invoice3 = carol.add_invoice(value=0)
         bob.send_payment_sync(payment_request=invoice3.payment_request, amt=SEND_AMT)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash = carol.decode_pay_req(invoice3.payment_request).payment_hash
@@ -630,7 +638,7 @@ class TestInteractiveLightning:
         except StopIteration:
             pass
         bob.daemon.wait_for_log("Closed completed SETTLE circuit", timeout=60)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash = carol.decode_pay_req(invoice.payment_request).payment_hash
@@ -649,7 +657,7 @@ class TestInteractiveLightning:
         except StopIteration:
             pass
         bob.daemon.wait_for_log("Closed completed SETTLE circuit", timeout=60)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash2 = carol.decode_pay_req(invoice2.payment_request).payment_hash
@@ -665,7 +673,7 @@ class TestInteractiveLightning:
         except StopIteration:
             pass
         bob.daemon.wait_for_log("Closed completed SETTLE circuit", timeout=60)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
 
         payment_hash = carol.decode_pay_req(invoice.payment_request).payment_hash
@@ -680,7 +688,7 @@ class TestInteractiveLightning:
         invoice = dave.add_invoice(value=SEND_AMT)
         route = bob.query_routes(pub_key=dave.id(), amt=SEND_AMT, final_cltv_delta=144)
         bob.send_to_route_sync(payment_hash=invoice.r_hash, route=route[0])
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         payment_hash = dave.decode_pay_req(invoice.payment_request).payment_hash
 
@@ -697,7 +705,7 @@ class TestInteractiveLightning:
         except StopIteration:
             pass
         bob.daemon.wait_for_log("Closed completed SETTLE circuit", timeout=60)
-        bitcoind.rpc.generate(3)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol, dave])
         payment_hash = dave.decode_pay_req(invoice.payment_request).payment_hash
 
@@ -724,7 +732,7 @@ class TestInteractiveLightning:
         channel_point = bob.list_channels()[0].channel_point
 
         bob.close_channel(channel_point=channel_point).__next__()
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 3)
         gen_and_sync_lnd(bitcoind, [bob, carol])
         assert any(
             update.closed_channel is not None for update in get_updates(chan_updates)
@@ -780,9 +788,9 @@ class TestChannelBackup:
 
         bob.daemon.wait_for_log("Inserting 1 SCB channel shells into DB")
         carol.daemon.wait_for_log("Broadcasting force close transaction")
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 6)
         bob.daemon.wait_for_log("Publishing sweep tx", timeout=120)
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 6)
         assert bob.daemon.wait_for_log(
             "a contract has been fully resolved!", timeout=120
         )
@@ -809,9 +817,9 @@ class TestChannelBackup:
 
         bob.daemon.wait_for_log("Inserting 1 SCB channel shells into DB")
         carol.daemon.wait_for_log("Broadcasting force close transaction")
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 6)
         bob.daemon.wait_for_log("Publishing sweep tx", timeout=120)
-        bitcoind.rpc.generate(6)
+        generate(bitcoind, 6)
         assert bob.daemon.wait_for_log(
             "a contract has been fully resolved!", timeout=120
         )
